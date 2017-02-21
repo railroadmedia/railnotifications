@@ -1,10 +1,6 @@
-<?php namespace Railroad\Railforums;
+<?php namespace Railroad\Railnotifications;
 
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
-use Railroad\Railforums\DataMappers\UserCloakDataMapper;
-use Railroad\Railforums\EventListeners\EntityEventListener;
-use Railroad\Railmap\Events\EntityDestroyed;
-use Railroad\Railmap\Events\EntitySaved;
 
 class NotificationsServiceProvider extends ServiceProvider
 {

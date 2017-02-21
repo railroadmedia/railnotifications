@@ -25,7 +25,7 @@
   },
   "autoload": {
     "psr-4": {
-      "Railroad\\Railforums\\": "src/"
+      "Railroad\\Railnotifications\\": "src/"
     }
   },
   "autoload-dev": {

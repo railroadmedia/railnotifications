@@ -2,13 +2,12 @@
 
 namespace Tests;
 
-use Railroad\Railforums\Jobs\SendNewThreadPostNotifications;
-use Railroad\Railforums\Services\PostLikes\ForumPostLikeService;
+use Railroad\Railnotifications\Services\NotificationService;
 
 class NotificationServiceTest extends TestCase
 {
     /**
-     * @var ForumPostLikeService
+     * @var NotificationService
      */
     private $classBeingTested;
 
@@ -16,14 +15,10 @@ class NotificationServiceTest extends TestCase
     {
         parent::setUp();
 
-        $this->classBeingTested = app(SendNewThreadPostNotifications::class);
+        $this->classBeingTested = app(NotificationService::class);
     }
 
     public function test_send_notification()
     {
-//        $job = (new SendNewThreadPostNotifications());
-//        dispatch($job);
-
-        $response = $this->get('/worker/queue');
     }
 }

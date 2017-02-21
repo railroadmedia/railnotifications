@@ -1,8 +1,8 @@
 <?php
 
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
 class CreateNotificationsTable extends Migration
 {
@@ -13,14 +13,17 @@ class CreateNotificationsTable extends Migration
      */
     public function up()
     {
-        Schema::create('notifications', function (Blueprint $table) {
-            $table->uuid('id')->primary();
-            $table->string('type');
-            $table->text('data');
-            $table->integer('recipient_id')->nullable();
-            $table->timestamp('read_at')->nullable();
-            $table->timestamps();
-        });
+        Schema::create(
+            'notifications',
+            function (Blueprint $table) {
+                $table->uuid('id')->primary();
+                $table->string('type');
+                $table->text('data');
+                $table->integer('recipient_id')->nullable();
+                $table->timestamp('read_at')->nullable();
+                $table->timestamps();
+            }
+        );
     }
 
     /**

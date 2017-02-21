@@ -1,0 +1,36 @@
+{
+  "name": "railroad/railnotifications",
+  "description": "Laravel notification system using entities",
+  "license": "MIT",
+  "minimum-stability": "dev",
+  "prefer-stable": true,
+  "authors": [
+    {
+      "name": "Caleb Favor",
+      "email": "calebfavor@gmail.com"
+    }
+  ],
+  "require": {
+    "php": "~7",
+    "laravel/framework": "5.*",
+    "guzzlehttp/guzzle": "~6.0",
+    "railroad/railmap": "dev-master"
+  },
+  "require-dev": {
+    "phpunit/phpunit": "~5.7",
+    "phpunit/php-code-coverage": "4.0.5",
+    "orchestra/testbench": "3.4.x@dev",
+    "orchestra/database": "3.4.x@dev",
+    "doctrine/dbal": "^2.5"
+  },
+  "autoload": {
+    "psr-4": {
+      "Railroad\\Railforums\\": "src/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Tests\\": "tests/"
+    }
+  }
+}

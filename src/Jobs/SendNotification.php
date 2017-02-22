@@ -8,6 +8,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use Railroad\Railnotifications\Channels\ChannelFactory;
 use Railroad\Railnotifications\DataMappers\NotificationBroadcastDataMapper;
+use Railroad\Railnotifications\Exceptions\NotificationBroadcastFailure;
 use Railroad\Railnotifications\Services\NotificationBroadcastService;
 
 class SendNotification implements ShouldQueue
@@ -31,24 +32,36 @@ class SendNotification implements ShouldQueue
         NotificationBroadcastDataMapper $notificationBroadcastDataMapper,
         ChannelFactory $channelFactory
     ) {
-        $this->notificationBroadcastService = $notificationBroadcastService;
+        try {
+            $this->notificationBroadcastService = $notificationBroadcastService;
 
-        $notificationBroadcast = $notificationBroadcastDataMapper->get($this->notificationBroadcastId);
+            $notificationBroadcast = $notificationBroadcastDataMapper->get($this->notificationBroadcastId);
 
-        if (empty($notificationBroadcast)) {
-            throw new Exception(
-                'Could not find notification broadcast with ID: ' . $this->notificationBroadcastId
+            if (empty($notificationBroadcast)) {
+                throw new Exception(
+                    'Could not find notification broadcast with ID: ' . $this->notificationBroadcastId
+                );
+            }
+
+            $channel = $channelFactory->make($notificationBroadcast->getChannel());
+            $channel->send($notificationBroadcast);
+
+            $notificationBroadcastService->markSucceeded($this->notificationBroadcastId);
+        } catch (Exception $exception) {
+            throw new NotificationBroadcastFailure(
+                $this->notificationBroadcastId,
+                $exception->getMessage(),
+                $exception->getCode(),
+                $exception->getPrevious()
             );
         }
-
-        $channel = $channelFactory->make($notificationBroadcast->getChannel());
-        $channel->send($notificationBroadcast);
-
-        $notificationBroadcastService->markSucceeded($this->notificationBroadcastId);
     }
 
-    public function failed(Exception $exception)
+    public function failed(NotificationBroadcastFailure $exception)
     {
-        $this->notificationBroadcastService->markFailed($this->notificationBroadcastId, $exception->getMessage());
+        app(NotificationBroadcastService::class)->markFailed(
+            $exception->getId(),
+            $exception->getMessage()
+        );
     }
 }

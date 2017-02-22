@@ -23,16 +23,12 @@ class ChannelFactory
      */
     public function make($name): ChannelInterface
     {
-        $class = $this->map[$name];
+        $className = $this->map[$name];
+        $class = $this->application->make($className);
 
         // All channels will be singletons
-        $this->application->singleton(
-            $name,
-            function (Application $app) use ($class) {
-                return $app->make($class);
-            }
-        );
+        $this->application->singleton($className, $class);
 
-        return $this->application->make($class);
+        return $class;
     }
 }

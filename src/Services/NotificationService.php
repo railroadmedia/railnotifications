@@ -2,6 +2,7 @@
 
 namespace Railroad\Railnotifications\Services;
 
+use Carbon\Carbon;
 use Railroad\Railnotifications\DataMappers\NotificationDataMapper;
 use Railroad\Railnotifications\Entities\Notification;
 
@@ -57,24 +58,78 @@ class NotificationService
         return $notifications;
     }
 
+    /**
+     * @param int $id
+     */
     public function destroy(int $id)
     {
-
+        $this->notificationDataMapper->destroy($id);
     }
 
-    public function markRead(int $id)
+    /**
+     * @param int $id
+     * @return Notification
+     */
+    public function get(int $id)
     {
-
+        return $this->notificationDataMapper->get($id);
     }
 
+    /**
+     * @param int $recipientId
+     * @param int $amount
+     * @param int $skip
+     * @return Notification[]
+     */
+    public function getManyPaginated(int $recipientId, int $amount, int $skip)
+    {
+        return $this->notificationDataMapper->getManyForRecipientPaginated($recipientId, $amount, $skip);
+    }
+
+    /**
+     * @param int $id
+     * @param string|null $readOnDateTimeString
+     */
+    public function markRead(int $id, string $readOnDateTimeString = null)
+    {
+        $notification = $this->notificationDataMapper->get($id);
+
+        if (!empty($notification)) {
+            $notification->setReadOn(
+                is_null($readOnDateTimeString) ? Carbon::now() : Carbon::parse($readOnDateTimeString)
+            );
+            $notification->persist();
+        }
+    }
+
+    /**
+     * @param int $id
+     */
     public function markUnRead(int $id)
     {
+        $notification = $this->notificationDataMapper->get($id);
 
+        if (!empty($notification)) {
+            $notification->setReadOn(null);
+            $notification->persist();
+        }
     }
 
-    public function markAllRead(int $recipientId)
+    /**
+     * @param int $recipientId
+     * @param string|null $readOnDateTimeString
+     */
+    public function markAllRead(int $recipientId, string $readOnDateTimeString = null)
     {
+        $allUnreadNotifications = $this->notificationDataMapper->getAllUnReadForRecipient($recipientId);
 
+        foreach ($allUnreadNotifications as $unreadNotification) {
+            $unreadNotification->setReadOn(
+                is_null($readOnDateTimeString) ? Carbon::now() : Carbon::parse($readOnDateTimeString)
+            );
+        }
+
+        $this->notificationDataMapper->persist($allUnreadNotifications);
     }
 
     public function broadcast(int $id, $channel)

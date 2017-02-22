@@ -4,8 +4,8 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "4967d0c4239634181e340e7c32d359e0",
-    "content-hash": "37ae0aa150ed1516781cea7ef94f801c",
+    "hash": "854e56e407dc3ac51fa239d4dbad4d07",
+    "content-hash": "4ebdf43fa0a3079a7c34e9c2989e656a",
     "packages": [
         {
             "name": "doctrine/annotations",
@@ -518,53 +518,6 @@
                 "parser"
             ],
             "time": "2016-11-02 15:56:58"
-        },
-        {
-            "name": "ezyang/htmlpurifier",
-            "version": "dev-master",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/ezyang/htmlpurifier.git",
-                "reference": "8e4cacf0a76458d6203f53113c47b49c6edc2dc5"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/ezyang/htmlpurifier/zipball/8e4cacf0a76458d6203f53113c47b49c6edc2dc5",
-                "reference": "8e4cacf0a76458d6203f53113c47b49c6edc2dc5",
-                "shasum": ""
-            },
-            "require": {
-                "php": ">=5.2"
-            },
-            "require-dev": {
-                "simpletest/simpletest": "^1.1"
-            },
-            "type": "library",
-            "autoload": {
-                "psr-0": {
-                    "HTMLPurifier": "library/"
-                },
-                "files": [
-                    "library/HTMLPurifier.composer.php"
-                ]
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "LGPL"
-            ],
-            "authors": [
-                {
-                    "name": "Edward Z. Yang",
-                    "email": "admin@htmlpurifier.org",
-                    "homepage": "http://ezyang.com"
-                }
-            ],
-            "description": "Standards compliant HTML filter written in PHP",
-            "homepage": "http://htmlpurifier.org/",
-            "keywords": [
-                "html"
-            ],
-            "time": "2017-02-04 00:54:51"
         },
         {
             "name": "guzzlehttp/guzzle",
@@ -1282,12 +1235,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/calebfavor/railmap.git",
-                "reference": "fe37220547c0f949fb460336555595f53abd0c62"
+                "reference": "40dbfbec740472aebd057ab060ad3b6c56d5119f"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/calebfavor/railmap/zipball/fe37220547c0f949fb460336555595f53abd0c62",
-                "reference": "fe37220547c0f949fb460336555595f53abd0c62",
+                "url": "https://api.github.com/repos/calebfavor/railmap/zipball/40dbfbec740472aebd057ab060ad3b6c56d5119f",
+                "reference": "40dbfbec740472aebd057ab060ad3b6c56d5119f",
                 "shasum": ""
             },
             "require": {
@@ -1296,9 +1249,10 @@
                 "php": "~7"
             },
             "require-dev": {
+                "orchestra/database": "3.4.x@dev",
                 "orchestra/testbench": "3.4.x@dev",
-                "phpunit/php-code-coverage": "3.*",
-                "phpunit/phpunit": "~5."
+                "phpunit/php-code-coverage": "4.0.5",
+                "phpunit/phpunit": "~5.7"
             },
             "type": "library",
             "autoload": {
@@ -1317,7 +1271,7 @@
                 }
             ],
             "description": "Entity System",
-            "time": "2017-02-20 16:33:35"
+            "time": "2017-02-22 00:26:28"
         },
         {
             "name": "ramsey/uuid",
@@ -2334,6 +2288,53 @@
                 "instantiate"
             ],
             "time": "2015-06-14 21:17:01"
+        },
+        {
+            "name": "ezyang/htmlpurifier",
+            "version": "dev-master",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/ezyang/htmlpurifier.git",
+                "reference": "8e4cacf0a76458d6203f53113c47b49c6edc2dc5"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/ezyang/htmlpurifier/zipball/8e4cacf0a76458d6203f53113c47b49c6edc2dc5",
+                "reference": "8e4cacf0a76458d6203f53113c47b49c6edc2dc5",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.2"
+            },
+            "require-dev": {
+                "simpletest/simpletest": "^1.1"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-0": {
+                    "HTMLPurifier": "library/"
+                },
+                "files": [
+                    "library/HTMLPurifier.composer.php"
+                ]
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "LGPL"
+            ],
+            "authors": [
+                {
+                    "name": "Edward Z. Yang",
+                    "email": "admin@htmlpurifier.org",
+                    "homepage": "http://ezyang.com"
+                }
+            ],
+            "description": "Standards compliant HTML filter written in PHP",
+            "homepage": "http://htmlpurifier.org/",
+            "keywords": [
+                "html"
+            ],
+            "time": "2017-02-04 00:54:51"
         },
         {
             "name": "fzaninotto/faker",
@@ -3818,7 +3819,6 @@
     "minimum-stability": "dev",
     "stability-flags": {
         "railroad/railmap": 20,
-        "ezyang/htmlpurifier": 20,
         "orchestra/testbench": 20,
         "orchestra/database": 20
     },

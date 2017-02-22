@@ -20,7 +20,8 @@ class CreateNotificationsTable extends Migration
                 $table->string('type');
                 $table->text('data');
                 $table->integer('recipient_id')->nullable();
-                $table->timestamp('read_at')->nullable();
+                $table->dateTime('read_on')->nullable();
+                $table->dateTime('created_on')->nullable();
                 $table->timestamps();
             }
         );

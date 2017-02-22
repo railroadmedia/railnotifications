@@ -2,6 +2,7 @@
 
 namespace Railroad\Railnotifications\DataMappers;
 
+use Illuminate\Database\Query\Builder;
 use Railroad\Railmap\DataMapper\DatabaseDataMapperBase;
 use Railroad\Railnotifications\Entities\Notification;
 
@@ -28,10 +29,47 @@ class NotificationDataMapper extends DatabaseDataMapperBase
             'type' => 'type',
             'data' => 'data',
             'recipientId' => 'recipient_id',
-            'readAt' => 'read_at',
+            'readOn' => 'read_on',
+            'createdOn' => 'created_on',
             'createdAt' => 'created_at',
             'updatedAt' => 'updated_at',
         ];
+    }
+
+    /**
+     * @return Builder
+     */
+    public function gettingQuery()
+    {
+        return parent::gettingQuery()->orderBy('created_on', 'desc');
+    }
+
+    /**
+     * @param int $recipientId
+     * @param int $amount
+     * @param int $skip
+     * @return Notification[]
+     */
+    public function getManyForRecipientPaginated(int $recipientId, int $amount, int $skip)
+    {
+        return $this->getWithQuery(
+            function (Builder $query) use ($recipientId, $amount, $skip) {
+                return $query->where('recipient_id', $recipientId)->limit($amount)->skip($skip);
+            }
+        );
+    }
+
+    /**
+     * @param int $recipientId
+     * @return Notification[]
+     */
+    public function getAllUnReadForRecipient(int $recipientId)
+    {
+        return $this->getWithQuery(
+            function (Builder $query) use ($recipientId) {
+                return $query->where('recipient_id', $recipientId)->whereNull('read_on');
+            }
+        );
     }
 
     /**

@@ -30,7 +30,12 @@ class Notification extends EntityBase
     /**
      * @var string|null
      */
-    protected $readAt;
+    protected $readOn;
+
+    /**
+     * @var string|null
+     */
+    protected $createdOn;
 
     public function __construct()
     {
@@ -88,17 +93,33 @@ class Notification extends EntityBase
     /**
      * @return null|string
      */
-    public function getReadAt()
+    public function getReadOn()
     {
-        return $this->readAt;
+        return $this->readOn;
     }
 
     /**
-     * @param null|string $readAt
+     * @param null|string $readOn
      */
-    public function setReadAt($readAt)
+    public function setReadOn($readOn)
     {
-        $this->readAt = $readAt;
+        $this->readOn = $readOn;
+    }
+
+    /**
+     * @return null|string
+     */
+    public function getCreatedOn()
+    {
+        return $this->createdOn;
+    }
+
+    /**
+     * @param null|string $createdOn
+     */
+    public function setCreatedOn($createdOn)
+    {
+        $this->createdOn = $createdOn;
     }
 
     public function randomize()
@@ -115,6 +136,9 @@ class Notification extends EntityBase
             ]
         );
         $this->setRecipientId($faker->randomNumber());
-        $this->setReadAt(Carbon::instance($faker->dateTime)->timestamp);
+        $this->setReadOn(Carbon::instance($faker->dateTime)->toDateTimeString());
+        $this->setCreatedOn(Carbon::instance($faker->dateTime)->toDateTimeString());
+
+        return $this;
     }
 }

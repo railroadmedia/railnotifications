@@ -9,7 +9,7 @@ use Railroad\Railnotifications\Entities\Notification;
 /**
  * Class NotificationDataMapper
  *
- * @package Railroad\Railforums\DataMappers
+ * @package Railroad\Railnotifications\DataMappers
  *
  * @method Notification[] getWithQuery(callable $queryCallback, $columns = ['*'])
  * @method Notification get($id)
@@ -61,12 +61,17 @@ class NotificationDataMapper extends DatabaseDataMapperBase
 
     /**
      * @param int $recipientId
+     * @param string $createdAfterDateTimeString
      * @return Notification[]
      */
-    public function getAllUnReadForRecipient(int $recipientId)
+    public function getAllUnReadForRecipient(int $recipientId, string $createdAfterDateTimeString = null)
     {
         return $this->getWithQuery(
-            function (Builder $query) use ($recipientId) {
+            function (Builder $query) use ($recipientId, $createdAfterDateTimeString) {
+                if (!is_null($createdAfterDateTimeString)) {
+                    $query->where('created_on', '<', $createdAfterDateTimeString);
+                }
+
                 return $query->where('recipient_id', $recipientId)->whereNull('read_on');
             }
         );

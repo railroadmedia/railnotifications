@@ -87,6 +87,19 @@ class NotificationService
     }
 
     /**
+     * @param int $recipientId
+     * @param string|null $createdAfterDateTimeString
+     * @return Notification[]
+     */
+    public function getManyUnread(int $recipientId, string $createdAfterDateTimeString = null)
+    {
+        return $this->notificationDataMapper->getAllUnReadForRecipient(
+            $recipientId,
+            $createdAfterDateTimeString
+        );
+    }
+
+    /**
      * @param int $id
      * @param string|null $readOnDateTimeString
      */
@@ -137,8 +150,8 @@ class NotificationService
         // if you wanted to email or send it via text
     }
 
-    public function broadcastAggregated(int $recipientId, $channel)
+    public function broadcastAggregatedForRecipient(int $recipientId, $channel)
     {
-        // if you want to send a summary of someones notifications
+        // if you want to send a summary of someones unread notifications
     }
 }

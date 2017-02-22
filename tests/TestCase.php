@@ -2,6 +2,7 @@
 
 namespace Tests;
 
+use Carbon\Carbon;
 use Faker\Generator;
 use Illuminate\Database\DatabaseManager;
 use Orchestra\Testbench\TestCase as BaseTestCase;
@@ -27,6 +28,8 @@ class TestCase extends BaseTestCase
 
         $this->faker = $this->app->make(Generator::class);
         $this->databaseManager = $this->app->make(DatabaseManager::class);
+
+        Carbon::setTestNow(Carbon::now());
     }
 
     /**

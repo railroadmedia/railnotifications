@@ -2,13 +2,13 @@
 
 namespace Railroad\Railnotifications\Channels;
 
-use Railroad\Railnotifications\Entities\Notification;
+use Railroad\Railnotifications\Entities\NotificationBroadcast;
 
 interface ChannelInterface
 {
-    public function broadcast(Notification $notification);
+    public function send(NotificationBroadcast $notificationBroadcast);
 
-    public function broadcastAll(array $notifications);
+    public function sendMany(array $notificationBroadcasts);
 
-    public function broadcastAggregated(array $notifications);
+    public function sendAggregated(array $notificationBroadcasts);
 }

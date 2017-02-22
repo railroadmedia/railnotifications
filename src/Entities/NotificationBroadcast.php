@@ -6,8 +6,14 @@ use Carbon\Carbon;
 use Faker\Generator;
 use Railroad\Railmap\Entity\EntityBase;
 use Railroad\Railmap\Entity\Properties\Timestamps;
-use Railroad\Railnotifications\DataMappers\NotificationDataMapper;
+use Railroad\Railnotifications\DataMappers\NotificationBroadcastDataMapper;
 
+/**
+ * Class NotificationBroadcast
+ *
+ * @method Notification|null getNotification()
+ * @method setNotification(Notification $notification)
+ */
 class NotificationBroadcast extends EntityBase
 {
     use Timestamps;
@@ -38,21 +44,20 @@ class NotificationBroadcast extends EntityBase
     protected $notificationId;
 
     /**
-     * @var string
+     * @var string|null
      */
     protected $broadcastOn;
 
     const TYPE_SINGLE = 'single';
     const TYPE_AGGREGATED = 'aggregated';
 
-    const STATUS_CREATED = 'created';
     const STATUS_IN_TRANSIT = 'in transit';
     const STATUS_SENT = 'sent';
     const STATUS_FAILED = 'failed';
 
     public function __construct()
     {
-        $this->setOwningDataMapper(app(NotificationDataMapper::class));
+        $this->setOwningDataMapper(app(NotificationBroadcastDataMapper::class));
     }
 
     /**
@@ -136,17 +141,17 @@ class NotificationBroadcast extends EntityBase
     }
 
     /**
-     * @return string
+     * @return null|string
      */
-    public function getBroadcastOn(): string
+    public function getBroadcastOn()
     {
         return $this->broadcastOn;
     }
 
     /**
-     * @param string $broadcastOn
+     * @param null|string $broadcastOn
      */
-    public function setBroadcastOn(string $broadcastOn)
+    public function setBroadcastOn($broadcastOn)
     {
         $this->broadcastOn = $broadcastOn;
     }
@@ -160,12 +165,14 @@ class NotificationBroadcast extends EntityBase
         $this->setType($faker->randomElement([self::TYPE_SINGLE, self::TYPE_AGGREGATED]));
         $this->setStatus(
             $faker->randomElement(
-                [self::STATUS_CREATED, self::STATUS_IN_TRANSIT, self::STATUS_SENT, self::STATUS_FAILED]
+                [self::STATUS_IN_TRANSIT, self::STATUS_SENT, self::STATUS_FAILED]
             )
         );
         $this->setReport($faker->boolean() ? $faker->paragraph() : null);
         $this->setNotificationId($faker->randomNumber());
-        $this->setBroadcastOn(Carbon::instance($faker->dateTime)->toDateTimeString());
+        $this->setBroadcastOn(
+            $faker->boolean() ? Carbon::instance($faker->dateTime)->toDateTimeString() : null
+        );
 
         return $this;
     }

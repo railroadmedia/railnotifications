@@ -4,6 +4,8 @@ namespace Railroad\Railnotifications\DataMappers;
 
 use Illuminate\Database\Query\Builder;
 use Railroad\Railmap\DataMapper\DatabaseDataMapperBase;
+use Railroad\Railmap\Entity\Links\OneToOne;
+use Railroad\Railnotifications\Entities\Notification;
 use Railroad\Railnotifications\Entities\NotificationBroadcast;
 
 /**
@@ -43,6 +45,11 @@ class NotificationBroadcastDataMapper extends DatabaseDataMapperBase
     public function gettingQuery()
     {
         return parent::gettingQuery()->orderBy('broadcast_on', 'desc');
+    }
+
+    public function links()
+    {
+        return ['notification' => new OneToOne(Notification::class, 'notificationId', 'id', 'notification')];
     }
 
     /**

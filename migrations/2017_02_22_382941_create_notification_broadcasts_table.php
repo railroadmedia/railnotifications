@@ -20,9 +20,9 @@ class CreateNotificationBroadcastsTable extends Migration
                 $table->string('channel', 1500);
                 $table->string('type');
                 $table->string('status');
-                $table->text('report');
+                $table->text('report')->nullable();
                 $table->integer('notification_id');
-                $table->dateTime('broadcast_on');
+                $table->dateTime('broadcast_on')->nullable();
                 $table->timestamps();
             }
         );

@@ -24,6 +24,7 @@ class TestCase extends BaseTestCase
         parent::setUp();
 
         $this->artisan('migrate', []);
+
         $this->faker = $this->app->make(Generator::class);
         $this->databaseManager = $this->app->make(DatabaseManager::class);
     }

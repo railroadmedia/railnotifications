@@ -2,22 +2,59 @@
 
 namespace Railroad\Railnotifications\Services;
 
+use Railroad\Railnotifications\DataMappers\NotificationDataMapper;
+use Railroad\Railnotifications\Entities\Notification;
+
 class NotificationService
 {
+    private $notificationDataMapper;
+
+    public function __construct(NotificationDataMapper $notificationDataMapper)
+    {
+        $this->notificationDataMapper = $notificationDataMapper;
+    }
+
+    /**
+     * @param string $type
+     * @param array $data
+     * @param int $recipientId
+     * @return Notification
+     */
     public function create(string $type, array $data, int $recipientId)
     {
+        $notification = new Notification();
 
+        $notification->setType($type);
+        $notification->setData($data);
+        $notification->setRecipientId($recipientId);
+
+        $notification->persist();
+
+        return $notification;
     }
 
     /**
      * Ex.
      * [ ['type' => my_type, 'data' => my_data, 'recipient_id' => my_recipient], ... ]
      *
-     * @param array $notificationData
+     * @param array $notificationsData
+     * @return Notification[]
      */
-    public function createMany(array $notificationData)
+    public function createMany(array $notificationsData)
     {
+        $notifications = [];
 
+        foreach ($notificationsData as $notificationData) {
+            $notification = new Notification();
+
+            $notification->fill($notificationData);
+
+            $notifications[] = $notification;
+        }
+
+        $this->notificationDataMapper->persist($notifications);
+
+        return $notifications;
     }
 
     public function destroy(int $id)

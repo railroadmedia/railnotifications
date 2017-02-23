@@ -5,6 +5,7 @@ namespace Tests;
 use Carbon\Carbon;
 use Faker\Generator;
 use Illuminate\Database\DatabaseManager;
+use Illuminate\Foundation\Testing\Concerns\InteractsWithDatabase;
 use Orchestra\Testbench\TestCase as BaseTestCase;
 use Railroad\Railnotifications\NotificationsServiceProvider;
 

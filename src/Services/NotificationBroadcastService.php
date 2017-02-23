@@ -6,6 +6,8 @@ use Carbon\Carbon;
 use Railroad\Railnotifications\Channels\ChannelFactory;
 use Railroad\Railnotifications\DataMappers\NotificationBroadcastDataMapper;
 use Railroad\Railnotifications\Entities\NotificationBroadcast;
+use Railroad\Railnotifications\Exceptions\NotificationBroadcastFailure;
+use Railroad\Railnotifications\Exceptions\RecipientNotificationBroadcastFailure;
 use Railroad\Railnotifications\Jobs\SendNotification;
 
 class NotificationBroadcastService
@@ -27,15 +29,14 @@ class NotificationBroadcastService
     /**
      * @param int $notificationId
      * @param string $channelName
+     * @throws NotificationBroadcastFailure
      */
     public function broadcast(int $notificationId, string $channelName)
     {
         $notification = $this->notificationService->get($notificationId);
 
         if (empty($notification)) {
-            // todo: exception?
-
-            return;
+            throw new NotificationBroadcastFailure($notificationId, 'Notification not found.');
         }
 
         $notificationBroadcast = new NotificationBroadcast();
@@ -55,6 +56,7 @@ class NotificationBroadcastService
      * @param int $recipientId
      * @param string $channelName
      * @param null|string $createdAfterDateTimeString
+     * @throws NotificationBroadcastFailure
      */
     public function broadcastUnreadAggregated(
         int $recipientId,
@@ -64,9 +66,10 @@ class NotificationBroadcastService
         $notifications = $this->notificationService->getManyUnread($recipientId, $createdAfterDateTimeString);
 
         if (empty($notifications)) {
-            // todo: exception?
-
-            return;
+            throw new RecipientNotificationBroadcastFailure(
+                $recipientId,
+                'Recipient has no notifications in period after: ' . $createdAfterDateTimeString
+            );
         }
 
         $notificationBroadcasts = [];
@@ -78,7 +81,7 @@ class NotificationBroadcastService
             $notificationBroadcast->setStatus(NotificationBroadcast::STATUS_IN_TRANSIT);
             $notificationBroadcast->setNotification($notification);
 
-            $notificationBroadcasts[] = $notificationBroadcasts;
+            $notificationBroadcasts[] = $notificationBroadcast;
         }
 
         // note: railmap still does not have mass insert implemented, this will persist 1 at a time
@@ -92,22 +95,22 @@ class NotificationBroadcastService
         }
     }
 
-    public function markSucceeded(int $broadcastNotificationId)
+    public function markSucceeded(int $notificationBroadcastId)
     {
-        $broadcastNotification = $this->notificationBroadcastDataMapper->get($broadcastNotificationId);
+        $notificationBroadcast = $this->notificationBroadcastDataMapper->get($notificationBroadcastId);
 
-        $broadcastNotification->setStatus(NotificationBroadcast::STATUS_SENT);
-        $broadcastNotification->setBroadcastOn(Carbon::now()->toDateTimeString());
-        $broadcastNotification->persist();
+        $notificationBroadcast->setStatus(NotificationBroadcast::STATUS_SENT);
+        $notificationBroadcast->setBroadcastOn(Carbon::now()->toDateTimeString());
+        $notificationBroadcast->persist();
     }
 
-    public function markFailed(int $broadcastNotificationId, $message)
+    public function markFailed(int $notificationBroadcastId, $message)
     {
-        $broadcastNotification = $this->notificationBroadcastDataMapper->get($broadcastNotificationId);
+        $notificationBroadcast = $this->notificationBroadcastDataMapper->get($notificationBroadcastId);
 
-        $broadcastNotification->setStatus(NotificationBroadcast::STATUS_FAILED);
-        $broadcastNotification->setBroadcastOn(Carbon::now()->toDateTimeString());
-        $broadcastNotification->setReport($message);
-        $broadcastNotification->persist();
+        $notificationBroadcast->setStatus(NotificationBroadcast::STATUS_FAILED);
+        $notificationBroadcast->setBroadcastOn(Carbon::now()->toDateTimeString());
+        $notificationBroadcast->setReport($message);
+        $notificationBroadcast->persist();
     }
 }

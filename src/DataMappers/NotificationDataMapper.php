@@ -69,7 +69,7 @@ class NotificationDataMapper extends DatabaseDataMapperBase
         return $this->getWithQuery(
             function (Builder $query) use ($recipientId, $createdAfterDateTimeString) {
                 if (!is_null($createdAfterDateTimeString)) {
-                    $query->where('created_on', '<', $createdAfterDateTimeString);
+                    $query->where('created_on', '>=', $createdAfterDateTimeString);
                 }
 
                 return $query->where('recipient_id', $recipientId)->whereNull('read_on');

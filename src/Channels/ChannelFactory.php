@@ -27,7 +27,12 @@ class ChannelFactory
         $class = $this->application->make($className);
 
         // All channels will be singletons
-        $this->application->singleton($className, $class);
+        $this->application->singleton(
+            $className,
+            function ($app) use ($class) {
+                return $class;
+            }
+        );
 
         return $class;
     }

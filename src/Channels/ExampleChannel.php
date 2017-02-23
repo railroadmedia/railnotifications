@@ -2,23 +2,31 @@
 
 namespace Railroad\Railnotifications\Channels;
 
-use Railroad\Railnotifications\Channels\ChannelInterface;
 use Railroad\Railnotifications\Entities\NotificationBroadcast;
+use Railroad\Railnotifications\Services\NotificationBroadcastService;
 
 class ExampleChannel implements ChannelInterface
 {
-    public function send(NotificationBroadcast $notificationBroadcast)
+    private $notificationBroadcastService;
+
+    public function __construct(NotificationBroadcastService $notificationBroadcastService)
     {
-        // TODO: Implement send() method.
+        $this->notificationBroadcastService = $notificationBroadcastService;
     }
 
-    public function sendMany(array $notificationBroadcasts)
+    public function send(NotificationBroadcast $notificationBroadcast)
     {
-        // TODO: Implement sendMany() method.
+        // Ex. send email using notification broadcast
+
+        $this->notificationBroadcastService->markSucceeded($notificationBroadcast->getId());
     }
 
     public function sendAggregated(array $notificationBroadcasts)
     {
-        // TODO: Implement sendAggregated() method.
+        // Ex. send email using notification broadcasts
+
+        foreach ($notificationBroadcasts as $notificationBroadcast) {
+            $this->notificationBroadcastService->markSucceeded($notificationBroadcast->getId());
+        }
     }
 }

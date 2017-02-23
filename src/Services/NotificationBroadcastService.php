@@ -77,11 +77,13 @@ class NotificationBroadcastService
         }
 
         $notificationBroadcasts = [];
+        $groupId = bin2hex(openssl_random_pseudo_bytes(32));
 
         foreach ($notifications as $notification) {
             $notificationBroadcast = new NotificationBroadcast();
             $notificationBroadcast->setChannel($channelName);
             $notificationBroadcast->setType(NotificationBroadcast::TYPE_AGGREGATED);
+            $notificationBroadcast->setAggregationGroupId($groupId);
             $notificationBroadcast->setStatus(NotificationBroadcast::STATUS_IN_TRANSIT);
             $notificationBroadcast->setNotification($notification);
 

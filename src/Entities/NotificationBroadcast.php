@@ -46,6 +46,11 @@ class NotificationBroadcast extends EntityBase
     /**
      * @var string|null
      */
+    protected $aggregationGroupId;
+
+    /**
+     * @var string|null
+     */
     protected $broadcastOn;
 
     const TYPE_SINGLE = 'single';
@@ -143,6 +148,22 @@ class NotificationBroadcast extends EntityBase
     /**
      * @return null|string
      */
+    public function getAggregationGroupId()
+    {
+        return $this->aggregationGroupId;
+    }
+
+    /**
+     * @param null|string $aggregationGroupId
+     */
+    public function setAggregationGroupId($aggregationGroupId)
+    {
+        $this->aggregationGroupId = $aggregationGroupId;
+    }
+
+    /**
+     * @return null|string
+     */
     public function getBroadcastOn()
     {
         return $this->broadcastOn;
@@ -170,6 +191,7 @@ class NotificationBroadcast extends EntityBase
         );
         $this->setReport($faker->boolean() ? $faker->paragraph() : null);
         $this->setNotificationId($faker->randomNumber());
+        $this->setAggregationGroupId(bin2hex(openssl_random_pseudo_bytes(32)));
         $this->setBroadcastOn(
             $faker->boolean() ? Carbon::instance($faker->dateTime)->toDateTimeString() : null
         );

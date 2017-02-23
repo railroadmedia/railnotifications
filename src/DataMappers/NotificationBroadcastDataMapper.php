@@ -33,6 +33,7 @@ class NotificationBroadcastDataMapper extends DatabaseDataMapperBase
             'status' => 'status',
             'report' => 'report',
             'notificationId' => 'notification_id',
+            'aggregationGroupId' => 'aggregation_group_id',
             'broadcastOn' => 'broadcast_on',
             'createdAt' => 'created_at',
             'updatedAt' => 'updated_at',

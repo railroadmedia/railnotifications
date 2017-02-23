@@ -22,6 +22,7 @@ class CreateNotificationBroadcastsTable extends Migration
                 $table->string('status');
                 $table->text('report')->nullable();
                 $table->integer('notification_id');
+                $table->string('aggregation_group_id')->nullable();
                 $table->dateTime('broadcast_on')->nullable();
                 $table->timestamps();
             }

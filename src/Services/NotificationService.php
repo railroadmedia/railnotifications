@@ -144,14 +144,4 @@ class NotificationService
 
         $this->notificationDataMapper->persist($allUnreadNotifications);
     }
-
-    public function broadcast(int $id, $channel)
-    {
-        // if you wanted to email or send it via text
-    }
-
-    public function broadcastAggregatedForRecipient(int $recipientId, $channel)
-    {
-        // if you want to send a summary of someones unread notifications
-    }
 }

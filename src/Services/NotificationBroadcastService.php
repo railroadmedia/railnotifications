@@ -8,7 +8,6 @@ use Railroad\Railnotifications\Channels\ChannelFactory;
 use Railroad\Railnotifications\DataMappers\NotificationBroadcastDataMapper;
 use Railroad\Railnotifications\Entities\NotificationBroadcast;
 use Railroad\Railnotifications\Exceptions\BroadcastNotificationFailure;
-use Railroad\Railnotifications\Exceptions\BroadcastNotificationsAggregatedFailure;
 use Railroad\Railnotifications\Exceptions\RecipientBroadcastNotificationsAggregatedFailure;
 use Railroad\Railnotifications\Exceptions\RecipientNotificationBroadcastFailure;
 use Railroad\Railnotifications\Jobs\BroadcastNotification;

@@ -13,7 +13,6 @@ class ChannelFactory
     public function __construct(Application $application)
     {
         $this->application = $application;
-
         $this->map = config('railnotifications.channels');
     }
 

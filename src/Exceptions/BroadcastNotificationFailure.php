@@ -4,7 +4,7 @@ namespace Railroad\Railnotifications\Exceptions;
 
 use Exception;
 
-class NotificationBroadcastFailure extends Exception
+class BroadcastNotificationFailure extends Exception
 {
     protected $id;
 

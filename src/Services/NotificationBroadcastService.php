@@ -3,12 +3,16 @@
 namespace Railroad\Railnotifications\Services;
 
 use Carbon\Carbon;
+use Railroad\Railmap\Helpers\RailmapHelpers;
 use Railroad\Railnotifications\Channels\ChannelFactory;
 use Railroad\Railnotifications\DataMappers\NotificationBroadcastDataMapper;
 use Railroad\Railnotifications\Entities\NotificationBroadcast;
-use Railroad\Railnotifications\Exceptions\NotificationBroadcastFailure;
+use Railroad\Railnotifications\Exceptions\BroadcastNotificationFailure;
+use Railroad\Railnotifications\Exceptions\BroadcastNotificationsAggregatedFailure;
+use Railroad\Railnotifications\Exceptions\RecipientBroadcastNotificationsAggregatedFailure;
 use Railroad\Railnotifications\Exceptions\RecipientNotificationBroadcastFailure;
-use Railroad\Railnotifications\Jobs\SendNotification;
+use Railroad\Railnotifications\Jobs\BroadcastNotification;
+use Railroad\Railnotifications\Jobs\BroadcastNotificationsAggregated;
 
 class NotificationBroadcastService
 {
@@ -29,14 +33,14 @@ class NotificationBroadcastService
     /**
      * @param int $notificationId
      * @param string $channelName
-     * @throws NotificationBroadcastFailure
+     * @throws BroadcastNotificationFailure
      */
     public function broadcast(int $notificationId, string $channelName)
     {
         $notification = $this->notificationService->get($notificationId);
 
         if (empty($notification)) {
-            throw new NotificationBroadcastFailure($notificationId, 'Notification not found.');
+            throw new BroadcastNotificationFailure($notificationId, 'Notification not found.');
         }
 
         $notificationBroadcast = new NotificationBroadcast();
@@ -47,7 +51,7 @@ class NotificationBroadcastService
 
         $notificationBroadcast->persist();
 
-        $job = new SendNotification($notificationBroadcast->getId());
+        $job = new BroadcastNotification($notificationBroadcast->getId());
 
         dispatch($job);
     }
@@ -56,7 +60,7 @@ class NotificationBroadcastService
      * @param int $recipientId
      * @param string $channelName
      * @param null|string $createdAfterDateTimeString
-     * @throws NotificationBroadcastFailure
+     * @throws RecipientNotificationBroadcastFailure
      */
     public function broadcastUnreadAggregated(
         int $recipientId,
@@ -77,7 +81,7 @@ class NotificationBroadcastService
         foreach ($notifications as $notification) {
             $notificationBroadcast = new NotificationBroadcast();
             $notificationBroadcast->setChannel($channelName);
-            $notificationBroadcast->setType(NotificationBroadcast::TYPE_SINGLE);
+            $notificationBroadcast->setType(NotificationBroadcast::TYPE_AGGREGATED);
             $notificationBroadcast->setStatus(NotificationBroadcast::STATUS_IN_TRANSIT);
             $notificationBroadcast->setNotification($notification);
 
@@ -87,12 +91,11 @@ class NotificationBroadcastService
         // note: railmap still does not have mass insert implemented, this will persist 1 at a time
         $this->notificationBroadcastDataMapper->persist($notificationBroadcasts);
 
-        // note: possible timeout issues here
-        foreach ($notificationBroadcasts as $notificationBroadcast) {
-            $job = new SendNotification($notificationBroadcast->getId());
+        $job = new BroadcastNotificationsAggregated(
+            RailmapHelpers::entityArrayColumn($notificationBroadcasts, 'getId')
+        );
 
-            dispatch($job);
-        }
+        dispatch($job);
     }
 
     public function markSucceeded(int $notificationBroadcastId)

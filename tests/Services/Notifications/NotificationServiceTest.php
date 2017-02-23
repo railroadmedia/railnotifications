@@ -217,7 +217,7 @@ class NotificationServiceTest extends NotificationsTestCase
             $notifications[2]->getCreatedOn()
         );
 
-        $this->assertEquals(array_slice($notifications, 3), $responseNotifications);
+        $this->assertEquals(array_slice($notifications, 0, 3), $responseNotifications);
     }
 
     public function test_get_many_paginated_none()

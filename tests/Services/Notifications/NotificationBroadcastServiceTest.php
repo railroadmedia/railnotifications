@@ -7,7 +7,9 @@ use Railroad\Railmap\Helpers\RailmapHelpers;
 use Railroad\Railnotifications\Channels\ExampleChannel;
 use Railroad\Railnotifications\Entities\Notification;
 use Railroad\Railnotifications\Entities\NotificationBroadcast;
-use Railroad\Railnotifications\Exceptions\NotificationBroadcastFailure;
+use Railroad\Railnotifications\Exceptions\BroadcastNotificationFailure;
+use Railroad\Railnotifications\Exceptions\BroadcastNotificationsAggregatedFailure;
+use Railroad\Railnotifications\Exceptions\RecipientNotificationBroadcastFailure;
 use Railroad\Railnotifications\Services\NotificationBroadcastService;
 use Tests\TestCase as NotificationsTestCase;
 
@@ -52,7 +54,7 @@ class NotificationBroadcastServiceTest extends NotificationsTestCase
 
     public function test_broadcast_exception_after_queue()
     {
-        $this->expectException(NotificationBroadcastFailure::class);
+        $this->expectException(BroadcastNotificationFailure::class);
 
         $notification = new Notification();
         $notification->randomize();
@@ -73,7 +75,7 @@ class NotificationBroadcastServiceTest extends NotificationsTestCase
     public function test_broadcast_notification_not_found()
     {
         $notificationId = rand();
-        $this->expectException(NotificationBroadcastFailure::class);
+        $this->expectException(BroadcastNotificationFailure::class);
 
         $this->classBeingTested->broadcast($notificationId, 'example');
 
@@ -154,7 +156,7 @@ class NotificationBroadcastServiceTest extends NotificationsTestCase
     public function test_broadcast_aggregated_none_found()
     {
         $recipientId = rand();
-        $this->expectException(NotificationBroadcastFailure::class);
+        $this->expectException(RecipientNotificationBroadcastFailure::class);
 
         $this->classBeingTested->broadcastUnreadAggregated(
             $recipientId,
@@ -166,7 +168,7 @@ class NotificationBroadcastServiceTest extends NotificationsTestCase
     {
         $recipientId = rand();
         $notifications = [];
-        $this->expectException(NotificationBroadcastFailure::class);
+        $this->expectException(BroadcastNotificationsAggregatedFailure::class);
 
         for ($i = 0; $i < 5; $i++) {
             $notification = new Notification();

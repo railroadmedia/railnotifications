@@ -8,10 +8,10 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use Railroad\Railnotifications\Channels\ChannelFactory;
 use Railroad\Railnotifications\DataMappers\NotificationBroadcastDataMapper;
-use Railroad\Railnotifications\Exceptions\NotificationBroadcastFailure;
+use Railroad\Railnotifications\Exceptions\BroadcastNotificationFailure;
 use Railroad\Railnotifications\Services\NotificationBroadcastService;
 
-class SendNotification implements ShouldQueue
+class BroadcastNotification implements ShouldQueue
 {
     use InteractsWithQueue, Queueable;
 
@@ -35,7 +35,9 @@ class SendNotification implements ShouldQueue
         try {
             $this->notificationBroadcastService = $notificationBroadcastService;
 
-            $notificationBroadcast = $notificationBroadcastDataMapper->get($this->notificationBroadcastId);
+            $notificationBroadcast = $notificationBroadcastDataMapper->get(
+                $this->notificationBroadcastId
+            );
 
             if (empty($notificationBroadcast)) {
                 throw new Exception(
@@ -44,11 +46,11 @@ class SendNotification implements ShouldQueue
             }
 
             $channel = $channelFactory->make($notificationBroadcast->getChannel());
+
             $channel->send($notificationBroadcast);
 
-            $notificationBroadcastService->markSucceeded($this->notificationBroadcastId);
         } catch (Exception $exception) {
-            throw new NotificationBroadcastFailure(
+            throw new BroadcastNotificationFailure(
                 $this->notificationBroadcastId,
                 $exception->getMessage(),
                 $exception->getCode(),
@@ -57,7 +59,7 @@ class SendNotification implements ShouldQueue
         }
     }
 
-    public function failed(NotificationBroadcastFailure $exception)
+    public function failed(BroadcastNotificationFailure $exception)
     {
         app(NotificationBroadcastService::class)->markFailed(
             $exception->getId(),

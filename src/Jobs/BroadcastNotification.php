@@ -8,7 +8,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use Railroad\Railnotifications\Channels\ChannelFactory;
 use Railroad\Railnotifications\DataMappers\NotificationBroadcastDataMapper;
-use Railroad\Railnotifications\Exceptions\BroadcastNotificationFailure;
+use Railroad\Railnotifications\Exceptions\CannotDeleteFirstPostInThread;
 use Railroad\Railnotifications\Services\NotificationBroadcastService;
 
 class BroadcastNotification implements ShouldQueue
@@ -50,7 +50,7 @@ class BroadcastNotification implements ShouldQueue
             $channel->send($notificationBroadcast);
 
         } catch (Exception $exception) {
-            throw new BroadcastNotificationFailure(
+            throw new CannotDeleteFirstPostInThread(
                 $this->notificationBroadcastId,
                 $exception->getMessage(),
                 $exception->getCode(),
@@ -59,7 +59,7 @@ class BroadcastNotification implements ShouldQueue
         }
     }
 
-    public function failed(BroadcastNotificationFailure $exception)
+    public function failed(CannotDeleteFirstPostInThread $exception)
     {
         app(NotificationBroadcastService::class)->markFailed(
             $exception->getId(),

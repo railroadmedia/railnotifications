@@ -7,7 +7,7 @@ use Railroad\Railmap\Helpers\RailmapHelpers;
 use Railroad\Railnotifications\Channels\ChannelFactory;
 use Railroad\Railnotifications\DataMappers\NotificationBroadcastDataMapper;
 use Railroad\Railnotifications\Entities\NotificationBroadcast;
-use Railroad\Railnotifications\Exceptions\BroadcastNotificationFailure;
+use Railroad\Railnotifications\Exceptions\CannotDeleteFirstPostInThread;
 use Railroad\Railnotifications\Exceptions\RecipientBroadcastNotificationsAggregatedFailure;
 use Railroad\Railnotifications\Exceptions\RecipientNotificationBroadcastFailure;
 use Railroad\Railnotifications\Jobs\BroadcastNotification;
@@ -32,14 +32,14 @@ class NotificationBroadcastService
     /**
      * @param int $notificationId
      * @param string $channelName
-     * @throws BroadcastNotificationFailure
+     * @throws CannotDeleteFirstPostInThread
      */
     public function broadcast(int $notificationId, string $channelName)
     {
         $notification = $this->notificationService->get($notificationId);
 
         if (empty($notification)) {
-            throw new BroadcastNotificationFailure($notificationId, 'Notification not found.');
+            throw new CannotDeleteFirstPostInThread($notificationId, 'Notification not found.');
         }
 
         $notificationBroadcast = new NotificationBroadcast();

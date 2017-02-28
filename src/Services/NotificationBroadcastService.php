@@ -3,6 +3,7 @@
 namespace Railroad\Railnotifications\Services;
 
 use Carbon\Carbon;
+use Railroad\Railforums\Exceptions\CannotDeleteFirstPostInThread;
 use Railroad\Railmap\Helpers\RailmapHelpers;
 use Railroad\Railnotifications\Channels\ChannelFactory;
 use Railroad\Railnotifications\DataMappers\NotificationBroadcastDataMapper;

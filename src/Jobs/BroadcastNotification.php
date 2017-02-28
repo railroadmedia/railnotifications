@@ -6,9 +6,9 @@ use Exception;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
+use Railroad\Railforums\Exceptions\CannotDeleteFirstPostInThread;
 use Railroad\Railnotifications\Channels\ChannelFactory;
 use Railroad\Railnotifications\DataMappers\NotificationBroadcastDataMapper;
-use Railroad\Railnotifications\Exceptions\CannotDeleteFirstPostInThread;
 use Railroad\Railnotifications\Services\NotificationBroadcastService;
 
 class BroadcastNotification implements ShouldQueue

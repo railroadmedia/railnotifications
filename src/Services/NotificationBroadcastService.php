@@ -8,8 +8,6 @@ use Railroad\Railmap\Helpers\RailmapHelpers;
 use Railroad\Railnotifications\Channels\ChannelFactory;
 use Railroad\Railnotifications\DataMappers\NotificationBroadcastDataMapper;
 use Railroad\Railnotifications\Entities\NotificationBroadcast;
-use Railroad\Railnotifications\Exceptions\CannotDeleteFirstPostInThread;
-use Railroad\Railnotifications\Exceptions\RecipientBroadcastNotificationsAggregatedFailure;
 use Railroad\Railnotifications\Exceptions\RecipientNotificationBroadcastFailure;
 use Railroad\Railnotifications\Jobs\BroadcastNotification;
 use Railroad\Railnotifications\Jobs\BroadcastNotificationsAggregated;

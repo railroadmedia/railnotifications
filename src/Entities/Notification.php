@@ -122,6 +122,9 @@ class Notification extends EntityBase
         $this->createdOn = $createdOn;
     }
 
+    /**
+     * @return bool
+     */
     public function isRead()
     {
         if($this->getReadOn()){
@@ -130,6 +133,14 @@ class Notification extends EntityBase
         return false;
     }
 
+    /**
+     * @param null $data
+     * @param null $recipientId
+     * @param null $type
+     * @param null $readOn
+     * @param null $createdOn
+     * @return $this
+     */
     public function randomize($data = null, $recipientId = null, $type = null, $readOn = null, $createdOn = null)
     {
         /** @var Generator $faker */

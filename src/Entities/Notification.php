@@ -37,11 +37,6 @@ class Notification extends EntityBase
      */
     protected $createdOn;
 
-    public static $state = [
-        'read' => 'read',
-        'unread' => 'unread'
-    ];
-
     public function __construct()
     {
         $this->setOwningDataMapper(app(NotificationDataMapper::class));
@@ -127,13 +122,12 @@ class Notification extends EntityBase
         $this->createdOn = $createdOn;
     }
 
-    public function getState()
+    public function isRead()
     {
         if($this->getReadOn()){
-            return self::$state['read'];
-        }else{
-            return self::$state['unread'];
+            return true;
         }
+        return false;
     }
 
     public function randomize($data = null, $recipientId = null, $type = null, $readOn = null, $createdOn = null)

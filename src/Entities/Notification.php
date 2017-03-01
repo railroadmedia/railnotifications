@@ -122,22 +122,46 @@ class Notification extends EntityBase
         $this->createdOn = $createdOn;
     }
 
-    public function randomize()
+    public function randomize($data = null, $recipientId = null, $type = null, $readOn = null, $createdOn = null)
     {
         /** @var Generator $faker */
         $faker = app(Generator::class);
 
-        $this->setType($faker->word);
-        $this->setData(
-            [
+        if(!$data){
+            $data = [
                 'data-1' => $faker->word,
                 'data-2' => $faker->word,
                 'data-3' => $faker->word
-            ]
-        );
-        $this->setRecipientId($faker->randomNumber());
-        $this->setReadOn(Carbon::instance($faker->dateTime)->toDateTimeString());
-        $this->setCreatedOn(Carbon::instance($faker->dateTime)->toDateTimeString());
+            ];
+        }
+
+        if(!is_array($data)){
+            $data = [$data];
+        }
+
+        if(!$recipientId){
+            $recipientId = $faker->randomNumber();
+        }
+
+        if(!$type){
+            $type = $faker->word;
+        }
+
+        if($readOn === null){
+            $readOn = Carbon::instance($faker->dateTime)->toDateTimeString();
+        }elseif($readOn === false){
+            $readOn = null;
+        }
+
+        if(!$createdOn){
+            $createdOn = Carbon::instance($faker->dateTime)->toDateTimeString();
+        }
+
+        $this->setType($type);
+        $this->setRecipientId($recipientId);
+        $this->setData($data);
+        $this->setReadOn($readOn);
+        $this->setCreatedOn($createdOn);
 
         return $this;
     }

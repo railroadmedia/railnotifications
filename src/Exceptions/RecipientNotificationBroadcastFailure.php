@@ -2,7 +2,7 @@
 
 namespace Railroad\Railnotifications\Exceptions;
 
-class RecipientNotificationBroadcastFailure extends BroadcastNotificationFailure
+class RecipientNotificationBroadcastFailure extends CannotDeleteFirstPostInThread
 {
 
 }

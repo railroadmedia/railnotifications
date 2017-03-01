@@ -77,6 +77,15 @@ class NotificationService
     }
 
     /**
+     * @param array $ids
+     * @return Notification[]
+     */
+    public function getMany(array $ids)
+    {
+        return $this->notificationDataMapper->getMany($ids);
+    }
+
+    /**
      * @param int $recipientId
      * @param int $amount
      * @param int $skip

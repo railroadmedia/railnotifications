@@ -28,6 +28,7 @@ class NotificationService
         $notification->setType($type);
         $notification->setData($data);
         $notification->setRecipientId($recipientId);
+        $notification->setCreatedOn(Carbon::now());
 
         $notification->persist();
 
@@ -86,11 +87,19 @@ class NotificationService
         return $this->notificationDataMapper->getManyForRecipientPaginated($recipientId, $amount, $skip);
     }
 
+    /**
+     * @param int $recipientId
+     * @return int
+     */
     public function getUnreadCount(int $recipientId)
     {
         return $this->notificationDataMapper->getUnreadCount($recipientId);
     }
 
+    /**
+     * @param int $recipientId
+     * @return int
+     */
     public function getReadCount(int $recipientId)
     {
         return $this->notificationDataMapper->getReadCount($recipientId);
@@ -105,6 +114,17 @@ class NotificationService
     {
         return $this->notificationDataMapper->getAllUnReadForRecipient(
             $recipientId,
+            $createdAfterDateTimeString
+        );
+    }
+
+    /**
+     * @param string|null $createdAfterDateTimeString
+     * @return array
+     */
+    public function getAllRecipientIdsWithUnreadNotifications(string $createdAfterDateTimeString = null)
+    {
+        return $this->notificationDataMapper->getAllRecipientIdsWithUnreadNotifications(
             $createdAfterDateTimeString
         );
     }

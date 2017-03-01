@@ -44,6 +44,10 @@ class NotificationDataMapper extends DatabaseDataMapperBase
         return parent::gettingQuery()->orderBy('created_on', 'desc');
     }
 
+    /**
+     * @param int $recipientId
+     * @return int
+     */
     public function getUnreadCount(int $recipientId)
     {
         return $this->count(
@@ -53,6 +57,10 @@ class NotificationDataMapper extends DatabaseDataMapperBase
         );
     }
 
+    /**
+     * @param int $recipientId
+     * @return int
+     */
     public function getReadCount(int $recipientId)
     {
         return $this->count(
@@ -92,6 +100,26 @@ class NotificationDataMapper extends DatabaseDataMapperBase
 
                 return $query->where('recipient_id', $recipientId)->whereNull('read_on');
             }
+        );
+    }
+
+    /**
+     * @param string|null $createdAfterDateTimeString
+     * @return array
+     */
+    public function getAllRecipientIdsWithUnreadNotifications(string $createdAfterDateTimeString = null)
+    {
+        return array_unique(
+            $this->list(
+                function (Builder $query) use ($createdAfterDateTimeString) {
+                    return $query->whereNull('read_on')->where(
+                        'created_on',
+                        '>=',
+                        $createdAfterDateTimeString
+                    );
+                },
+                'recipient_id'
+            )
         );
     }
 

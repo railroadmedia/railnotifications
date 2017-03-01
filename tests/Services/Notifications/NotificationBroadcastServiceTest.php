@@ -7,6 +7,7 @@ use Railroad\Railmap\Helpers\RailmapHelpers;
 use Railroad\Railnotifications\Channels\ExampleChannel;
 use Railroad\Railnotifications\Entities\Notification;
 use Railroad\Railnotifications\Entities\NotificationBroadcast;
+use Railroad\Railnotifications\Exceptions\BroadcastNotificationFailure;
 use Railroad\Railnotifications\Exceptions\CannotDeleteFirstPostInThread;
 use Railroad\Railnotifications\Exceptions\BroadcastNotificationsAggregatedFailure;
 use Railroad\Railnotifications\Exceptions\RecipientNotificationBroadcastFailure;
@@ -54,7 +55,7 @@ class NotificationBroadcastServiceTest extends NotificationsTestCase
 
     public function test_broadcast_exception_after_queue()
     {
-        $this->expectException(CannotDeleteFirstPostInThread::class);
+        $this->expectException(BroadcastNotificationFailure::class);
 
         $notification = new Notification();
         $notification->randomize();
@@ -75,7 +76,7 @@ class NotificationBroadcastServiceTest extends NotificationsTestCase
     public function test_broadcast_notification_not_found()
     {
         $notificationId = rand();
-        $this->expectException(CannotDeleteFirstPostInThread::class);
+        $this->expectException(BroadcastNotificationFailure::class);
 
         $this->classBeingTested->broadcast($notificationId, 'example');
 

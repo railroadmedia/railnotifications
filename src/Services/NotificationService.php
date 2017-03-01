@@ -86,6 +86,16 @@ class NotificationService
         return $this->notificationDataMapper->getManyForRecipientPaginated($recipientId, $amount, $skip);
     }
 
+    public function getUnreadCount(int $recipientId)
+    {
+        return $this->notificationDataMapper->getUnreadCount($recipientId);
+    }
+
+    public function getReadCount(int $recipientId)
+    {
+        return $this->notificationDataMapper->getReadCount($recipientId);
+    }
+
     /**
      * @param int $recipientId
      * @param string|null $createdAfterDateTimeString

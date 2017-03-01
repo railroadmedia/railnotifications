@@ -44,6 +44,24 @@ class NotificationDataMapper extends DatabaseDataMapperBase
         return parent::gettingQuery()->orderBy('created_on', 'desc');
     }
 
+    public function getUnreadCount(int $recipientId)
+    {
+        return $this->count(
+            function (Builder $query) use ($recipientId) {
+                return $query->where('recipient_id', $recipientId)->whereNull('read_on');
+            }
+        );
+    }
+
+    public function getReadCount(int $recipientId)
+    {
+        return $this->count(
+            function (Builder $query) use ($recipientId) {
+                return $query->where('recipient_id', $recipientId)->whereNotNull('read_on');
+            }
+        );
+    }
+
     /**
      * @param int $recipientId
      * @param int $amount

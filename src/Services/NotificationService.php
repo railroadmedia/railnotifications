@@ -3,6 +3,7 @@
 namespace Railroad\Railnotifications\Services;
 
 use Carbon\Carbon;
+use Illuminate\Database\Query\Builder;
 use Railroad\Railnotifications\DataMappers\NotificationDataMapper;
 use Railroad\Railnotifications\Entities\Notification;
 
@@ -33,6 +34,33 @@ class NotificationService
         $notification->persist();
 
         return $notification;
+    }
+
+    /**
+     * @param string $type
+     * @param array $data
+     * @param int $recipientId
+     * @return Notification
+     */
+    public function createOrUpdateWhereMatchingData(string $type, array $data, int $recipientId)
+    {
+        $existingNotification = $this->notificationDataMapper->getWithQuery(
+                function (Builder $query) use ($type, $data, $recipientId) {
+                    return $query->where('type', $type)
+                        ->where('data', json_encode($data))
+                        ->where('recipient_id', $recipientId);
+                }
+            )[0] ?? null;
+
+        if (!empty($existingNotification)) {
+            $existingNotification->setReadOn(null);
+            $existingNotification->setCreatedOn(Carbon::now()->toDateTimeString());
+            $existingNotification->persist();
+
+            return $existingNotification;
+        } else {
+            return $this->create($type, $data, $recipientId);
+        }
     }
 
     /**

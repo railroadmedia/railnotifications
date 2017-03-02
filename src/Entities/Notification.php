@@ -134,6 +134,14 @@ class Notification extends EntityBase
     }
 
     /**
+     * @return bool
+     */
+    public function hasBeenBroadcast()
+    {
+        return count($this->getBroadcasts()) > 0;
+    }
+
+    /**
      * @param null $data
      * @param null $recipientId
      * @param null $type

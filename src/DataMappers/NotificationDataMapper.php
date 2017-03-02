@@ -4,7 +4,9 @@ namespace Railroad\Railnotifications\DataMappers;
 
 use Illuminate\Database\Query\Builder;
 use Railroad\Railmap\DataMapper\DatabaseDataMapperBase;
+use Railroad\Railmap\Entity\Links\OneToMany;
 use Railroad\Railnotifications\Entities\Notification;
+use Railroad\Railnotifications\Entities\NotificationBroadcast;
 
 /**
  * Class NotificationDataMapper
@@ -18,6 +20,7 @@ use Railroad\Railnotifications\Entities\Notification;
 class NotificationDataMapper extends DatabaseDataMapperBase
 {
     public $table = 'notifications';
+    public $with = ['broadcasts'];
 
     /**
      * @return array
@@ -129,6 +132,18 @@ class NotificationDataMapper extends DatabaseDataMapperBase
     public function types()
     {
         return ['data' => 'json'];
+    }
+
+    public function links()
+    {
+        return [
+            'broadcasts' => new OneToMany(
+                NotificationBroadcast::class,
+                'id',
+                'notificationId',
+                'broadcasts'
+            )
+        ];
     }
 
     /**

@@ -78,6 +78,10 @@ class NotificationBroadcastService
         $groupId = bin2hex(openssl_random_pseudo_bytes(32));
 
         foreach ($notifications as $notification) {
+            if ($notification->hasBeenBroadcast()) {
+                continue;
+            }
+
             $notificationBroadcast = new NotificationBroadcast();
             $notificationBroadcast->setChannel($channelName);
             $notificationBroadcast->setType(NotificationBroadcast::TYPE_AGGREGATED);
@@ -86,6 +90,10 @@ class NotificationBroadcastService
             $notificationBroadcast->setNotification($notification);
 
             $notificationBroadcasts[] = $notificationBroadcast;
+        }
+
+        if (empty($notificationBroadcasts)) {
+            return;
         }
 
         // note: railmap still does not have mass insert implemented, this will persist 1 at a time

@@ -25,6 +25,11 @@ class Notification extends EntityBase
     /**
      * @var int
      */
+    protected $subject;
+
+    /**
+     * @var int
+     */
     protected $recipientId;
 
     /**
@@ -72,6 +77,22 @@ class Notification extends EntityBase
     public function setData(array $data)
     {
         $this->data = $data;
+    }
+
+    /**
+     * @return int
+     */
+    public function getSubject(): int
+    {
+        return $this->subject;
+    }
+
+    /**
+     * @param int $subject
+     */
+    public function setSubject(int $subject)
+    {
+        $this->subject = $subject;
     }
 
     /**
@@ -127,7 +148,7 @@ class Notification extends EntityBase
      */
     public function isRead()
     {
-        if($this->getReadOn()){
+        if ($this->getReadOn()) {
             return true;
         }
         return false;
@@ -149,12 +170,17 @@ class Notification extends EntityBase
      * @param null $createdOn
      * @return $this
      */
-    public function randomize($data = null, $recipientId = null, $type = null, $readOn = null, $createdOn = null)
-    {
+    public function randomize(
+        $data = null,
+        $recipientId = null,
+        $type = null,
+        $readOn = null,
+        $createdOn = null
+    ) {
         /** @var Generator $faker */
         $faker = app(Generator::class);
 
-        if(!$data){
+        if (!$data) {
             $data = [
                 'data-1' => $faker->word,
                 'data-2' => $faker->word,
@@ -162,25 +188,25 @@ class Notification extends EntityBase
             ];
         }
 
-        if(!is_array($data)){
+        if (!is_array($data)) {
             $data = [$data];
         }
 
-        if(!$recipientId){
+        if (!$recipientId) {
             $recipientId = $faker->randomNumber();
         }
 
-        if(!$type){
+        if (!$type) {
             $type = $faker->word;
         }
 
-        if($readOn === null){
+        if ($readOn === null) {
             $readOn = Carbon::instance($faker->dateTime)->toDateTimeString();
-        }elseif($readOn === false){
+        } elseif ($readOn === false) {
             $readOn = null;
         }
 
-        if(!$createdOn){
+        if (!$createdOn) {
             $createdOn = Carbon::instance($faker->dateTime)->toDateTimeString();
         }
 

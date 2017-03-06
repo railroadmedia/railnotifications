@@ -19,6 +19,7 @@ class CreateNotificationsTable extends Migration
                 $table->increments('id');
                 $table->string('type');
                 $table->text('data');
+                $table->integer('subject_id')->nullable();
                 $table->integer('recipient_id')->nullable();
                 $table->dateTime('read_on')->nullable();
                 $table->dateTime('created_on')->nullable();

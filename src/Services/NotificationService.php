@@ -6,32 +6,44 @@ use Carbon\Carbon;
 use Illuminate\Database\Query\Builder;
 use Railroad\Railnotifications\DataMappers\NotificationDataMapper;
 use Railroad\Railnotifications\Entities\Notification;
+use Railroad\Railnotifications\Entities\NotificationOld;
+use LaravelFCM\Message\OptionsBuilder;
+use LaravelFCM\Message\PayloadDataBuilder;
+use LaravelFCM\Message\PayloadNotificationBuilder;
+use FCM;
+use Railroad\Railnotifications\Managers\RailnotificationsEntityManager;
 
 class NotificationService
 {
     private $notificationDataMapper;
 
-    public function __construct(NotificationDataMapper $notificationDataMapper)
+    /**
+     * @var RailnotificationsEntityManager
+     */
+    public $entityManager;
+
+    public function __construct(NotificationDataMapper $notificationDataMapper, RailnotificationsEntityManager $entityManager)
     {
         $this->notificationDataMapper = $notificationDataMapper;
+        $this->entityManager = $entityManager;
     }
 
     /**
      * @param string $type
      * @param array $data
      * @param int $recipientId
-     * @return Notification
+     * @return NotificationOld
      */
     public function create(string $type, array $data, int $recipientId)
     {
         $notification = new Notification();
 
         $notification->setType($type);
-        $notification->setData($data);
-        $notification->setRecipientId($recipientId);
-        $notification->setCreatedOn(Carbon::now());
+        $notification->setData(json_encode($data));
+       // $notification->setRecipient($recipientId);
 
-        $notification->persist();
+        $this->entityManager->persist($notification);
+        $this->entityManager->flush();
 
         return $notification;
     }
@@ -40,7 +52,7 @@ class NotificationService
      * @param string $type
      * @param array $data
      * @param int $recipientId
-     * @return Notification
+     * @return NotificationOld
      */
     public function createOrUpdateWhereMatchingData(string $type, array $data, int $recipientId)
     {
@@ -68,14 +80,14 @@ class NotificationService
      * [ ['type' => my_type, 'data' => my_data, 'recipient_id' => my_recipient], ... ]
      *
      * @param array $notificationsData
-     * @return Notification[]
+     * @return NotificationOld[]
      */
     public function createMany(array $notificationsData)
     {
         $notifications = [];
 
         foreach ($notificationsData as $notificationData) {
-            $notification = new Notification();
+            $notification = new NotificationOld();
 
             $notification->fill($notificationData);
 
@@ -97,7 +109,7 @@ class NotificationService
 
     /**
      * @param int $id
-     * @return Notification
+     * @return NotificationOld
      */
     public function get(int $id)
     {
@@ -106,7 +118,7 @@ class NotificationService
 
     /**
      * @param array $ids
-     * @return Notification[]
+     * @return NotificationOld[]
      */
     public function getMany(array $ids)
     {
@@ -117,7 +129,7 @@ class NotificationService
      * @param int $recipientId
      * @param int $amount
      * @param int $skip
-     * @return Notification[]
+     * @return NotificationOld[]
      */
     public function getManyPaginated(int $recipientId, int $amount, int $skip)
     {
@@ -145,7 +157,7 @@ class NotificationService
     /**
      * @param int $recipientId
      * @param string|null $createdAfterDateTimeString
-     * @return Notification[]
+     * @return NotificationOld[]
      */
     public function getManyUnread(int $recipientId, string $createdAfterDateTimeString = null)
     {
@@ -210,5 +222,38 @@ class NotificationService
         }
 
         $this->notificationDataMapper->persist($allUnreadNotifications);
+    }
+
+
+    public function sendTestNotification()
+    {
+        $optionBuilder = new OptionsBuilder();
+
+        $optionBuilder->setTimeToLive(60*20);
+
+        $notificationBuilder = new PayloadNotificationBuilder('my title');
+        $notificationBuilder->setBody('Hello world')
+            ->setSound('default');
+
+        $dataBuilder = new PayloadDataBuilder();
+        $dataBuilder->addData(['a_data' => 'my_data']);
+
+        $option = $optionBuilder->build();
+        $notification = $notificationBuilder->build();
+        $data = $dataBuilder->build();
+
+        $token = "a_registration_from_your_database";
+
+        $downstreamResponse = FCM::sendTo($token, $option, $notification, $data);
+
+        $downstreamResponse->numberSuccess();
+        $downstreamResponse->numberFailure();
+        $downstreamResponse->numberModification();
+        $downstreamResponse->tokensToDelete();
+        $downstreamResponse->tokensToModify();
+        $downstreamResponse->tokensToRetry();
+        $downstreamResponse->tokensWithError();
+
+        return true;
     }
 }

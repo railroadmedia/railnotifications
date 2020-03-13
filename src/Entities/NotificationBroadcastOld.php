@@ -2,28 +2,56 @@
 
 namespace Railroad\Railnotifications\Entities;
 
-use Doctrine\ORM\Mapping as ORM;
-use Gedmo\Timestampable\Traits\TimestampableEntity;
+use Carbon\Carbon;
+use Faker\Generator;
+use Railroad\Railmap\Entity\EntityBase;
+use Railroad\Railmap\Entity\Properties\Timestamps;
+use Railroad\Railnotifications\DataMappers\NotificationBroadcastDataMapper;
 
 /**
- * @ORM\Entity()
- * @ORM\HasLifecycleCallbacks
- * @ORM\Table(
- *     name="notification_broadcasts",
- *     indexes={
- *         @ORM\Index(name="notification_broadcasts_channel_index", columns={"channel"}),
- *         @ORM\Index(name="notification_broadcasts_type_index", columns={"type"}),
- *         @ORM\Index(name="notification_broadcasts_status_index", columns={"status"}),
- *         @ORM\Index(name="notification_broadcasts_notification_id_index", columns={"notification_id"}),
- *         @ORM\Index(name="notification_broadcasts_aggregation_group_id_index", columns={"aggregation_group_id"}),
- *         @ORM\Index(name="notification_broadcasts_broadcast_on_index", columns={"broadcast_on"})
- *     }
- * )
+ * Class NotificationBroadcast
  *
+ * @method NotificationOld|null getNotification()
+ * @method setNotification(NotificationOld $notification)
  */
-class NotificationBroadcast
+class NotificationBroadcastOld extends EntityBase
 {
-    use TimestampableEntity;
+    use Timestamps;
+
+    /**
+     * @var string
+     */
+    protected $channel;
+
+    /**
+     * @var string
+     */
+    protected $type;
+
+    /**
+     * @var string
+     */
+    protected $status;
+
+    /**
+     * @var string|null
+     */
+    protected $report;
+
+    /**
+     * @var int
+     */
+    protected $notificationId;
+
+    /**
+     * @var string|null
+     */
+    protected $aggregationGroupId;
+
+    /**
+     * @var string|null
+     */
+    protected $broadcastOn;
 
     const TYPE_SINGLE = 'single';
     const TYPE_AGGREGATED = 'aggregated';
@@ -32,62 +60,9 @@ class NotificationBroadcast
     const STATUS_SENT = 'sent';
     const STATUS_FAILED = 'failed';
 
-    /**
-     * @ORM\Id @ORM\GeneratedValue @ORM\Column(type="integer")
-     * @var int
-     */
-    protected $id;
-
-    /**
-     * @ORM\Column(type="string")
-     * @var string
-     */
-    protected $channel;
-
-    /**
-     * @ORM\Column(type="string")
-     * @var string
-     */
-    protected $type;
-
-    /**
-     * @ORM\Column(type="string")
-     * @var string
-     */
-    protected $status;
-
-    /**
-     * @ORM\Column(type="text", nullable=true)
-     * @var text
-     */
-    protected $report;
-
-    /**
-     * @ORM\Column(type="integer")
-     *
-     * @var int
-     */
-    protected $notificationId;
-
-    /**
-     * @ORM\Column(type="string")
-     * @var string
-     */
-    protected $aggregationGroupId;
-
-    /**
-     * @ORM\Column(type="datetime", name="broadcast_on", nullable=true)
-     *
-     * @var \DateTime
-     */
-    protected $broadcastOn;
-
-    /**
-     * @return int|null
-     */
-    public function getId(): ?int
+    public function __construct()
     {
-        return $this->id;
+        $this->setOwningDataMapper(app(NotificationBroadcastDataMapper::class));
     }
 
     /**
@@ -139,17 +114,17 @@ class NotificationBroadcast
     }
 
     /**
-     * @return string|null
+     * @return null|string
      */
-    public function getReport(): ?string
+    public function getReport()
     {
         return $this->report;
     }
 
     /**
-     * @param string $report
+     * @param null|string $report
      */
-    public function setReport(?string $report)
+    public function setReport($report)
     {
         $this->report = $report;
     }
@@ -181,13 +156,13 @@ class NotificationBroadcast
     /**
      * @param null|string $aggregationGroupId
      */
-    public function setAggregationGroupId(?string $aggregationGroupId)
+    public function setAggregationGroupId($aggregationGroupId)
     {
         $this->aggregationGroupId = $aggregationGroupId;
     }
 
     /**
-     * @return \DateTimeInterface|null
+     * @return null|string
      */
     public function getBroadcastOn()
     {
@@ -195,10 +170,32 @@ class NotificationBroadcast
     }
 
     /**
-     * @param \DateTimeInterface $broadcastOn
+     * @param null|string $broadcastOn
      */
-    public function setBroadcastOn(?\DateTimeInterface $broadcastOn)
+    public function setBroadcastOn($broadcastOn)
     {
         $this->broadcastOn = $broadcastOn;
+    }
+
+    public function randomize()
+    {
+        /** @var Generator $faker */
+        $faker = app(Generator::class);
+
+        $this->setChannel(implode('\\', $faker->words()));
+        $this->setType($faker->randomElement([self::TYPE_SINGLE, self::TYPE_AGGREGATED]));
+        $this->setStatus(
+            $faker->randomElement(
+                [self::STATUS_IN_TRANSIT, self::STATUS_SENT, self::STATUS_FAILED]
+            )
+        );
+        $this->setReport($faker->boolean() ? $faker->paragraph() : null);
+        $this->setNotificationId($faker->randomNumber());
+        $this->setAggregationGroupId(bin2hex(openssl_random_pseudo_bytes(32)));
+        $this->setBroadcastOn(
+            $faker->boolean() ? Carbon::instance($faker->dateTime)->toDateTimeString() : null
+        );
+
+        return $this;
     }
 }

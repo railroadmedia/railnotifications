@@ -5,8 +5,8 @@ namespace Tests;
 use Carbon\Carbon;
 use Railroad\Railmap\Helpers\RailmapHelpers;
 use Railroad\Railnotifications\Channels\ExampleChannel;
-use Railroad\Railnotifications\Entities\Notification;
-use Railroad\Railnotifications\Entities\NotificationBroadcast;
+use Railroad\Railnotifications\Entities\NotificationOld;
+use Railroad\Railnotifications\Entities\NotificationBroadcastOld;
 use Railroad\Railnotifications\Exceptions\BroadcastNotificationFailure;
 use Railroad\Railnotifications\Exceptions\CannotDeleteFirstPostInThread;
 use Railroad\Railnotifications\Exceptions\BroadcastNotificationsAggregatedFailure;
@@ -37,7 +37,7 @@ class NotificationBroadcastServiceTest extends NotificationsTestCase
 
     public function test_broadcast()
     {
-        $notification = new Notification();
+        $notification = new NotificationOld();
         $notification->randomize();
         $notification->persist();
 
@@ -47,7 +47,7 @@ class NotificationBroadcastServiceTest extends NotificationsTestCase
             'notification_broadcasts',
             [
                 'notification_id' => $notification->getId(),
-                'status' => NotificationBroadcast::STATUS_SENT,
+                'status' => NotificationBroadcastOld::STATUS_SENT,
                 'broadcast_on' => Carbon::now()
             ]
         );
@@ -57,7 +57,7 @@ class NotificationBroadcastServiceTest extends NotificationsTestCase
     {
         $this->expectException(BroadcastNotificationFailure::class);
 
-        $notification = new Notification();
+        $notification = new NotificationOld();
         $notification->randomize();
         $notification->persist();
 
@@ -67,7 +67,7 @@ class NotificationBroadcastServiceTest extends NotificationsTestCase
             'notification_broadcasts',
             [
                 'notification_id' => $notification->getId(),
-                'status' => NotificationBroadcast::STATUS_FAILED,
+                'status' => NotificationBroadcastOld::STATUS_FAILED,
                 'broadcast_on' => Carbon::now()
             ]
         );
@@ -84,7 +84,7 @@ class NotificationBroadcastServiceTest extends NotificationsTestCase
             'notification_broadcasts',
             [
                 'notification_id' => $notificationId,
-                'status' => NotificationBroadcast::STATUS_FAILED,
+                'status' => NotificationBroadcastOld::STATUS_FAILED,
                 'broadcast_on' => Carbon::now()
             ]
         );
@@ -96,7 +96,7 @@ class NotificationBroadcastServiceTest extends NotificationsTestCase
         $notifications = [];
 
         for ($i = 0; $i < 3; $i++) {
-            $notification = new Notification();
+            $notification = new NotificationOld();
             $notification->randomize();
             $notification->setRecipientId($recipientId);
             $notification->setReadOn(null);
@@ -112,7 +112,7 @@ class NotificationBroadcastServiceTest extends NotificationsTestCase
                 'notification_broadcasts',
                 [
                     'notification_id' => $notification->getId(),
-                    'status' => NotificationBroadcast::STATUS_SENT,
+                    'status' => NotificationBroadcastOld::STATUS_SENT,
                     'broadcast_on' => Carbon::now()
                 ]
             );
@@ -125,7 +125,7 @@ class NotificationBroadcastServiceTest extends NotificationsTestCase
         $notifications = [];
 
         for ($i = 0; $i < 5; $i++) {
-            $notification = new Notification();
+            $notification = new NotificationOld();
             $notification->randomize();
             $notification->setRecipientId($recipientId);
             $notification->setReadOn(null);
@@ -147,7 +147,7 @@ class NotificationBroadcastServiceTest extends NotificationsTestCase
                 'notification_broadcasts',
                 [
                     'notification_id' => $notification->getId(),
-                    'status' => NotificationBroadcast::STATUS_SENT,
+                    'status' => NotificationBroadcastOld::STATUS_SENT,
                     'broadcast_on' => Carbon::now()
                 ]
             );
@@ -172,7 +172,7 @@ class NotificationBroadcastServiceTest extends NotificationsTestCase
         $this->expectException(BroadcastNotificationsAggregatedFailure::class);
 
         for ($i = 0; $i < 5; $i++) {
-            $notification = new Notification();
+            $notification = new NotificationOld();
             $notification->randomize();
             $notification->setRecipientId($recipientId);
             $notification->setReadOn(null);
@@ -191,7 +191,7 @@ class NotificationBroadcastServiceTest extends NotificationsTestCase
                 'notification_broadcasts',
                 [
                     'notification_id' => $notification->getId(),
-                    'status' => NotificationBroadcast::STATUS_FAILED,
+                    'status' => NotificationBroadcastOld::STATUS_FAILED,
                     'broadcast_on' => Carbon::now()
                 ]
             );
@@ -200,9 +200,9 @@ class NotificationBroadcastServiceTest extends NotificationsTestCase
 
     public function test_mark_succeeded()
     {
-        $notificationBroadcast = new NotificationBroadcast();
+        $notificationBroadcast = new NotificationBroadcastOld();
         $notificationBroadcast->randomize();
-        $notificationBroadcast->setStatus(NotificationBroadcast::STATUS_IN_TRANSIT);
+        $notificationBroadcast->setStatus(NotificationBroadcastOld::STATUS_IN_TRANSIT);
         $notificationBroadcast->persist();
 
         $this->classBeingTested->markSucceeded($notificationBroadcast->getId());
@@ -211,7 +211,7 @@ class NotificationBroadcastServiceTest extends NotificationsTestCase
             'notification_broadcasts',
             [
                 'notification_id' => $notificationBroadcast->getNotificationId(),
-                'status' => NotificationBroadcast::STATUS_SENT,
+                'status' => NotificationBroadcastOld::STATUS_SENT,
                 'broadcast_on' => Carbon::now()
             ]
         );
@@ -219,9 +219,9 @@ class NotificationBroadcastServiceTest extends NotificationsTestCase
 
     public function test_mark_failed()
     {
-        $notificationBroadcast = new NotificationBroadcast();
+        $notificationBroadcast = new NotificationBroadcastOld();
         $notificationBroadcast->randomize();
-        $notificationBroadcast->setStatus(NotificationBroadcast::STATUS_IN_TRANSIT);
+        $notificationBroadcast->setStatus(NotificationBroadcastOld::STATUS_IN_TRANSIT);
         $notificationBroadcast->persist();
 
         $message = $this->faker->sentence();
@@ -232,7 +232,7 @@ class NotificationBroadcastServiceTest extends NotificationsTestCase
             'notification_broadcasts',
             [
                 'notification_id' => $notificationBroadcast->getNotificationId(),
-                'status' => NotificationBroadcast::STATUS_FAILED,
+                'status' => NotificationBroadcastOld::STATUS_FAILED,
                 'report' => $message,
                 'broadcast_on' => Carbon::now()
             ]

@@ -6,11 +6,14 @@ use Carbon\Carbon;
 use Railroad\Railmap\Helpers\RailmapHelpers;
 use Railroad\Railnotifications\Channels\ChannelFactory;
 use Railroad\Railnotifications\DataMappers\NotificationBroadcastDataMapper;
+use Railroad\Railnotifications\Entities\Notification;
 use Railroad\Railnotifications\Entities\NotificationBroadcast;
+use Railroad\Railnotifications\Entities\NotificationBroadcastOld;
 use Railroad\Railnotifications\Exceptions\BroadcastNotificationFailure;
 use Railroad\Railnotifications\Exceptions\RecipientNotificationBroadcastFailure;
 use Railroad\Railnotifications\Jobs\BroadcastNotification;
 use Railroad\Railnotifications\Jobs\BroadcastNotificationsAggregated;
+use Railroad\Railnotifications\Managers\RailnotificationsEntityManager;
 
 class NotificationBroadcastService
 {
@@ -18,14 +21,25 @@ class NotificationBroadcastService
     private $channelFactory;
     private $notificationBroadcastDataMapper;
 
+    /**
+     * @var RailnotificationsEntityManager
+     */
+    public $entityManager;
+
+    private $notificationRepository;
+
     public function __construct(
         NotificationService $notificationService,
         ChannelFactory $channelFactory,
-        NotificationBroadcastDataMapper $notificationBroadcastDataMapper
+        NotificationBroadcastDataMapper $notificationBroadcastDataMapper,
+        RailnotificationsEntityManager $entityManager
     ) {
         $this->notificationService = $notificationService;
         $this->channelFactory = $channelFactory;
         $this->notificationBroadcastDataMapper = $notificationBroadcastDataMapper;
+
+        $this->entityManager = $entityManager;
+        $this->notificationRepository = $this->entityManager->getRepository(Notification::class);
     }
 
     /**
@@ -35,7 +49,7 @@ class NotificationBroadcastService
      */
     public function broadcast(int $notificationId, string $channelName)
     {
-        $notification = $this->notificationService->get($notificationId);
+        $notification = $this->notificationRepository->find($notificationId);
 
         if (empty($notification)) {
             throw new BroadcastNotificationFailure($notificationId, 'Notification not found.');
@@ -43,11 +57,12 @@ class NotificationBroadcastService
 
         $notificationBroadcast = new NotificationBroadcast();
         $notificationBroadcast->setChannel($channelName);
-        $notificationBroadcast->setType(NotificationBroadcast::TYPE_SINGLE);
-        $notificationBroadcast->setStatus(NotificationBroadcast::STATUS_IN_TRANSIT);
-        $notificationBroadcast->setNotification($notification);
+        $notificationBroadcast->setType(NotificationBroadcastOld::TYPE_SINGLE);
+        $notificationBroadcast->setStatus(NotificationBroadcastOld::STATUS_IN_TRANSIT);
+        $notificationBroadcast->setNotificationId($notificationId);
 
-        $notificationBroadcast->persist();
+        $this->entityManager->persist($notificationBroadcast);
+        $this->entityManager->flush();
 
         $job = new BroadcastNotification($notificationBroadcast->getId());
 
@@ -69,8 +84,7 @@ class NotificationBroadcastService
 
         if (empty($notifications)) {
             throw new RecipientNotificationBroadcastFailure(
-                $recipientId,
-                'Recipient has no notifications in period after: ' . $createdAfterDateTimeString
+                $recipientId, 'Recipient has no notifications in period after: ' . $createdAfterDateTimeString
             );
         }
 
@@ -82,11 +96,11 @@ class NotificationBroadcastService
                 continue;
             }
 
-            $notificationBroadcast = new NotificationBroadcast();
+            $notificationBroadcast = new NotificationBroadcastOld();
             $notificationBroadcast->setChannel($channelName);
-            $notificationBroadcast->setType(NotificationBroadcast::TYPE_AGGREGATED);
+            $notificationBroadcast->setType(NotificationBroadcastOld::TYPE_AGGREGATED);
             $notificationBroadcast->setAggregationGroupId($groupId);
-            $notificationBroadcast->setStatus(NotificationBroadcast::STATUS_IN_TRANSIT);
+            $notificationBroadcast->setStatus(NotificationBroadcastOld::STATUS_IN_TRANSIT);
             $notificationBroadcast->setNotification($notification);
 
             $notificationBroadcasts[] = $notificationBroadcast;
@@ -110,8 +124,11 @@ class NotificationBroadcastService
     {
         $notificationBroadcast = $this->notificationBroadcastDataMapper->get($notificationBroadcastId);
 
-        $notificationBroadcast->setStatus(NotificationBroadcast::STATUS_SENT);
-        $notificationBroadcast->setBroadcastOn(Carbon::now()->toDateTimeString());
+        $notificationBroadcast->setStatus(NotificationBroadcastOld::STATUS_SENT);
+        $notificationBroadcast->setBroadcastOn(
+            Carbon::now()
+                ->toDateTimeString()
+        );
         $notificationBroadcast->persist();
     }
 
@@ -119,8 +136,11 @@ class NotificationBroadcastService
     {
         $notificationBroadcast = $this->notificationBroadcastDataMapper->get($notificationBroadcastId);
 
-        $notificationBroadcast->setStatus(NotificationBroadcast::STATUS_FAILED);
-        $notificationBroadcast->setBroadcastOn(Carbon::now()->toDateTimeString());
+        $notificationBroadcast->setStatus(NotificationBroadcastOld::STATUS_FAILED);
+        $notificationBroadcast->setBroadcastOn(
+            Carbon::now()
+                ->toDateTimeString()
+        );
         $notificationBroadcast->setReport($message);
         $notificationBroadcast->persist();
     }

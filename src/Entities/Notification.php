@@ -2,49 +2,67 @@
 
 namespace Railroad\Railnotifications\Entities;
 
-use Carbon\Carbon;
-use Faker\Generator;
-use Railroad\Railmap\Entity\EntityBase;
-use Railroad\Railmap\Entity\Properties\Timestamps;
-use Railroad\Railnotifications\DataMappers\NotificationDataMapper;
+use Doctrine\ORM\Mapping as ORM;
+use Gedmo\Timestampable\Traits\TimestampableEntity;
 
-class Notification extends EntityBase
+/**
+ * @ORM\Entity()
+ * @ORM\HasLifecycleCallbacks
+ * @ORM\Table(
+ *     name="notifications",
+ *     indexes={
+ *         @ORM\Index(name="notifications_type_index", columns={"type"}),
+ *         @ORM\Index(name="notifications_recipient_id_index", columns={"recipient_id"}),
+ *         @ORM\Index(name="notifications_subject_id_index", columns={"subject_id"})
+ *     }
+ * )
+ *
+ */
+class Notification
 {
-    use Timestamps;
+    use TimestampableEntity;
 
     /**
+     * @ORM\Id @ORM\GeneratedValue @ORM\Column(type="integer")
+     * @var int
+     */
+    protected $id;
+
+    /**
+     * @ORM\Column(type="string")
      * @var string
      */
     protected $type;
 
     /**
-     * @var array
+     * @ORM\Column(type="json_array")
+     * @var text
      */
     protected $data;
 
     /**
-     * @var int
+     * @ORM\Column(type="user", name="subject_id", nullable=true)
      */
     protected $subject;
 
     /**
-     * @var int
+     * @ORM\Column(type="user", name="recipient_id", nullable=true)
      */
-    protected $recipientId;
+    protected $recipient;
 
     /**
-     * @var string|null
+     * @ORM\Column(type="datetime", name="read_on", nullable=true)
+     *
+     * @var \DateTime
      */
     protected $readOn;
 
     /**
-     * @var string|null
+     * @return int|null
      */
-    protected $createdOn;
-
-    public function __construct()
+    public function getId(): ?int
     {
-        $this->setOwningDataMapper(app(NotificationDataMapper::class));
+        return $this->id;
     }
 
     /**
@@ -64,158 +82,67 @@ class Notification extends EntityBase
     }
 
     /**
-     * @return array
+     * @return string
      */
-    public function getData(): array
+    public function getData(): string
     {
         return $this->data;
     }
 
     /**
-     * @param array $data
+     * @param string $data
      */
-    public function setData(array $data)
+    public function setData(string $data)
     {
         $this->data = $data;
     }
 
     /**
-     * @return int
+     * @return User|null
      */
-    public function getSubject(): int
+    public function getSubject(): ?User
     {
         return $this->subject;
     }
 
     /**
-     * @param int $subject
+     * @param User $user
      */
-    public function setSubject(int $subject)
+    public function setSubject(?User $user)
     {
-        $this->subject = $subject;
+        $this->subject = $user;
     }
 
     /**
-     * @return int
+     * @return User|null
      */
-    public function getRecipientId(): int
+    public function getRecipient(): ?User
     {
-        return $this->recipientId;
+        return $this->recipient;
     }
 
     /**
-     * @param int $recipientId
+     * @param User $user
      */
-    public function setRecipientId(int $recipientId)
+    public function setRecipient(?User $user)
     {
-        $this->recipientId = $recipientId;
+        $this->recipient = $user;
     }
 
     /**
-     * @return null|string
+     * @return \DateTimeInterface|null
      */
-    public function getReadOn()
+    public function getReadOn(): ?\DateTimeInterface
     {
         return $this->readOn;
     }
 
     /**
-     * @param null|string $readOn
+     * @param \DateTimeInterface $readOn
      */
-    public function setReadOn($readOn)
+    public function setReadOn(?\DateTimeInterface $readOn)
     {
         $this->readOn = $readOn;
     }
 
-    /**
-     * @return null|string
-     */
-    public function getCreatedOn()
-    {
-        return $this->createdOn;
-    }
-
-    /**
-     * @param null|string $createdOn
-     */
-    public function setCreatedOn($createdOn)
-    {
-        $this->createdOn = $createdOn;
-    }
-
-    /**
-     * @return bool
-     */
-    public function isRead()
-    {
-        if ($this->getReadOn()) {
-            return true;
-        }
-        return false;
-    }
-
-    /**
-     * @return bool
-     */
-    public function hasBeenBroadcast()
-    {
-        return count($this->getBroadcasts()) > 0;
-    }
-
-    /**
-     * @param null $data
-     * @param null $recipientId
-     * @param null $type
-     * @param null $readOn
-     * @param null $createdOn
-     * @return $this
-     */
-    public function randomize(
-        $data = null,
-        $recipientId = null,
-        $type = null,
-        $readOn = null,
-        $createdOn = null
-    ) {
-        /** @var Generator $faker */
-        $faker = app(Generator::class);
-
-        if (!$data) {
-            $data = [
-                'data-1' => $faker->word,
-                'data-2' => $faker->word,
-                'data-3' => $faker->word
-            ];
-        }
-
-        if (!is_array($data)) {
-            $data = [$data];
-        }
-
-        if (!$recipientId) {
-            $recipientId = $faker->randomNumber();
-        }
-
-        if (!$type) {
-            $type = $faker->word;
-        }
-
-        if ($readOn === null) {
-            $readOn = Carbon::instance($faker->dateTime)->toDateTimeString();
-        } elseif ($readOn === false) {
-            $readOn = null;
-        }
-
-        if (!$createdOn) {
-            $createdOn = Carbon::instance($faker->dateTime)->toDateTimeString();
-        }
-
-        $this->setType($type);
-        $this->setRecipientId($recipientId);
-        $this->setData($data);
-        $this->setReadOn($readOn);
-        $this->setCreatedOn($createdOn);
-
-        return $this;
-    }
 }

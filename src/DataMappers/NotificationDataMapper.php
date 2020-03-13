@@ -5,17 +5,17 @@ namespace Railroad\Railnotifications\DataMappers;
 use Illuminate\Database\Query\Builder;
 use Railroad\Railmap\DataMapper\DatabaseDataMapperBase;
 use Railroad\Railmap\Entity\Links\OneToMany;
-use Railroad\Railnotifications\Entities\Notification;
-use Railroad\Railnotifications\Entities\NotificationBroadcast;
+use Railroad\Railnotifications\Entities\NotificationOld;
+use Railroad\Railnotifications\Entities\NotificationBroadcastOld;
 
 /**
  * Class NotificationDataMapper
  *
  * @package Railroad\Railnotifications\DataMappers
  *
- * @method Notification[] getWithQuery(callable $queryCallback, $columns = ['*'])
- * @method Notification get($id)
- * @method Notification[] getMany($ids)
+ * @method NotificationOld[] getWithQuery(callable $queryCallback, $columns = ['*'])
+ * @method NotificationOld get($id)
+ * @method NotificationOld[] getMany($ids)
  */
 class NotificationDataMapper extends DatabaseDataMapperBase
 {
@@ -77,7 +77,7 @@ class NotificationDataMapper extends DatabaseDataMapperBase
      * @param int $recipientId
      * @param int $amount
      * @param int $skip
-     * @return Notification[]
+     * @return NotificationOld[]
      */
     public function getManyForRecipientPaginated(int $recipientId, int $amount, int $skip)
     {
@@ -91,7 +91,7 @@ class NotificationDataMapper extends DatabaseDataMapperBase
     /**
      * @param int $recipientId
      * @param string $createdAfterDateTimeString
-     * @return Notification[]
+     * @return NotificationOld[]
      */
     public function getAllUnReadForRecipient(int $recipientId, string $createdAfterDateTimeString = null)
     {
@@ -138,7 +138,7 @@ class NotificationDataMapper extends DatabaseDataMapperBase
     {
         return [
             'broadcasts' => new OneToMany(
-                NotificationBroadcast::class,
+                NotificationBroadcastOld::class,
                 'id',
                 'notificationId',
                 'broadcasts'
@@ -147,10 +147,10 @@ class NotificationDataMapper extends DatabaseDataMapperBase
     }
 
     /**
-     * @return Notification
+     * @return NotificationOld
      */
     public function entity()
     {
-        return new Notification();
+        return new NotificationOld();
     }
 }

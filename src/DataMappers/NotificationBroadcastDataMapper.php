@@ -5,17 +5,17 @@ namespace Railroad\Railnotifications\DataMappers;
 use Illuminate\Database\Query\Builder;
 use Railroad\Railmap\DataMapper\DatabaseDataMapperBase;
 use Railroad\Railmap\Entity\Links\OneToOne;
-use Railroad\Railnotifications\Entities\Notification;
-use Railroad\Railnotifications\Entities\NotificationBroadcast;
+use Railroad\Railnotifications\Entities\NotificationOld;
+use Railroad\Railnotifications\Entities\NotificationBroadcastOld;
 
 /**
  * Class NotificationBroadcastDataMapper
  *
  * @package Railroad\Railnotifications\DataMappers
  *
- * @method NotificationBroadcast[] getWithQuery(callable $queryCallback, $columns = ['*'])
- * @method NotificationBroadcast get($id)
- * @method NotificationBroadcast[] getMany($ids)
+ * @method NotificationBroadcastOld[] getWithQuery(callable $queryCallback, $columns = ['*'])
+ * @method NotificationBroadcastOld get($id)
+ * @method NotificationBroadcastOld[] getMany($ids)
  */
 class NotificationBroadcastDataMapper extends DatabaseDataMapperBase
 {
@@ -50,14 +50,14 @@ class NotificationBroadcastDataMapper extends DatabaseDataMapperBase
 
     public function links()
     {
-        return ['notification' => new OneToOne(Notification::class, 'notificationId', 'id', 'notification')];
+        return ['notification' => new OneToOne(NotificationOld::class, 'notificationId', 'id', 'notification')];
     }
 
     /**
-     * @return NotificationBroadcast
+     * @return NotificationBroadcastOld
      */
     public function entity()
     {
-        return new NotificationBroadcast();
+        return new NotificationBroadcastOld();
     }
 }

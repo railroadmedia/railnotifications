@@ -4,7 +4,7 @@ namespace Tests;
 
 use Carbon\Carbon;
 use Railroad\Railmap\Helpers\RailmapHelpers;
-use Railroad\Railnotifications\Entities\Notification;
+use Railroad\Railnotifications\Entities\NotificationOld;
 use Railroad\Railnotifications\Services\NotificationService;
 use Tests\TestCase as NotificationsTestCase;
 
@@ -107,7 +107,7 @@ class NotificationServiceTest extends NotificationsTestCase
 
     public function test_get()
     {
-        $notification = new Notification();
+        $notification = new NotificationOld();
         $notification->randomize();
         $notification->persist();
 
@@ -129,7 +129,7 @@ class NotificationServiceTest extends NotificationsTestCase
         $recipientId = rand();
 
         for ($i = 0; $i < 3; $i++) {
-            $notification = new Notification();
+            $notification = new NotificationOld();
             $notification->randomize();
             $notification->setRecipientId($recipientId);
             $notification->persist();
@@ -150,7 +150,7 @@ class NotificationServiceTest extends NotificationsTestCase
         $recipientId = rand();
 
         for ($i = 0; $i < 7; $i++) {
-            $notification = new Notification();
+            $notification = new NotificationOld();
             $notification->randomize();
             $notification->setRecipientId($recipientId);
             $notification->persist();
@@ -179,7 +179,7 @@ class NotificationServiceTest extends NotificationsTestCase
         $recipientId = rand();
 
         for ($i = 0; $i < 3; $i++) {
-            $notification = new Notification();
+            $notification = new NotificationOld();
             $notification->randomize();
             $notification->setRecipientId($recipientId);
             $notification->setReadOn(null);
@@ -201,7 +201,7 @@ class NotificationServiceTest extends NotificationsTestCase
         $recipientId = rand();
 
         for ($i = 0; $i < 5; $i++) {
-            $notification = new Notification();
+            $notification = new NotificationOld();
             $notification->randomize();
             $notification->setRecipientId($recipientId);
             $notification->setReadOn(null);
@@ -229,7 +229,7 @@ class NotificationServiceTest extends NotificationsTestCase
 
     public function test_mark_read()
     {
-        $notification = new Notification();
+        $notification = new NotificationOld();
         $notification->randomize();
         $notification->setReadOn(null);
         $notification->persist();
@@ -255,7 +255,7 @@ class NotificationServiceTest extends NotificationsTestCase
 
     public function test_mark_read_specific_time()
     {
-        $notification = new Notification();
+        $notification = new NotificationOld();
         $notification->randomize();
         $notification->setReadOn(null);
         $notification->persist();
@@ -286,7 +286,7 @@ class NotificationServiceTest extends NotificationsTestCase
 
     public function test_mark_un_read()
     {
-        $notification = new Notification();
+        $notification = new NotificationOld();
         $notification->randomize();
         $notification->persist();
 
@@ -320,7 +320,7 @@ class NotificationServiceTest extends NotificationsTestCase
         $notifications = [];
 
         for ($i = 0; $i < 3; $i++) {
-            $notification = new Notification();
+            $notification = new NotificationOld();
             $notification->randomize();
             $notification->setRecipientId($recipientId);
             $notification->setReadOn(null);
@@ -348,7 +348,7 @@ class NotificationServiceTest extends NotificationsTestCase
         $notifications = [];
 
         for ($i = 0; $i < 3; $i++) {
-            $notification = new Notification();
+            $notification = new NotificationOld();
             $notification->randomize();
             $notification->setRecipientId($recipientId);
             $notification->setReadOn(null);

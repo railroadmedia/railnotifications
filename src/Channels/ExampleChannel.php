@@ -2,7 +2,7 @@
 
 namespace Railroad\Railnotifications\Channels;
 
-use Railroad\Railnotifications\Entities\NotificationBroadcast;
+use Railroad\Railnotifications\Entities\NotificationBroadcastOld;
 use Railroad\Railnotifications\Services\NotificationBroadcastService;
 
 class ExampleChannel implements ChannelInterface
@@ -14,7 +14,7 @@ class ExampleChannel implements ChannelInterface
         $this->notificationBroadcastService = $notificationBroadcastService;
     }
 
-    public function send(NotificationBroadcast $notificationBroadcast)
+    public function send(NotificationBroadcastOld $notificationBroadcast)
     {
         // Ex. send email using notification broadcast
 

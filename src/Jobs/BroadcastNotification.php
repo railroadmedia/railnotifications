@@ -36,9 +36,10 @@ class BroadcastNotification implements ShouldQueue
         try {
             $this->notificationBroadcastService = $notificationBroadcastService;
 
-            $notificationBroadcast = $notificationBroadcastDataMapper->get(
-                $this->notificationBroadcastId
-            );
+//            $notificationBroadcast = $notificationBroadcastDataMapper->get(
+//                $this->notificationBroadcastId
+//            );
+            $notificationBroadcast = $this->notificationBroadcastService->get( $this->notificationBroadcastId);
 
             if (empty($notificationBroadcast)) {
                 throw new Exception(

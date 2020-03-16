@@ -15,6 +15,8 @@ use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvi
 use Railroad\Doctrine\TimestampableListener;
 use Railroad\Railnotifications\Managers\RailnotificationsEntityManager;
 use Redis;
+use Railroad\Railnotifications\Types\UserType;
+use Doctrine\DBAL\Types\Type;
 
 class NotificationsServiceProvider extends ServiceProvider
 {
@@ -44,6 +46,8 @@ class NotificationsServiceProvider extends ServiceProvider
      */
     public function register()
     {
+        !Type::hasType(UserType::USER_TYPE) ? Type::addType(UserType::USER_TYPE, UserType::class) : null;
+
         // set proxy dir to temp folder on server
         if (app()->runningUnitTests()) {
             $proxyDir = sys_get_temp_dir();

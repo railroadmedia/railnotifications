@@ -12,6 +12,7 @@ use LaravelFCM\Message\PayloadDataBuilder;
 use LaravelFCM\Message\PayloadNotificationBuilder;
 use FCM;
 use Railroad\Railnotifications\Managers\RailnotificationsEntityManager;
+use Railroad\Railnotifications\Contracts\UserProviderInterface;
 
 class NotificationService
 {
@@ -22,25 +23,47 @@ class NotificationService
      */
     public $entityManager;
 
-    public function __construct(NotificationDataMapper $notificationDataMapper, RailnotificationsEntityManager $entityManager)
-    {
+    /**
+     * @var \Doctrine\Common\Persistence\ObjectRepository|\Doctrine\ORM\EntityRepository
+     */
+    private $notificationRepository;
+
+    /**
+     * @var UserProviderInterface
+     */
+    private $userProvider;
+
+    public function __construct(
+        NotificationDataMapper $notificationDataMapper,
+        RailnotificationsEntityManager $entityManager,
+        UserProviderInterface $userProvider
+    ) {
         $this->notificationDataMapper = $notificationDataMapper;
         $this->entityManager = $entityManager;
+        $this->userProvider = $userProvider;
+
+        $this->notificationRepository = $this->entityManager->getRepository(Notification::class);
     }
 
     /**
      * @param string $type
      * @param array $data
      * @param int $recipientId
-     * @return NotificationOld
+     * @return Notification
+     * @throws \Doctrine\ORM\ORMException
+     * @throws \Doctrine\ORM\OptimisticLockException
      */
     public function create(string $type, array $data, int $recipientId)
     {
         $notification = new Notification();
 
         $notification->setType($type);
-        $notification->setData(json_encode($data));
-       // $notification->setRecipient($recipientId);
+
+        $notification->setData($data);
+
+        $user = $this->userProvider->getRailnotificationsUserById($recipientId);
+
+        $notification->setRecipient($user);
 
         $this->entityManager->persist($notification);
         $this->entityManager->flush();
@@ -66,7 +89,10 @@ class NotificationService
 
         if (!empty($existingNotification)) {
             $existingNotification->setReadOn(null);
-            $existingNotification->setCreatedOn(Carbon::now()->toDateTimeString());
+            $existingNotification->setCreatedOn(
+                Carbon::now()
+                    ->toDateTimeString()
+            );
             $existingNotification->persist();
 
             return $existingNotification;
@@ -113,7 +139,7 @@ class NotificationService
      */
     public function get(int $id)
     {
-        return $this->notificationDataMapper->get($id);
+        return $this->notificationRepository->find($id);
     }
 
     /**
@@ -129,29 +155,67 @@ class NotificationService
      * @param int $recipientId
      * @param int $amount
      * @param int $skip
-     * @return NotificationOld[]
+     * @return mixed
      */
     public function getManyPaginated(int $recipientId, int $amount, int $skip)
     {
-        return $this->notificationDataMapper->getManyForRecipientPaginated($recipientId, $amount, $skip);
+        $qb = $this->notificationRepository->createQueryBuilder('n');
+
+        return $qb->select('n')
+            ->where(
+                'n.recipient = :recipientId'
+            )
+            ->setParameter('recipientId', $recipientId)
+            ->setMaxResults($amount)
+            ->setFirstResult($skip)
+            ->getQuery()
+            ->getResult();
     }
 
     /**
      * @param int $recipientId
-     * @return int
+     * @return mixed
+     * @throws \Doctrine\ORM\NoResultException
+     * @throws \Doctrine\ORM\NonUniqueResultException
      */
     public function getUnreadCount(int $recipientId)
     {
-        return $this->notificationDataMapper->getUnreadCount($recipientId);
+        $qb = $this->notificationRepository->createQueryBuilder('n');
+
+        return $qb->select('count(n)')
+            ->where(
+                'n.recipient = :recipientId'
+            )
+            ->andWhere(
+                $qb->expr()
+                    ->isNull('n.readOn')
+            )
+            ->setParameter('recipientId', $recipientId)
+            ->getQuery()
+            ->getSingleScalarResult();
     }
 
     /**
      * @param int $recipientId
-     * @return int
+     * @return mixed
+     * @throws \Doctrine\ORM\NoResultException
+     * @throws \Doctrine\ORM\NonUniqueResultException
      */
     public function getReadCount(int $recipientId)
     {
-        return $this->notificationDataMapper->getReadCount($recipientId);
+        $qb = $this->notificationRepository->createQueryBuilder('n');
+
+        return $qb->select('count(n)')
+            ->where(
+                'n.recipient = :recipientId'
+            )
+            ->andWhere(
+                $qb->expr()
+                    ->isNotNull('n.readOn')
+            )
+            ->setParameter('recipientId', $recipientId)
+            ->getQuery()
+            ->getSingleScalarResult();
     }
 
     /**
@@ -181,55 +245,79 @@ class NotificationService
     /**
      * @param int $id
      * @param string|null $readOnDateTimeString
+     * @throws \Doctrine\ORM\ORMException
+     * @throws \Doctrine\ORM\OptimisticLockException
      */
     public function markRead(int $id, string $readOnDateTimeString = null)
     {
-        $notification = $this->notificationDataMapper->get($id);
+        $notification = $this->get($id);
 
         if (!empty($notification)) {
             $notification->setReadOn(
                 is_null($readOnDateTimeString) ? Carbon::now() : Carbon::parse($readOnDateTimeString)
             );
-            $notification->persist();
+
+            $this->entityManager->persist($notification);
+            $this->entityManager->flush();
         }
     }
 
     /**
      * @param int $id
+     * @throws \Doctrine\ORM\ORMException
+     * @throws \Doctrine\ORM\OptimisticLockException
      */
     public function markUnRead(int $id)
     {
-        $notification = $this->notificationDataMapper->get($id);
+        $notification = $this->get($id);
 
         if (!empty($notification)) {
-            $notification->setReadOn(null);
-            $notification->persist();
+            $notification->setReadOn(
+                null
+            );
+
+            $this->entityManager->persist($notification);
+            $this->entityManager->flush();
         }
     }
 
     /**
      * @param int $recipientId
      * @param string|null $readOnDateTimeString
+     * @throws \Doctrine\ORM\ORMException
+     * @throws \Doctrine\ORM\OptimisticLockException
      */
     public function markAllRead(int $recipientId, string $readOnDateTimeString = null)
     {
-        $allUnreadNotifications = $this->notificationDataMapper->getAllUnReadForRecipient($recipientId);
+        $qb = $this->notificationRepository->createQueryBuilder('n');
+
+        $allUnreadNotifications = $qb->select('n')
+            ->where(
+                'n.recipient = :recipientId'
+            )
+            ->andWhere(
+                $qb->expr()
+                    ->isNull('n.readOn')
+            )
+            ->setParameter('recipientId', $recipientId)
+            ->getQuery()
+            ->getResult();
 
         foreach ($allUnreadNotifications as $unreadNotification) {
             $unreadNotification->setReadOn(
                 is_null($readOnDateTimeString) ? Carbon::now() : Carbon::parse($readOnDateTimeString)
             );
+            $this->entityManager->persist($unreadNotification);
         }
 
-        $this->notificationDataMapper->persist($allUnreadNotifications);
+        $this->entityManager->flush();
     }
-
 
     public function sendTestNotification()
     {
         $optionBuilder = new OptionsBuilder();
 
-        $optionBuilder->setTimeToLive(60*20);
+        $optionBuilder->setTimeToLive(60 * 20);
 
         $notificationBuilder = new PayloadNotificationBuilder('my title');
         $notificationBuilder->setBody('Hello world')

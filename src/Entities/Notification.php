@@ -82,17 +82,17 @@ class Notification
     }
 
     /**
-     * @return string
+     * @return array
      */
-    public function getData(): string
+    public function getData()
     {
         return $this->data;
     }
 
     /**
-     * @param string $data
+     * @param array $data
      */
-    public function setData(string $data)
+    public function setData(array $data)
     {
         $this->data = $data;
     }
@@ -116,7 +116,7 @@ class Notification
     /**
      * @return User|null
      */
-    public function getRecipient(): ?User
+    public function getRecipient()
     {
         return $this->recipient;
     }

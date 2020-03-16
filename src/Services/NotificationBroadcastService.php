@@ -28,6 +28,8 @@ class NotificationBroadcastService
 
     private $notificationRepository;
 
+    private $notificationBroadcastRepository;
+
     public function __construct(
         NotificationService $notificationService,
         ChannelFactory $channelFactory,
@@ -40,12 +42,15 @@ class NotificationBroadcastService
 
         $this->entityManager = $entityManager;
         $this->notificationRepository = $this->entityManager->getRepository(Notification::class);
+        $this->notificationBroadcastRepository = $this->entityManager->getRepository(NotificationBroadcast::class);
     }
 
     /**
      * @param int $notificationId
      * @param string $channelName
      * @throws BroadcastNotificationFailure
+     * @throws \Doctrine\ORM\ORMException
+     * @throws \Doctrine\ORM\OptimisticLockException
      */
     public function broadcast(int $notificationId, string $channelName)
     {
@@ -66,7 +71,7 @@ class NotificationBroadcastService
 
         $job = new BroadcastNotification($notificationBroadcast->getId());
 
-        dispatch($job);
+        dispatch_now($job);
     }
 
     /**
@@ -143,5 +148,10 @@ class NotificationBroadcastService
         );
         $notificationBroadcast->setReport($message);
         $notificationBroadcast->persist();
+    }
+
+    public function get($id)
+    {
+        return $this->notificationBroadcastRepository->find($id);
     }
 }

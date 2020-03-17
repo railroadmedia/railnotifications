@@ -38,6 +38,10 @@ class NotificationsServiceProvider extends ServiceProvider
                 __DIR__ . '/../config/railnotifications.php' => config_path('railnotifications.php'),
             ]
         );
+
+        //load package routes file
+        $this->loadRoutesFrom(__DIR__ . '/../routes/routes.php');
+        $this->loadRoutesFrom(__DIR__ . '/../routes/api.php');
     }
 
     /**

@@ -3,14 +3,7 @@
 namespace Tests;
 
 use Carbon\Carbon;
-
-use Railroad\Railmap\Helpers\RailmapHelpers;
-use Railroad\Railnotifications\Entities\Notification;
-use Railroad\Railnotifications\Entities\NotificationOld;
-use Railroad\Railnotifications\Managers\RailnotificationsEntityManager;
 use Railroad\Railnotifications\Services\NotificationService;
-use Railroad\Railnotifications\Tests\Fixtures\UserProvider;
-
 use Railroad\Railnotifications\Tests\TestCase as NotificationsTestCase;
 
 class NotificationServiceTest extends NotificationsTestCase
@@ -29,8 +22,6 @@ class NotificationServiceTest extends NotificationsTestCase
 
     public function test_create()
     {
-        $this->assertTrue(true);
-
         $type = $this->faker->word;
         $data = [
             'data-1' => $this->faker->word,
@@ -79,35 +70,18 @@ class NotificationServiceTest extends NotificationsTestCase
         }
     }
 
-    public function _test_destroy()
+    public function test_destroy()
     {
-        $type = $this->faker->word;
-        $data = [
-            'data-1' => $this->faker->word,
-            'data-2' => $this->faker->word,
-            'data-3' => $this->faker->word
-        ];
-        $recipientId = $this->faker->randomNumber();
+        $notification= $this->fakeNotification();
 
-        $responseNotification = $this->classBeingTested->create($type, $data, $recipientId);
-
-        $this->assertDatabaseHas(
-            'notifications',
-            [
-                'type' => $type,
-                'data' => json_encode($data),
-                'recipient_id' => $recipientId
-            ]
-        );
-
-        $this->classBeingTested->destroy($responseNotification->getId());
+        $this->classBeingTested->destroy($notification['id']);
 
         $this->assertDatabaseMissing(
             'notifications',
             [
-                'type' => $type,
-                'data' => json_encode($data),
-                'recipient_id' => $recipientId
+                'type' => $notification['type'],
+                'data' => json_encode($notification['data']),
+                'recipient_id' => $notification['recipient_id']
             ]
         );
     }
@@ -129,104 +103,105 @@ class NotificationServiceTest extends NotificationsTestCase
         $this->assertEquals(null, $responseNotification);
     }
 
-    public function _test_get_many_paginated_1_page()
+    public function test_get_many_paginated_1_page()
     {
         $notifications = [];
         $recipientId = rand();
 
         for ($i = 0; $i < 3; $i++) {
-            $notification = new NotificationOld();
-            $notification->randomize();
-            $notification->setRecipientId($recipientId);
-            $notification->persist();
+            $notification = $this->fakeNotification(['recipient_id' => $recipientId]);
 
             $notifications[] = $notification;
         }
 
-        $notifications = RailmapHelpers::sortEntitiesByDateAttribute($notifications, 'createdOn', 'desc');
-
         $responseNotifications = $this->classBeingTested->getManyPaginated($recipientId, 3, 0);
 
-        $this->assertEquals($notifications, $responseNotifications);
+        foreach ($responseNotifications as $index=>$responseNotification) {
+            $this->assertEquals($notifications[$index]['type'], $responseNotification->getType());
+            $this->assertEquals(json_decode($notifications[$index]['data'], true), $responseNotification->getData());
+            $this->assertEquals($notifications[$index]['read_on'], $responseNotification->getReadOn());
+        }
     }
 
-    public function _test_get_many_paginated_multi_page()
+    public function test_get_many_paginated_multi_page()
     {
         $notifications = [];
         $recipientId = rand();
 
         for ($i = 0; $i < 7; $i++) {
-            $notification = new NotificationOld();
-            $notification->randomize();
-            $notification->setRecipientId($recipientId);
-            $notification->persist();
+            $notification = $this->fakeNotification(['recipient_id' => $recipientId]);
 
             $notifications[] = $notification;
         }
-
-        $notifications = RailmapHelpers::sortEntitiesByDateAttribute($notifications, 'createdOn', 'desc');
 
         $responseNotifications = $this->classBeingTested->getManyPaginated($recipientId, 3, 0);
-
-        $this->assertEquals(array_slice($notifications, 0, 3), $responseNotifications);
+        foreach ($responseNotifications as $index=>$responseNotification) {
+            $this->assertEquals($notifications[$index]['type'], $responseNotification->getType());
+            $this->assertEquals(json_decode($notifications[$index]['data'], true), $responseNotification->getData());
+            $this->assertEquals($notifications[$index]['read_on'], $responseNotification->getReadOn());
+        }
 
         $responseNotifications = $this->classBeingTested->getManyPaginated($recipientId, 3, 3);
-
-        $this->assertEquals(array_slice($notifications, 3, 3), $responseNotifications);
+        foreach ($responseNotifications as $index=>$responseNotification) {
+            $this->assertEquals($notifications[$index+3]['type'], $responseNotification->getType());
+            $this->assertEquals(json_decode($notifications[$index+3]['data'], true), $responseNotification->getData());
+            $this->assertEquals($notifications[$index+3]['read_on'], $responseNotification->getReadOn());
+        }
 
         $responseNotifications = $this->classBeingTested->getManyPaginated($recipientId, 3, 6);
-
-        $this->assertEquals(array_slice($notifications, 6, 3), $responseNotifications);
+        foreach ($responseNotifications as $index=>$responseNotification) {
+            $this->assertEquals($notifications[$index+6]['type'], $responseNotification->getType());
+            $this->assertEquals(json_decode($notifications[$index+6]['data'], true), $responseNotification->getData());
+            $this->assertEquals($notifications[$index+6]['read_on'], $responseNotification->getReadOn());
+        }
     }
 
-    public function _test_get_many_unread()
+    public function test_get_many_unread()
     {
         $notifications = [];
-        $recipientId = rand();
+        $recipientId = $this->createAndLogInNewUser();
 
         for ($i = 0; $i < 3; $i++) {
-            $notification = new NotificationOld();
-            $notification->randomize();
-            $notification->setRecipientId($recipientId);
-            $notification->setReadOn(null);
-            $notification->persist();
+            $notification = $this->fakeNotification(['recipient_id' => $recipientId, 'read_on'=>null]);
 
             $notifications[] = $notification;
         }
-
-        $notifications = RailmapHelpers::sortEntitiesByDateAttribute($notifications, 'createdOn', 'desc');
 
         $responseNotifications = $this->classBeingTested->getManyUnread($recipientId);
 
-        $this->assertEquals($notifications, $responseNotifications);
+        foreach ($responseNotifications as $index=>$responseNotification) {
+            $this->assertEquals($notifications[$index]['type'], $responseNotification->getType());
+            $this->assertEquals(json_decode($notifications[$index]['data'], true), $responseNotification->getData());
+            $this->assertEquals($notifications[$index]['read_on'], $responseNotification->getReadOn());
+            $this->assertEquals($notifications[$index]['recipient_id'], $responseNotification->getRecipient()->getId());
+        }
     }
 
-    public function _test_get_many_unread_created_after()
+    public function test_get_many_unread_created_after()
     {
         $notifications = [];
-        $recipientId = rand();
+        $recipientId = $this->createAndLogInNewUser();
 
         for ($i = 0; $i < 5; $i++) {
-            $notification = new NotificationOld();
-            $notification->randomize();
-            $notification->setRecipientId($recipientId);
-            $notification->setReadOn(null);
-            $notification->persist();
+            $notification = $this->fakeNotification(['recipient_id' => $recipientId, 'read_on'=>null]);
 
             $notifications[] = $notification;
         }
 
-        $notifications = RailmapHelpers::sortEntitiesByDateAttribute($notifications, 'createdOn', 'desc');
-
         $responseNotifications = $this->classBeingTested->getManyUnread(
             $recipientId,
-            $notifications[2]->getCreatedOn()
+            $notifications[2]['created_at']
         );
 
-        $this->assertEquals(array_slice($notifications, 0, 3), $responseNotifications);
+        foreach ($responseNotifications as $index=>$responseNotification) {
+            $this->assertEquals($notifications[$index]['type'], $responseNotification->getType());
+            $this->assertEquals(json_decode($notifications[$index]['data'], true), $responseNotification->getData());
+            $this->assertEquals($notifications[$index]['read_on'], $responseNotification->getReadOn());
+            $this->assertEquals($notifications[$index]['recipient_id'], $responseNotification->getRecipient()->getId());
+        }
     }
 
-    public function _test_get_many_paginated_none()
+    public function test_get_many_paginated_none()
     {
         $responseNotification = $this->classBeingTested->getManyPaginated(rand(), 5, 0);
 
@@ -326,19 +301,13 @@ class NotificationServiceTest extends NotificationsTestCase
         }
     }
 
-    public function _test_mark_all_un_read_specific_time()
+    public function test_mark_all_un_read_specific_time()
     {
         $recipientId = rand();
         $notifications = [];
 
         for ($i = 0; $i < 3; $i++) {
-            $notification = new NotificationOld();
-            $notification->randomize();
-            $notification->setRecipientId($recipientId);
-            $notification->setReadOn(null);
-            $notification->persist();
-
-            $notifications[] = $notification;
+            $notifications[] =  $this->fakeNotification(['recipient_id' => $recipientId, 'read_on' => null]);
         }
 
         $this->classBeingTested->markAllRead($recipientId, Carbon::now()->subMonth());
@@ -347,7 +316,7 @@ class NotificationServiceTest extends NotificationsTestCase
             $this->assertDatabaseHas(
                 'notifications',
                 [
-                    'id' => $notification->getId(),
+                    'id' => $notification['id'],
                     'read_on' => Carbon::now()->subMonth()
                 ]
             );

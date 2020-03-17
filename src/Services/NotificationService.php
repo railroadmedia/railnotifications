@@ -3,7 +3,6 @@
 namespace Railroad\Railnotifications\Services;
 
 use Carbon\Carbon;
-use Illuminate\Database\Query\Builder;
 use Railroad\Railnotifications\DataMappers\NotificationDataMapper;
 use Railroad\Railnotifications\Entities\Notification;
 use Railroad\Railnotifications\Entities\NotificationOld;
@@ -75,17 +74,32 @@ class NotificationService
      * @param string $type
      * @param array $data
      * @param int $recipientId
-     * @return NotificationOld
+     * @return mixed|Notification
+     * @throws \Doctrine\ORM\NonUniqueResultException
+     * @throws \Doctrine\ORM\ORMException
+     * @throws \Doctrine\ORM\OptimisticLockException
      */
     public function createOrUpdateWhereMatchingData(string $type, array $data, int $recipientId)
     {
-        $existingNotification = $this->notificationDataMapper->getWithQuery(
-                function (Builder $query) use ($type, $data, $recipientId) {
-                    return $query->where('type', $type)
-                        ->where('data', json_encode($data))
-                        ->where('recipient_id', $recipientId);
-                }
-            )[0] ?? null;
+        $qb = $this->notificationRepository->createQueryBuilder('n');
+
+        $existingNotification = $qb->select('n')
+            ->where('n.recipient IN (:recipientIdS)')
+            ->andWhere('n.type = :type')
+            ->andWhere('n.data = :data')
+            ->setParameter('recipientIdS', $recipientId)
+            ->setParameter('type', $type)
+            ->setParameter('data', $data)
+            ->getQuery()
+            ->getOneOrNullResult();
+
+//        $existingNotification = $this->notificationDataMapper->getWithQuery(
+//                function (Builder $query) use ($type, $data, $recipientId) {
+//                    return $query->where('type', $type)
+//                        ->where('data', json_encode($data))
+//                        ->where('recipient_id', $recipientId);
+//                }
+//            )[0] ?? null;
 
         if (!empty($existingNotification)) {
             $existingNotification->setReadOn(null);
@@ -93,7 +107,9 @@ class NotificationService
                 Carbon::now()
                     ->toDateTimeString()
             );
-            $existingNotification->persist();
+
+            $this->entityManager->persist($existingNotification);
+            $this->entityManager->flush();
 
             return $existingNotification;
         } else {
@@ -110,6 +126,7 @@ class NotificationService
      */
     public function createMany(array $notificationsData)
     {
+        //TODO: Check if it's in use - NOT IN USE
         $notifications = [];
 
         foreach ($notificationsData as $notificationData) {
@@ -127,15 +144,24 @@ class NotificationService
 
     /**
      * @param int $id
+     * @return object|null
+     * @throws \Doctrine\ORM\ORMException
+     * @throws \Doctrine\ORM\OptimisticLockException
      */
     public function destroy(int $id)
     {
-        $this->notificationDataMapper->destroy($id);
+        $notification = $this->get($id);
+        if (is_null($notification)) {
+            return $notification;
+        }
+
+        $this->entityManager->remove($notification);
+        $this->entityManager->flush();
     }
 
     /**
      * @param int $id
-     * @return NotificationOld
+     * @return object|null
      */
     public function get(int $id)
     {
@@ -148,7 +174,15 @@ class NotificationService
      */
     public function getMany(array $ids)
     {
-        return $this->notificationDataMapper->getMany($ids);
+        $qb = $this->notificationRepository->createQueryBuilder('n');
+
+        return $qb->select('n')
+            ->where(
+                'n.recipient IN (:recipientIdS)'
+            )
+            ->setParameter('recipientIdS', $ids)
+            ->getQuery()
+            ->getResult();
     }
 
     /**
@@ -225,10 +259,30 @@ class NotificationService
      */
     public function getManyUnread(int $recipientId, string $createdAfterDateTimeString = null)
     {
-        return $this->notificationDataMapper->getAllUnReadForRecipient(
-            $recipientId,
-            $createdAfterDateTimeString
-        );
+        //TODO: UPDATE
+        $qb = $this->notificationRepository->createQueryBuilder('n');
+
+        $result =  $qb->select('n')
+            ->where(
+                'n.recipient = :recipientId'
+            )
+            ->andWhere(
+                $qb->expr()
+                    ->isNull('n.readOn')
+            )
+            ->setParameter('recipientId', $recipientId);
+
+        if($createdAfterDateTimeString) {
+            $result = $result->andWhere('n.createdAt >= :createdAtDate')
+                ->setParameter('createdAtDate', $createdAfterDateTimeString);
+        }
+            return $result->getQuery()
+            ->getResult();
+
+//        return $this->notificationDataMapper->getAllUnReadForRecipient(
+//            $recipientId,
+//            $createdAfterDateTimeString
+//        );
     }
 
     /**
@@ -237,9 +291,21 @@ class NotificationService
      */
     public function getAllRecipientIdsWithUnreadNotifications(string $createdAfterDateTimeString = null)
     {
-        return $this->notificationDataMapper->getAllRecipientIdsWithUnreadNotifications(
-            $createdAfterDateTimeString
-        );
+        //TODO: UPDATE
+        $qb = $this->notificationRepository->createQueryBuilder('n');
+
+        return $qb->select('n')
+            ->where(
+                $qb->expr()
+                    ->isNull('n.readOn')
+            )
+            ->andWhere('n.createdAt >= :createdAtDate')
+            ->setParameter('createdAtDate', $createdAfterDateTimeString)
+            ->getQuery()
+            ->getResult();
+//        return $this->notificationDataMapper->getAllRecipientIdsWithUnreadNotifications(
+//            $createdAfterDateTimeString
+//        );
     }
 
     /**

@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use Faker\Generator;
 use Illuminate\Database\DatabaseManager;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Orchestra\Testbench\TestCase as BaseTestCase;
 use Railroad\Railnotifications\Contracts\UserProviderInterface;
@@ -175,15 +176,15 @@ class TestCase extends BaseTestCase
                     ]
                 );
 
-        Auth::shouldReceive('check')
-            ->andReturn(true);
-
-        Auth::shouldReceive('id')
-            ->andReturn($userId);
-
-        $userMockResults = ['id' => $userId, 'email' => $email];
-        Auth::shouldReceive('user')
-            ->andReturn($userMockResults);
+//        Auth::shouldReceive('check')
+//            ->andReturn(true);
+//
+//        Auth::shouldReceive('id')
+//            ->andReturn($userId);
+//
+//        $userMockResults = ['id' => $userId, 'email' => $email];
+//        Auth::shouldReceive('user')
+//            ->andReturn($userMockResults);
 
         return $userId;
     }

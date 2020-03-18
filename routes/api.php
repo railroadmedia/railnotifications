@@ -21,8 +21,14 @@ Route::group(
         )
             ->name('notification.store');
 
-        Route::patch(
-            '/notification/{id}',
+        Route::put(
+            '/read/{id}',
+            \Railroad\Railnotifications\Controllers\NotificationJsonController::class . '@markAsRead'
+        )
+            ->name('notification.read');
+
+        Route::put(
+            '/read-all/{id}',
             \Railroad\Railnotifications\Controllers\NotificationJsonController::class . '@update'
         )
             ->name('notification.update');

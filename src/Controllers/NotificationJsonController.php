@@ -59,7 +59,7 @@ class NotificationJsonController extends Controller
             $this->notificationService->create(
                 $request->get('type'),
                 $request->get('data'),
-                $request->get('recipientId')
+                $request->get('recipient_id')
             );
 
         return ResponseService::notification($notification);
@@ -77,5 +77,22 @@ class NotificationJsonController extends Controller
         $this->notificationService->destroy($id);
 
         return ResponseService::empty(204);
+    }
+
+    /**
+     * @param Request $request
+     * @return Fractal
+     * @throws ORMException
+     * @throws OptimisticLockException
+     */
+    public function markAsRead(int $id, Request $request)
+    {
+        $notification =
+            $this->notificationService->markRead(
+                $id,
+                $request->get('read_on_date_time')
+            );
+
+        return ResponseService::notification($notification);
     }
 }

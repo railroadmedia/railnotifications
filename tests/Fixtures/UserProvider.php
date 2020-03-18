@@ -92,20 +92,19 @@ class UserProvider implements UserProviderInterface
         // TODO: Implement getCurrentUserId() method.
     }
 
-    /**
-     * @inheritDoc
-     */
-    public function getUserTransformer()
-    : TransformerAbstract
-    {
-        // TODO: Implement getUserTransformer() method.
-    }
-
-    /**
+   /**
      * @inheritDoc
      */
     public function createUser(string $email, string $password)
     : ?\Railroad\Ecommerce\Entities\User {
         // TODO: Implement createUser() method.
+    }
+
+    /**
+     * @return TransformerAbstract
+     */
+    public function getUserTransformer(): TransformerAbstract
+    {
+        return new UserTransformer();
     }
 }

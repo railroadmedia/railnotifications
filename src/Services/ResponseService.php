@@ -3,6 +3,8 @@
 namespace Railroad\Railnotifications\Services;
 
 use Doctrine\ORM\QueryBuilder;
+use League\Fractal\Serializer\ArraySerializer;
+use League\Fractal\Serializer\DataArraySerializer;
 use League\Fractal\Serializer\JsonApiSerializer;
 use Railroad\Doctrine\Services\FractalResponseService;
 use Railroad\Railnotifications\Transformers\NotificationsTransformer;
@@ -25,9 +27,9 @@ class ResponseService extends FractalResponseService
     ) {
         return self::create(
             $entityOrEntities,
-            'notification',
+            '',
             new NotificationsTransformer(),
-            new JsonApiSerializer(),
+            new ArraySerializer(),
             $queryBuilder
         )
             ->parseIncludes($includes);

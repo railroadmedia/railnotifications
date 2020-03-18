@@ -259,7 +259,6 @@ class NotificationService
      */
     public function getManyUnread(int $recipientId, string $createdAfterDateTimeString = null)
     {
-        //TODO: UPDATE
         $qb = $this->notificationRepository->createQueryBuilder('n');
 
         $result =  $qb->select('n')
@@ -291,7 +290,6 @@ class NotificationService
      */
     public function getAllRecipientIdsWithUnreadNotifications(string $createdAfterDateTimeString = null)
     {
-        //TODO: UPDATE
         $qb = $this->notificationRepository->createQueryBuilder('n');
 
         return $qb->select('n')

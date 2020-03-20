@@ -93,14 +93,6 @@ class NotificationService
             ->getQuery()
             ->getOneOrNullResult();
 
-//        $existingNotification = $this->notificationDataMapper->getWithQuery(
-//                function (Builder $query) use ($type, $data, $recipientId) {
-//                    return $query->where('type', $type)
-//                        ->where('data', json_encode($data))
-//                        ->where('recipient_id', $recipientId);
-//                }
-//            )[0] ?? null;
-
         if (!empty($existingNotification)) {
             $existingNotification->setReadOn(null);
             $existingNotification->setCreatedOn(
@@ -324,6 +316,8 @@ class NotificationService
             $this->entityManager->persist($notification);
             $this->entityManager->flush();
         }
+
+        return $notification;
     }
 
     /**
@@ -343,6 +337,8 @@ class NotificationService
             $this->entityManager->persist($notification);
             $this->entityManager->flush();
         }
+
+        return $notification;
     }
 
     /**

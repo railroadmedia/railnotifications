@@ -2,6 +2,7 @@
 
 namespace Railroad\Railnotifications\Tests\Controllers;
 
+use Carbon\Carbon;
 use Railroad\Railnotifications\Tests\TestCase;
 
 class NotificationJSONControllerTest extends TestCase
@@ -115,13 +116,31 @@ class NotificationJSONControllerTest extends TestCase
         );
     }
 
-    public function test_mark_as_read()
+    public function test_sync_new_notification()
     {
-        $notification = $this->fakeNotification();
+        $type = $this->faker->word;
+        $data = [
+            'commentId' => rand(),
+        ];
+        $recipient = $this->fakeUser();
+
+        $this->assertDatabaseMissing(
+            'notifications',
+            [
+                'type' => $type,
+                'data' => json_encode($data),
+                'recipient_id' => $recipient['id']
+            ]
+        );
 
         $response = $this->call(
             'PUT',
-            'railnotifications/read/'.$notification['id']
+            'railnotifications/sync-notification',
+            [
+                'type' => $type,
+                'data' => $data,
+                'recipient_id' => $recipient['id'],
+            ]
         );
 
         $this->assertEquals(200, $response->getStatusCode());
@@ -145,6 +164,127 @@ class NotificationJSONControllerTest extends TestCase
                 'data' => json_encode($data),
                 'recipient_id' => $recipient['id']
             ]
+        );
+    }
+
+    public function test_sync_existing_notification()
+    {
+        $recipientInitial = $this->fakeUser();
+
+        $notification = $this->fakeNotification(['recipient_id' => $recipientInitial['id']]);
+
+        $type = $this->faker->word;
+        $data = [
+            'commentId' => rand(),
+        ];
+        $recipient = $this->fakeUser();
+
+        $response = $this->call(
+            'PUT',
+            'railnotifications/sync-notification',
+            [
+                'type' => $type,
+                'data' => $data,
+                'recipient_id' => $recipient['id'],
+            ]
+        );
+
+        $this->assertEquals(200, $response->getStatusCode());
+
+        $this->assertArraySubset(
+            [
+                'type' => $type,
+                'data' => $data,
+                'read_on' => null,
+                'recipient' => [
+                    'id' => $recipient['id'],
+                ],
+            ],
+            $response->decodeResponseJson()
+        );
+
+        $this->assertDatabaseHas(
+            'notifications',
+            [
+                'type' => $type,
+                'data' => json_encode($data),
+                'recipient_id' => $recipient['id']
+            ]
+        );
+
+        $this->assertDatabaseMissing(
+            'notifications',
+            [
+                'type' => $notification['type'],
+                'data' => json_encode($notification['data']),
+                'recipient_id' => $recipientInitial['id']
+            ]
+        );
+    }
+
+    public function test_show_existing_notification()
+    {
+        $recipientInitial = $this->fakeUser();
+
+        $notification = $this->fakeNotification(['recipient_id' => $recipientInitial['id']]);
+
+        $response = $this->call(
+            'GET',
+            'railnotifications/notification/'.$notification['id']
+        );
+
+        $this->assertEquals(200, $response->getStatusCode());
+
+        $this->assertArraySubset(
+            [
+                'type' => $notification['type'],
+                'data' => json_decode($notification['data']),
+                'read_on' => null,
+                'recipient' => [
+                    'id' => $recipientInitial['id'],
+                ],
+            ],
+            $response->decodeResponseJson()
+        );
+    }
+
+    public function test_show_not_existing_notification()
+    {
+        $response = $this->call(
+            'GET',
+            'railnotifications/notification/'.rand()
+        );
+
+        $this->assertArraySubset(
+            [
+                'title' => "Not found.",
+            ],
+            $response->decodeResponseJson('errors')
+        );
+    }
+
+    public function test_mark_as_read()
+    {
+        $notification = $this->fakeNotification();
+
+        $response = $this->call(
+            'PUT',
+            'railnotifications/read/'.$notification['id']
+        );
+
+        $this->assertEquals(200, $response->getStatusCode());
+
+        $this->assertArraySubset(
+            [
+                'id' => $notification['id'],
+                'type' => $notification['type'],
+                'data' => json_decode($notification['data']),
+                'read_on' => Carbon::now()->toDateTimeString(),
+                'recipient' => [
+                    'id' => $notification['recipient_id'],
+                ],
+            ],
+            $response->decodeResponseJson()
         );
     }
 }

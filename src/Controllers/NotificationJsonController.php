@@ -7,6 +7,7 @@ use Doctrine\ORM\ORMException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Routing\Controller;
 use Illuminate\Http\Request;
+use Railroad\Railnotifications\Exceptions\NotFoundException;
 use Railroad\Railnotifications\Services\NotificationService;
 use Railroad\Railnotifications\Services\ResponseService;
 use Spatie\Fractal\Fractal;
@@ -55,12 +56,11 @@ class NotificationJsonController extends Controller
      */
     public function store(Request $request)
     {
-        $notification =
-            $this->notificationService->create(
-                $request->get('type'),
-                $request->get('data'),
-                $request->get('recipient_id')
-            );
+        $notification = $this->notificationService->create(
+            $request->get('type'),
+            $request->get('data'),
+            $request->get('recipient_id')
+        );
 
         return ResponseService::notification($notification);
     }
@@ -87,11 +87,60 @@ class NotificationJsonController extends Controller
      */
     public function markAsRead(int $id, Request $request)
     {
-        $notification =
-            $this->notificationService->markRead(
-                $id,
-                $request->get('read_on_date_time')
-            );
+        $notification = $this->notificationService->markRead(
+            $id,
+            $request->get('read_on_date_time')
+        );
+
+        return ResponseService::notification($notification);
+    }
+
+    /**
+     * @param Request $request
+     * @return Fractal
+     * @throws ORMException
+     * @throws OptimisticLockException
+     * @throws \Doctrine\ORM\NonUniqueResultException
+     */
+    public function syncNotification(Request $request)
+    {
+        $notification = $this->notificationService->createOrUpdateWhereMatchingData(
+            $request->get('type'),
+            $request->get('data'),
+            $request->get('recipient_id')
+        );
+
+        return ResponseService::notification($notification);
+    }
+
+    /**
+     * @param $id
+     * @return Fractal
+     * @throws Throwable
+     */
+    public function showNotification($id)
+    {
+        $notification = $this->notificationService->get(
+          $id
+        );
+
+        throw_if(
+            is_null($notification),
+            new NotFoundException('Update failed, notification not found with id: ' . $id)
+        );
+
+        return ResponseService::notification($notification);
+    }
+
+    /**
+     * @param int $id
+     * @return Fractal
+     * @throws ORMException
+     * @throws OptimisticLockException
+     */
+    public function markAsUnRead(int $id)
+    {
+        $notification = $this->notificationService->markUnRead(            $id        );
 
         return ResponseService::notification($notification);
     }

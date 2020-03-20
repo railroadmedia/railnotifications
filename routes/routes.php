@@ -22,10 +22,22 @@ Route::group(
             ->name('notification.store');
 
         Route::put(
+            '/sync-notification',
+            \Railroad\Railnotifications\Controllers\NotificationJsonController::class . '@syncNotification'
+        )
+            ->name('notification.sync');
+
+        Route::put(
             '/read/{id}',
             \Railroad\Railnotifications\Controllers\NotificationJsonController::class . '@markAsRead'
         )
             ->name('notification.read');
+
+        Route::put(
+            '/unread/{id}',
+            \Railroad\Railnotifications\Controllers\NotificationJsonController::class . '@markAsUnRead'
+        )
+            ->name('notification.unread');
 
         Route::put(
             '/read-all/{id}',
@@ -38,6 +50,12 @@ Route::group(
             \Railroad\Railnotifications\Controllers\NotificationJsonController::class . '@delete'
         )
             ->name('notification.delete');
+
+        Route::get(
+            '/notification/{id}',
+            \Railroad\Railnotifications\Controllers\NotificationJsonController::class . '@showNotification'
+        )
+            ->name('notification.show');
     }
 );
 

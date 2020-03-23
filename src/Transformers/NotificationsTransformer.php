@@ -22,13 +22,13 @@ class NotificationsTransformer extends TransformerAbstract
             'type' => $notification->getType(),
             'data' => $notification->getData(),
             'read_on' => $notification->getReadOn() ?
-                $notification->getReadOn()
+                $notification->getReadOn()->toDateTimeString()
                     : null,
             'created_at' => $notification->getCreatedAt() ?
-                $notification->getCreatedAt()
+                $notification->getCreatedAt()->toDateTimeString()
            : null,
             'updated_at' => $notification->getUpdatedAt() ?
-                $notification->getUpdatedAt()
+                $notification->getUpdatedAt()->toDateTimeString()
                   : null,
         ];
     }

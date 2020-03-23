@@ -12,6 +12,7 @@ use LaravelFCM\Message\PayloadNotificationBuilder;
 use FCM;
 use Railroad\Railnotifications\Managers\RailnotificationsEntityManager;
 use Railroad\Railnotifications\Contracts\UserProviderInterface;
+use Railroad\Railnotifications\Notifications\CommentReplyNotifications;
 
 class NotificationService
 {
@@ -33,11 +34,9 @@ class NotificationService
     private $userProvider;
 
     public function __construct(
-        NotificationDataMapper $notificationDataMapper,
         RailnotificationsEntityManager $entityManager,
         UserProviderInterface $userProvider
     ) {
-        $this->notificationDataMapper = $notificationDataMapper;
         $this->entityManager = $entityManager;
         $this->userProvider = $userProvider;
 
@@ -54,6 +53,11 @@ class NotificationService
      */
     public function create(string $type, array $data, int $recipientId)
     {
+        \Illuminate\Support\Facades\Notification::route('mail', 'taylor@example.com')
+            ->route('database', '5555555555')
+            ->notify(new CommentReplyNotifications());
+
+        return true;
         $notification = new Notification();
 
         $notification->setType($type);
@@ -363,6 +367,7 @@ class NotificationService
             ->getQuery()
             ->getResult();
 
+
         foreach ($allUnreadNotifications as $unreadNotification) {
             $unreadNotification->setReadOn(
                 is_null($readOnDateTimeString) ? Carbon::now() : Carbon::parse($readOnDateTimeString)
@@ -371,6 +376,8 @@ class NotificationService
         }
 
         $this->entityManager->flush();
+
+        return $allUnreadNotifications;
     }
 
     public function sendTestNotification()

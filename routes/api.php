@@ -41,9 +41,9 @@ Route::group(
 
         Route::put(
             '/read-all/{id}',
-            \Railroad\Railnotifications\Controllers\NotificationJsonController::class . '@update'
+            \Railroad\Railnotifications\Controllers\NotificationJsonController::class . '@markAllAsRead'
         )
-            ->name('notification.update');
+            ->name('notification.read.all');
 
         Route::delete(
             '/notification/{id}',
@@ -56,6 +56,18 @@ Route::group(
             \Railroad\Railnotifications\Controllers\NotificationJsonController::class . '@showNotification'
         )
             ->name('notification.show');
+
+        Route::get(
+            '/count-read',
+            \Railroad\Railnotifications\Controllers\NotificationJsonController::class . '@countReadNotifications'
+        )
+            ->name('notification.count.read');
+
+        Route::get(
+            '/count-unread',
+            \Railroad\Railnotifications\Controllers\NotificationJsonController::class . '@countUnReadNotifications'
+        )
+            ->name('notification.count.unread');
     }
 );
 

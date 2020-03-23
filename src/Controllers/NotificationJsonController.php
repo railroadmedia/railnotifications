@@ -80,10 +80,12 @@ class NotificationJsonController extends Controller
     }
 
     /**
+     * @param int $id
      * @param Request $request
      * @return Fractal
      * @throws ORMException
      * @throws OptimisticLockException
+     * @throws Throwable
      */
     public function markAsRead(int $id, Request $request)
     {
@@ -92,7 +94,29 @@ class NotificationJsonController extends Controller
             $request->get('read_on_date_time')
         );
 
+        throw_if(
+            is_null($notification),
+            new NotFoundException('Mark as read failed, notification not found with id: ' . $id)
+        );
+
         return ResponseService::notification($notification);
+    }
+
+    /**
+     * @param int $id
+     * @param Request $request
+     * @return Fractal
+     * @throws ORMException
+     * @throws OptimisticLockException
+     */
+    public function markAllAsRead(int $id, Request $request)
+    {
+        $notifications = $this->notificationService->markAllRead(
+            $id,
+            $request->get('read_on_date_time')
+        );
+
+        return ResponseService::notification($notifications);
     }
 
     /**
@@ -121,7 +145,7 @@ class NotificationJsonController extends Controller
     public function showNotification($id)
     {
         $notification = $this->notificationService->get(
-          $id
+            $id
         );
 
         throw_if(
@@ -137,11 +161,45 @@ class NotificationJsonController extends Controller
      * @return Fractal
      * @throws ORMException
      * @throws OptimisticLockException
+     * @throws Throwable
      */
     public function markAsUnRead(int $id)
     {
-        $notification = $this->notificationService->markUnRead(            $id        );
+        $notification = $this->notificationService->markUnRead($id);
+
+        throw_if(
+            is_null($notification),
+            new NotFoundException('Mark as read failed, notification not found with id: ' . $id)
+        );
 
         return ResponseService::notification($notification);
+    }
+
+    /**
+     * @param Request $request
+     * @return JsonResponse|\Symfony\Component\HttpFoundation\JsonResponse
+     * @throws \Doctrine\ORM\NoResultException
+     * @throws \Doctrine\ORM\NonUniqueResultException
+     */
+    public function countReadNotifications(Request $request)
+    {
+        $count = $this->notificationService->getReadCount($request->get('user_id',auth()->id()));
+
+        return ResponseService::empty(201)
+            ->setData(['data' => $count]);
+    }
+
+    /**
+     * @param Request $request
+     * @return JsonResponse|\Symfony\Component\HttpFoundation\JsonResponse
+     * @throws \Doctrine\ORM\NoResultException
+     * @throws \Doctrine\ORM\NonUniqueResultException
+     */
+    public function countUnReadNotifications(Request $request)
+    {
+        $count = $this->notificationService->getUnreadCount($request->get('user_id',auth()->id()));
+
+        return ResponseService::empty(201)
+            ->setData(['data' => $count]);
     }
 }

@@ -3,17 +3,24 @@
 namespace Railroad\Railnotifications\Tests;
 
 use Carbon\Carbon;
+use Doctrine\DBAL\Types\Type;
 use Faker\Generator;
 use Illuminate\Database\DatabaseManager;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Orchestra\Testbench\TestCase as BaseTestCase;
+use Railroad\Doctrine\Providers\DoctrineServiceProvider;
+use Railroad\Doctrine\Types\Carbon\CarbonDateTimeTimezoneType;
+use Railroad\Doctrine\Types\Carbon\CarbonDateTimeType;
+use Railroad\Doctrine\Types\Carbon\CarbonDateType;
+use Railroad\Doctrine\Types\Carbon\CarbonTimeType;
 use Railroad\Railnotifications\Contracts\UserProviderInterface;
 use Railroad\Railnotifications\Faker\Factory;
 use Railroad\Railnotifications\Managers\RailnotificationsEntityManager;
 use Railroad\Railnotifications\NotificationsServiceProvider;
 use Railroad\Railnotifications\Tests\Fixtures\UserProvider;
+use Railroad\Railnotifications\Entities\User;
 
 class TestCase extends BaseTestCase
 {
@@ -82,6 +89,11 @@ class TestCase extends BaseTestCase
     {
         $defaultConfig = require(__DIR__ . '/../config/railnotifications.php');
 
+//        Type::overrideType('datetime', CarbonDateTimeType::class);
+//        Type::overrideType('datetimetz', CarbonDateTimeTimezoneType::class);
+//        Type::overrideType('date', CarbonDateType::class);
+//        Type::overrideType('time', CarbonTimeType::class);
+
         // Setup default database to use sqlite :memory:
         $app['config']->set('database.default', 'testbench');
         $app['config']->set(
@@ -110,6 +122,26 @@ class TestCase extends BaseTestCase
 
         $app->register(NotificationsServiceProvider::class);
 
+        $app['config']->set('doctrine.redis_host', $defaultConfig['redis_host']);
+        $app['config']->set('doctrine.redis_port', $defaultConfig['redis_port']);
+
+        $app['config']->set(
+            'doctrine.entities',
+            array_merge(
+                $defaultConfig['entities']
+            )
+        );
+
+        $app['config']->set('doctrine.database_driver', 'pdo_sqlite');
+        $app['config']->set('doctrine.database_user', 'root');
+        $app['config']->set('doctrine.database_password', 'root');
+        $app['config']->set('doctrine.database_in_memory', true);
+        $app['config']->set('doctrine.development_mode', true);
+        $app->register(DoctrineServiceProvider::class);
+
+        // allows access to built in user auth
+        $app['config']->set('auth.providers.users.model', User::class);
+
         $app->bind(
             'UserProviderInterface',
             function () {
@@ -130,6 +162,52 @@ class TestCase extends BaseTestCase
         );
     }
 
+    /**
+     * We don't want to use mockery so this is a reimplementation of the mockery version.
+     *
+     * @param  array|string $events
+     * @return $this
+     *
+     * @throws Exception
+     */
+    public function expectsEvents($events)
+    {
+        $events = is_array($events) ? $events : func_get_args();
+
+        $mock =
+            $this->getMockBuilder(Dispatcher::class)
+                ->setMethods(['fire', 'dispatch'])
+                ->getMockForAbstractClass();
+
+        $mock->method('fire')
+            ->willReturnCallback(
+                function ($called) {
+                    $this->firedEvents[] = $called;
+                }
+            );
+
+        $mock->method('dispatch')
+            ->willReturnCallback(
+                function ($called) {
+                    $this->firedEvents[] = $called;
+                }
+            );
+
+        $this->app->instance('events', $mock);
+
+        $this->beforeApplicationDestroyed(
+            function () use ($events) {
+                $fired = $this->getFiredEvents($events);
+                if ($eventsNotFired = array_diff($events, $fired)) {
+                    throw new Exception(
+                        'These expected events were not fired: [' . implode(', ', $eventsNotFired) . ']'
+                    );
+                }
+            }
+        );
+
+        return $this;
+    }
 
     protected function createUsersTable()
     {
@@ -175,7 +253,7 @@ class TestCase extends BaseTestCase
                             ->toDateTimeString(),
                     ]
                 );
-
+dd(Auth::shouldReceive('id'));
 //        Auth::shouldReceive('check')
 //            ->andReturn(true);
 //

@@ -13,6 +13,10 @@ use Gedmo\DoctrineExtensions;
 use Gedmo\Sortable\SortableListener;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 use Railroad\Doctrine\TimestampableListener;
+use Railroad\Doctrine\Types\Carbon\CarbonDateTimeTimezoneType;
+use Railroad\Doctrine\Types\Carbon\CarbonDateTimeType;
+use Railroad\Doctrine\Types\Carbon\CarbonDateType;
+use Railroad\Doctrine\Types\Carbon\CarbonTimeType;
 use Railroad\Railnotifications\Managers\RailnotificationsEntityManager;
 use Redis;
 use Railroad\Railnotifications\Types\UserType;
@@ -50,6 +54,11 @@ class NotificationsServiceProvider extends ServiceProvider
      */
     public function register()
     {
+        Type::overrideType('datetime', CarbonDateTimeType::class);
+        Type::overrideType('datetimetz', CarbonDateTimeTimezoneType::class);
+        Type::overrideType('date', CarbonDateType::class);
+        Type::overrideType('time', CarbonTimeType::class);
+
         !Type::hasType(UserType::USER_TYPE) ? Type::addType(UserType::USER_TYPE, UserType::class) : null;
 
         // set proxy dir to temp folder on server

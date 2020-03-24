@@ -14,6 +14,7 @@ use Railroad\Railnotifications\Exceptions\RecipientNotificationBroadcastFailure;
 use Railroad\Railnotifications\Jobs\BroadcastNotification;
 use Railroad\Railnotifications\Jobs\BroadcastNotificationsAggregated;
 use Railroad\Railnotifications\Managers\RailnotificationsEntityManager;
+use Railroad\Railnotifications\Notifications\CommentReplyNotifications;
 
 class NotificationBroadcastService
 {

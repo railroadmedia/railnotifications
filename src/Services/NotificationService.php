@@ -53,11 +53,6 @@ class NotificationService
      */
     public function create(string $type, array $data, int $recipientId)
     {
-        \Illuminate\Support\Facades\Notification::route('mail', 'taylor@example.com')
-            ->route('database', '5555555555')
-            ->notify(new CommentReplyNotifications());
-
-        return true;
         $notification = new Notification();
 
         $notification->setType($type);

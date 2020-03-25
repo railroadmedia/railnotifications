@@ -14,7 +14,6 @@ use Railroad\Railnotifications\Exceptions\RecipientNotificationBroadcastFailure;
 use Railroad\Railnotifications\Jobs\BroadcastNotification;
 use Railroad\Railnotifications\Jobs\BroadcastNotificationsAggregated;
 use Railroad\Railnotifications\Managers\RailnotificationsEntityManager;
-use Railroad\Railnotifications\Notifications\CommentReplyNotifications;
 
 class NotificationBroadcastService
 {
@@ -63,8 +62,8 @@ class NotificationBroadcastService
 
         $notificationBroadcast = new NotificationBroadcast();
         $notificationBroadcast->setChannel($channelName);
-        $notificationBroadcast->setType(NotificationBroadcastOld::TYPE_SINGLE);
-        $notificationBroadcast->setStatus(NotificationBroadcastOld::STATUS_IN_TRANSIT);
+        $notificationBroadcast->setType(NotificationBroadcast::TYPE_SINGLE);
+        $notificationBroadcast->setStatus(NotificationBroadcast::STATUS_IN_TRANSIT);
         $notificationBroadcast->setNotificationId($notificationId);
 
         $this->entityManager->persist($notificationBroadcast);
@@ -126,29 +125,44 @@ class NotificationBroadcastService
         dispatch($job);
     }
 
+    /**
+     * @param int $notificationBroadcastId
+     * @throws \Doctrine\ORM\ORMException
+     * @throws \Doctrine\ORM\OptimisticLockException
+     */
     public function markSucceeded(int $notificationBroadcastId)
     {
-        $notificationBroadcast = $this->notificationBroadcastDataMapper->get($notificationBroadcastId);
+        $notificationBroadcast = $this->notificationBroadcastRepository->find($notificationBroadcastId);
 
-        $notificationBroadcast->setStatus(NotificationBroadcastOld::STATUS_SENT);
+        $notificationBroadcast->setStatus(NotificationBroadcast::STATUS_SENT);
         $notificationBroadcast->setBroadcastOn(
             Carbon::now()
                 ->toDateTimeString()
         );
-        $notificationBroadcast->persist();
+
+        $this->entityManager->persist($notificationBroadcast);
+        $this->entityManager->flush();
     }
 
+    /**
+     * @param int $notificationBroadcastId
+     * @param $message
+     * @throws \Doctrine\ORM\ORMException
+     * @throws \Doctrine\ORM\OptimisticLockException
+     */
     public function markFailed(int $notificationBroadcastId, $message)
     {
-        $notificationBroadcast = $this->notificationBroadcastDataMapper->get($notificationBroadcastId);
+        $notificationBroadcast = $this->notificationBroadcastRepository->find($notificationBroadcastId);
 
-        $notificationBroadcast->setStatus(NotificationBroadcastOld::STATUS_FAILED);
+        $notificationBroadcast->setStatus(NotificationBroadcast::STATUS_FAILED);
         $notificationBroadcast->setBroadcastOn(
             Carbon::now()
                 ->toDateTimeString()
         );
         $notificationBroadcast->setReport($message);
-        $notificationBroadcast->persist();
+
+        $this->entityManager->persist($notificationBroadcast);
+        $this->entityManager->flush();
     }
 
     public function get($id)

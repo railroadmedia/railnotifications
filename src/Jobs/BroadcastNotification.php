@@ -6,9 +6,7 @@ use Exception;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
-use Railroad\Railforums\Exceptions\CannotDeleteFirstPostInThread;
 use Railroad\Railnotifications\Channels\ChannelFactory;
-use Railroad\Railnotifications\DataMappers\NotificationBroadcastDataMapper;
 use Railroad\Railnotifications\Exceptions\BroadcastNotificationFailure;
 use Railroad\Railnotifications\Services\NotificationBroadcastService;
 
@@ -23,6 +21,11 @@ class BroadcastNotification implements ShouldQueue
      */
     private $notificationBroadcastService;
 
+    /**
+     * BroadcastNotification constructor.
+     *
+     * @param $notificationBroadcastId
+     */
     public function __construct($notificationBroadcastId)
     {
         $this->notificationBroadcastId = $notificationBroadcastId;
@@ -30,16 +33,12 @@ class BroadcastNotification implements ShouldQueue
 
     public function handle(
         NotificationBroadcastService $notificationBroadcastService,
-        NotificationBroadcastDataMapper $notificationBroadcastDataMapper,
         ChannelFactory $channelFactory
     ) {
         try {
             $this->notificationBroadcastService = $notificationBroadcastService;
 
-//            $notificationBroadcast = $notificationBroadcastDataMapper->get(
-//                $this->notificationBroadcastId
-//            );
-            $notificationBroadcast = $this->notificationBroadcastService->get( $this->notificationBroadcastId);
+            $notificationBroadcast = $this->notificationBroadcastService->get($this->notificationBroadcastId);
 
             if (empty($notificationBroadcast)) {
                 throw new Exception(

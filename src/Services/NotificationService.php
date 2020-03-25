@@ -283,7 +283,7 @@ class NotificationService
     {
         $qb = $this->notificationRepository->createQueryBuilder('n');
 
-        return $qb->select('n')
+        return $qb->select('n.id')
             ->where(
                 $qb->expr()
                     ->isNull('n.readOn')
@@ -291,7 +291,7 @@ class NotificationService
             ->andWhere('n.createdAt >= :createdAtDate')
             ->setParameter('createdAtDate', $createdAfterDateTimeString)
             ->getQuery()
-            ->getResult();
+            ->getScalarResult();
 //        return $this->notificationDataMapper->getAllRecipientIdsWithUnreadNotifications(
 //            $createdAfterDateTimeString
 //        );

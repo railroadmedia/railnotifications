@@ -1,10 +1,9 @@
 <?php
 
-return array(
+return [
     'channels' => [
         /* add custom channels here, custom channels must extend a base channel */
-
-        /* Ex: 'mail' => \My\MailClass\::class, */
+        \Railroad\Railnotifications\Channels\FcmChannel::class
     ],
 
     // cache
@@ -28,4 +27,4 @@ return array(
             'namespace' => 'Railroad\Railnotifications\Entities',
         ],
     ],
-);
+];

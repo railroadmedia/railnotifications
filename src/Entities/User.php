@@ -34,6 +34,21 @@ class User implements UserEntityInterface
     private $avatar;
 
     /**
+     * @var
+     */
+    private $firebaseTokenIOS;
+
+    /**
+     * @var
+     */
+    private $firebaseTokenAndroid;
+
+    /**
+     * @var
+     */
+    private $firebaseTokenWeb;
+
+    /**
      * User constructor.
      *
      * @param int $id
@@ -41,12 +56,22 @@ class User implements UserEntityInterface
      * @param $displayName
      * @param $avatar
      */
-    public function __construct(int $id, $email, $displayName, $avatar)
-    {
+    public function __construct(
+        int $id,
+        $email,
+        $displayName,
+        $avatar,
+        $firebaseTokenIOS,
+        $firebaseTokenAndroid,
+        $firebaseTokenWeb
+    ) {
         $this->id = $id;
         $this->email = $email;
         $this->displayName = $displayName;
         $this->avatar = $avatar;
+        $this->firebaseTokenAndroid = $firebaseTokenAndroid;
+        $this->firebaseTokenIOS = $firebaseTokenIOS;
+        $this->firebaseTokenWeb = $firebaseTokenWeb;
     }
 
     /**
@@ -107,6 +132,57 @@ class User implements UserEntityInterface
     : string
     {
         return $this->avatar;
+    }
+
+    /**
+     * @param $firebaseTokenIOS
+     */
+    public function setFirebaseTokenIOS($firebaseTokenIOS)
+    : void {
+        $this->firebaseTokenIOS = $firebaseTokenIOS;
+    }
+
+    /**
+     * @return string
+     */
+    public function getFirebaseTokenIOS()
+    : ?string
+    {
+        return $this->firebaseTokenIOS;
+    }
+
+    /**
+     * @param $firebaseTokenAndroid
+     */
+    public function setFirebaseTokenAndroid($firebaseTokenAndroid)
+    : void {
+        $this->firebaseTokenAndroid = $firebaseTokenAndroid;
+    }
+
+    /**
+     * @return string
+     */
+    public function getFirebaseTokenAndroid()
+    : ?string
+    {
+        return $this->firebaseTokenAndroid;
+    }
+
+    /**
+     * @param $firebaseTokenWeb
+     */
+    public function setFirebaseTokenWeb($firebaseTokenWeb)
+    : void {
+        $this->firebaseTokenWeb = $firebaseTokenWeb;
+    }
+
+    /**
+     * @return string
+     */
+    public function getFirebaseTokenWeb()
+    : ?string
+    {
+        return $this->firebaseTokenWeb;
     }
 
     /**

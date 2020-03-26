@@ -5,10 +5,7 @@ namespace Railroad\Railnotifications\Services;
 use Carbon\Carbon;
 use Railroad\Railmap\Helpers\RailmapHelpers;
 use Railroad\Railnotifications\Channels\ChannelFactory;
-use Railroad\Railnotifications\DataMappers\NotificationBroadcastDataMapper;
-use Railroad\Railnotifications\Entities\Notification;
 use Railroad\Railnotifications\Entities\NotificationBroadcast;
-use Railroad\Railnotifications\Entities\NotificationBroadcastOld;
 use Railroad\Railnotifications\Exceptions\BroadcastNotificationFailure;
 use Railroad\Railnotifications\Exceptions\RecipientNotificationBroadcastFailure;
 use Railroad\Railnotifications\Jobs\BroadcastNotification;
@@ -17,31 +14,41 @@ use Railroad\Railnotifications\Managers\RailnotificationsEntityManager;
 
 class NotificationBroadcastService
 {
+    /**
+     * @var NotificationService
+     */
     private $notificationService;
+
+    /**
+     * @var ChannelFactory
+     */
     private $channelFactory;
-    private $notificationBroadcastDataMapper;
 
     /**
      * @var RailnotificationsEntityManager
      */
     public $entityManager;
 
-    private $notificationRepository;
-
+    /**
+     * @var \Doctrine\Common\Persistence\ObjectRepository|\Doctrine\ORM\EntityRepository
+     */
     private $notificationBroadcastRepository;
 
+    /**
+     * NotificationBroadcastService constructor.
+     *
+     * @param NotificationService $notificationService
+     * @param ChannelFactory $channelFactory
+     * @param RailnotificationsEntityManager $entityManager
+     */
     public function __construct(
         NotificationService $notificationService,
         ChannelFactory $channelFactory,
-        NotificationBroadcastDataMapper $notificationBroadcastDataMapper,
         RailnotificationsEntityManager $entityManager
     ) {
         $this->notificationService = $notificationService;
         $this->channelFactory = $channelFactory;
-        $this->notificationBroadcastDataMapper = $notificationBroadcastDataMapper;
-
         $this->entityManager = $entityManager;
-        $this->notificationRepository = $this->entityManager->getRepository(Notification::class);
         $this->notificationBroadcastRepository = $this->entityManager->getRepository(NotificationBroadcast::class);
     }
 
@@ -54,7 +61,7 @@ class NotificationBroadcastService
      */
     public function broadcast(int $notificationId, string $channelName)
     {
-        $notification = $this->notificationRepository->find($notificationId);
+        $notification = $this->notificationService->get($notificationId);
 
         if (empty($notification)) {
             throw new BroadcastNotificationFailure($notificationId, 'Notification not found.');
@@ -77,8 +84,10 @@ class NotificationBroadcastService
     /**
      * @param int $recipientId
      * @param string $channelName
-     * @param null|string $createdAfterDateTimeString
+     * @param string|null $createdAfterDateTimeString
      * @throws RecipientNotificationBroadcastFailure
+     * @throws \Doctrine\ORM\ORMException
+     * @throws \Doctrine\ORM\OptimisticLockException
      */
     public function broadcastUnreadAggregated(
         int $recipientId,
@@ -97,16 +106,19 @@ class NotificationBroadcastService
         $groupId = bin2hex(openssl_random_pseudo_bytes(32));
 
         foreach ($notifications as $notification) {
-            if ($notification->hasBeenBroadcast()) {
+            if ($notification->getBroadcastOn()) {
                 continue;
             }
 
-            $notificationBroadcast = new NotificationBroadcastOld();
+            $notificationBroadcast = new NotificationBroadcast();
             $notificationBroadcast->setChannel($channelName);
-            $notificationBroadcast->setType(NotificationBroadcastOld::TYPE_AGGREGATED);
+            $notificationBroadcast->setType(NotificationBroadcast::TYPE_AGGREGATED);
             $notificationBroadcast->setAggregationGroupId($groupId);
-            $notificationBroadcast->setStatus(NotificationBroadcastOld::STATUS_IN_TRANSIT);
-            $notificationBroadcast->setNotification($notification);
+            $notificationBroadcast->setStatus(NotificationBroadcast::STATUS_IN_TRANSIT);
+            $notificationBroadcast->setNotificationId($notification->getId());
+
+            $this->entityManager->persist($notificationBroadcast);
+            $this->entityManager->flush();
 
             $notificationBroadcasts[] = $notificationBroadcast;
         }
@@ -116,8 +128,6 @@ class NotificationBroadcastService
         }
 
         // note: railmap still does not have mass insert implemented, this will persist 1 at a time
-        $this->notificationBroadcastDataMapper->persist($notificationBroadcasts);
-
         $job = new BroadcastNotificationsAggregated(
             RailmapHelpers::entityArrayColumn($notificationBroadcasts, 'getId')
         );
@@ -135,10 +145,7 @@ class NotificationBroadcastService
         $notificationBroadcast = $this->notificationBroadcastRepository->find($notificationBroadcastId);
 
         $notificationBroadcast->setStatus(NotificationBroadcast::STATUS_SENT);
-        $notificationBroadcast->setBroadcastOn(
-            Carbon::now()
-                ->toDateTimeString()
-        );
+        $notificationBroadcast->setBroadcastOn(Carbon::now());
 
         $this->entityManager->persist($notificationBroadcast);
         $this->entityManager->flush();
@@ -155,10 +162,7 @@ class NotificationBroadcastService
         $notificationBroadcast = $this->notificationBroadcastRepository->find($notificationBroadcastId);
 
         $notificationBroadcast->setStatus(NotificationBroadcast::STATUS_FAILED);
-        $notificationBroadcast->setBroadcastOn(
-            Carbon::now()
-                ->toDateTimeString()
-        );
+        $notificationBroadcast->setBroadcastOn(Carbon::now());
         $notificationBroadcast->setReport($message);
 
         $this->entityManager->persist($notificationBroadcast);

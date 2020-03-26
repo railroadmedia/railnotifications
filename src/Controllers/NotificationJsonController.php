@@ -5,8 +5,8 @@ namespace Railroad\Railnotifications\Controllers;
 use Doctrine\ORM\OptimisticLockException;
 use Doctrine\ORM\ORMException;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Routing\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controller;
 use Railroad\Railnotifications\Exceptions\NotFoundException;
 use Railroad\Railnotifications\Services\NotificationService;
 use Railroad\Railnotifications\Services\ResponseService;
@@ -183,7 +183,7 @@ class NotificationJsonController extends Controller
      */
     public function countReadNotifications(Request $request)
     {
-        $count = $this->notificationService->getReadCount($request->get('user_id',auth()->id()));
+        $count = $this->notificationService->getReadCount($request->get('user_id', auth()->id()));
 
         return ResponseService::empty(201)
             ->setData(['data' => $count]);
@@ -197,7 +197,7 @@ class NotificationJsonController extends Controller
      */
     public function countUnReadNotifications(Request $request)
     {
-        $count = $this->notificationService->getUnreadCount($request->get('user_id',auth()->id()));
+        $count = $this->notificationService->getUnreadCount($request->get('user_id', auth()->id()));
 
         return ResponseService::empty(201)
             ->setData(['data' => $count]);
@@ -205,13 +205,13 @@ class NotificationJsonController extends Controller
 
     public function notify()
     {
-        $data = json_decode( \request()->getContent() );
+        $data = json_decode(\request()->getContent());
 
-        $sender    = $data->sender_user;
-        $receiver  = $data->receiver_user;
-        $notification_payload   = $data->payload;
-        $notification_title     = $data->title;
-        $notification_message   = $data->message;
+        $sender = $data->sender_user;
+        $receiver = $data->receiver_user;
+        $notification_payload = $data->payload;
+        $notification_title = $data->title;
+        $notification_message = $data->message;
         $notification_push_type = $data->push_type;
 
         try {
@@ -220,7 +220,7 @@ class NotificationJsonController extends Controller
             $receiver_id = "";
 
             $firebase = new \Firebase();
-            $push     = new \Push();
+            $push = new \Push();
 
             // optional payload
             $payload = $notification_payload;
@@ -233,32 +233,37 @@ class NotificationJsonController extends Controller
             // push type - single user / topic
             $push_type = $notification_push_type ?? '';
 
-            $push->setTitle( $title );
-            $push->setMessage( $message );
-            $push->setPayload( $payload );
+            $push->setTitle($title);
+            $push->setMessage($message);
+            $push->setPayload($payload);
 
-            $json     = '';
+            $json = '';
             $response = '';
 
-            if ( $push_type === 'topic' ) {
-                $json     = $push->getPush();
-                $response = $firebase->sendToTopic( 'global', $json );
-            } else if ( $push_type === 'individual' ) {
-                $json     = $push->getPush();
-                $regId    = $receiver_id ?? '';
-                $response = $firebase->send( $regId, $json );
+            if ($push_type === 'topic') {
+                $json = $push->getPush();
+                $response = $firebase->sendToTopic('global', $json);
+            } else {
+                if ($push_type === 'individual') {
+                    $json = $push->getPush();
+                    $regId = $receiver_id ?? '';
+                    $response = $firebase->send($regId, $json);
 
-                return response()->json( [
-                    'response' => $response
-                ] );
+                    return response()->json(
+                        [
+                            'response' => $response,
+                        ]
+                    );
+                }
             }
 
-
-        } catch ( \Exception $ex ) {
-            return response()->json( [
-                'error'   => true,
-                'message' => $ex->getMessage()
-            ] );
+        } catch (\Exception $ex) {
+            return response()->json(
+                [
+                    'error' => true,
+                    'message' => $ex->getMessage(),
+                ]
+            );
         }
     }
 }

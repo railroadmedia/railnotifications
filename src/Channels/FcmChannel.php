@@ -2,28 +2,36 @@
 
 namespace Railroad\Railnotifications\Channels;
 
-use Railroad\Railnotifications\Entities\NotificationBroadcast;
-use Railroad\Railnotifications\Services\NotificationService;
-use Railroad\Railnotifications\Services\NotificationBroadcastService;
-
 use LaravelFCM\Facades\FCM;
 use LaravelFCM\Message\OptionsBuilder;
 use LaravelFCM\Message\PayloadDataBuilder;
 use LaravelFCM\Message\PayloadNotificationBuilder;
+use Railroad\Railnotifications\Entities\NotificationBroadcast;
+use Railroad\Railnotifications\Services\NotificationBroadcastService;
+use Railroad\Railnotifications\Services\NotificationService;
 
 class FcmChannel implements ChannelInterface
 {
     const MAX_TOKEN_PER_REQUEST = 500;
-
     /**
      * @var Client
      */
     protected $client;
-
+    /**
+     * @var NotificationService
+     */
     private $notificationService;
-
+    /**
+     * @var NotificationBroadcastService
+     */
     private $notificationBroadcastService;
 
+    /**
+     * FcmChannel constructor.
+     *
+     * @param NotificationService $notificationService
+     * @param NotificationBroadcastService $notificationBroadcastService
+     */
     public function __construct(
         NotificationService $notificationService,
         NotificationBroadcastService $notificationBroadcastService
@@ -34,59 +42,65 @@ class FcmChannel implements ChannelInterface
 
     /**
      * @param NotificationBroadcast $notificationBroadcast
-     * @throws \LaravelFCM\Message\Exceptions\InvalidOptionsException
+     * @throws \Doctrine\ORM\ORMException
+     * @throws \Doctrine\ORM\OptimisticLockException
      */
     public function send(NotificationBroadcast $notificationBroadcast)
     {
         $notification = $this->notificationService->get($notificationBroadcast->getNotificationId());
 
-        //android test
-        $token = "c__l3YtTc_g:APA91bEoljL8IT4skNOSvyAJrqh5v1LA_CfIm2bxSLpkKpFDR3-y1Szkya8MwRIcMSvV4YN30yUCG-rtiJX-aBNyY-yutkbwzq0qiwaTvXTnCv1OP9z2zeD_Lb6KGyOJm011a6sINoOA";
+        $recipient = $notification->getRecipient();
 
-        //iOS test
-        $token =
-            "d8ejwv0hW0NFl-KeEUMSjh:APA91bH-TIWpWlCPNObJonllaFVaDF9wUtE5gbtNSaZQ8c5qcoETrGjUDEFiZlHADIIJr0F-y4BQ7CGn530xqtcUMxMj5r9n7OLKg_RGDOaF-lOjYo5GFOxYifXwtfg2o7K0_QXG4062";
+        $firebaseTokenWeb = $recipient->getFirebaseTokenWeb();
 
-        //$token = $notification->getRecipient()->getToken();
+        $firebaseTokenIOS = $recipient->getFirebaseTokenIOS();
 
-        if (empty($token)) {
-            throw new \Exception('No FCM token found for notifiable.');
+        $firebaseTokenAndroid = $recipient->getFirebaseTokenAndroid();
+
+        if ($firebaseTokenWeb) {
+            $this->sendToFcm($firebaseTokenWeb);
         }
 
-        // Get the message based on notification type
-        $fcmMessage = "New Lesson Comment Reply: ";
+        if ($firebaseTokenAndroid) {
+            $this->sendToFcm($firebaseTokenAndroid);
+        }
 
-        $optionBuilder = new OptionsBuilder();
-        $optionBuilder->setTimeToLive(60 * 20);
+        if ($firebaseTokenIOS) {
+            $this->sendToFcm($firebaseTokenIOS);
+        }
 
-        $notificationBuilder = new PayloadNotificationBuilder('Notification title');
-        $notificationBuilder->setBody($fcmMessage)
-            ->setSound('default');
-
-        $dataBuilder = new PayloadDataBuilder();
-        $dataBuilder->addData(['a_data' => 'my_data']);
-
-        $option = $optionBuilder->build();
-        $notification = $notificationBuilder->build();
-        $data = $dataBuilder->build();
-
-        $downstreamResponse = FCM::sendTo($token, $option, $notification, $data);
-
-        $this->notificationBroadcastService->markSucceeded($notificationBroadcast->getId());
+        if ($firebaseTokenWeb || $firebaseTokenIOS || $firebaseTokenAndroid) {
+            $this->notificationBroadcastService->markSucceeded($notificationBroadcast->getId());
+        }
     }
 
     /**
-     * @param Message $fcmMessage
-     *
-     * @return mixed
-     * @throws CouldNotSendNotification
+     * @param $token
      */
-    protected function sendToFcm(Message $fcmMessage)
+    protected function sendToFcm($token)
     {
         try {
-            return FirebaseMessaging::send($fcmMessage);
-        } catch (MessagingException $messagingException) {
-            throw CouldNotSendNotification::serviceRespondedWithAnError($messagingException);
+            // Get the message based on notification type
+            $fcmMessage = "New Lesson Comment Reply: ";
+
+            $optionBuilder = new OptionsBuilder();
+            $optionBuilder->setTimeToLive(60 * 20);
+
+            $notificationBuilder = new PayloadNotificationBuilder('Notification title');
+            $notificationBuilder->setBody($fcmMessage)
+                ->setSound('default');
+
+            $dataBuilder = new PayloadDataBuilder();
+           // $dataBuilder->addData(['a_data' => 'my_data']);
+
+            $option = $optionBuilder->build();
+            $notification = $notificationBuilder->build();
+            $data = $dataBuilder->build();
+
+            FCM::sendTo($token, $option, $notification, $data);
+
+        } catch (\Exception $messagingException) {
+
         }
     }
 

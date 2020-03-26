@@ -3,16 +3,11 @@
 namespace Railroad\Railnotifications\Services;
 
 use Carbon\Carbon;
-use Railroad\Railnotifications\DataMappers\NotificationDataMapper;
+use FCM;
+use Railroad\Railnotifications\Contracts\UserProviderInterface;
 use Railroad\Railnotifications\Entities\Notification;
 use Railroad\Railnotifications\Entities\NotificationOld;
-use LaravelFCM\Message\OptionsBuilder;
-use LaravelFCM\Message\PayloadDataBuilder;
-use LaravelFCM\Message\PayloadNotificationBuilder;
-use FCM;
 use Railroad\Railnotifications\Managers\RailnotificationsEntityManager;
-use Railroad\Railnotifications\Contracts\UserProviderInterface;
-use Railroad\Railnotifications\Notifications\CommentReplyNotifications;
 
 class NotificationService
 {
@@ -33,6 +28,12 @@ class NotificationService
      */
     private $userProvider;
 
+    /**
+     * NotificationService constructor.
+     *
+     * @param RailnotificationsEntityManager $entityManager
+     * @param UserProviderInterface $userProvider
+     */
     public function __construct(
         RailnotificationsEntityManager $entityManager,
         UserProviderInterface $userProvider
@@ -82,15 +83,16 @@ class NotificationService
     {
         $qb = $this->notificationRepository->createQueryBuilder('n');
 
-        $existingNotification = $qb->select('n')
-            ->where('n.recipient IN (:recipientIdS)')
-            ->andWhere('n.type = :type')
-            ->andWhere('n.data = :data')
-            ->setParameter('recipientIdS', $recipientId)
-            ->setParameter('type', $type)
-            ->setParameter('data', $data)
-            ->getQuery()
-            ->getOneOrNullResult();
+        $existingNotification =
+            $qb->select('n')
+                ->where('n.recipient IN (:recipientIdS)')
+                ->andWhere('n.type = :type')
+                ->andWhere('n.data = :data')
+                ->setParameter('recipientIdS', $recipientId)
+                ->setParameter('type', $type)
+                ->setParameter('data', $data)
+                ->getQuery()
+                ->getOneOrNullResult();
 
         if (!empty($existingNotification)) {
             $existingNotification->setReadOn(null);
@@ -161,7 +163,7 @@ class NotificationService
 
     /**
      * @param array $ids
-     * @return NotificationOld[]
+     * @return mixed
      */
     public function getMany(array $ids)
     {
@@ -252,27 +254,24 @@ class NotificationService
     {
         $qb = $this->notificationRepository->createQueryBuilder('n');
 
-        $result =  $qb->select('n')
-            ->where(
-                'n.recipient = :recipientId'
-            )
-            ->andWhere(
-                $qb->expr()
-                    ->isNull('n.readOn')
-            )
-            ->setParameter('recipientId', $recipientId);
+        $result =
+            $qb->select('n')
+                ->where(
+                    'n.recipient = :recipientId'
+                )
+                ->andWhere(
+                    $qb->expr()
+                        ->isNull('n.readOn')
+                )
+                ->setParameter('recipientId', $recipientId);
 
-        if($createdAfterDateTimeString) {
-            $result = $result->andWhere('n.createdAt >= :createdAtDate')
-                ->setParameter('createdAtDate', $createdAfterDateTimeString);
+        if ($createdAfterDateTimeString) {
+            $result =
+                $result->andWhere('n.createdAt >= :createdAtDate')
+                    ->setParameter('createdAtDate', $createdAfterDateTimeString);
         }
-            return $result->getQuery()
+        return $result->getQuery()
             ->getResult();
-
-//        return $this->notificationDataMapper->getAllUnReadForRecipient(
-//            $recipientId,
-//            $createdAfterDateTimeString
-//        );
     }
 
     /**
@@ -281,25 +280,26 @@ class NotificationService
      */
     public function getAllRecipientIdsWithUnreadNotifications(string $createdAfterDateTimeString = null)
     {
-        $qb = $this->notificationRepository->createQueryBuilder('n');
+        $qb =
+            $this->notificationRepository->createQueryBuilder('n')
+                ->select('n.id');
 
-        return $qb->select('n.id')
-            ->where(
+        if ($createdAfterDateTimeString) {
+            $qb->where(
                 $qb->expr()
                     ->isNull('n.readOn')
             )
-            ->andWhere('n.createdAt >= :createdAtDate')
-            ->setParameter('createdAtDate', $createdAfterDateTimeString)
-            ->getQuery()
+                ->where('n.createdAt >= :createdAtDate')
+                ->setParameter('createdAtDate', $createdAfterDateTimeString);
+        }
+        return $qb->getQuery()
             ->getScalarResult();
-//        return $this->notificationDataMapper->getAllRecipientIdsWithUnreadNotifications(
-//            $createdAfterDateTimeString
-//        );
     }
 
     /**
      * @param int $id
      * @param string|null $readOnDateTimeString
+     * @return object|null
      * @throws \Doctrine\ORM\ORMException
      * @throws \Doctrine\ORM\OptimisticLockException
      */
@@ -321,6 +321,7 @@ class NotificationService
 
     /**
      * @param int $id
+     * @return object|null
      * @throws \Doctrine\ORM\ORMException
      * @throws \Doctrine\ORM\OptimisticLockException
      */
@@ -343,6 +344,7 @@ class NotificationService
     /**
      * @param int $recipientId
      * @param string|null $readOnDateTimeString
+     * @return mixed
      * @throws \Doctrine\ORM\ORMException
      * @throws \Doctrine\ORM\OptimisticLockException
      */
@@ -350,18 +352,18 @@ class NotificationService
     {
         $qb = $this->notificationRepository->createQueryBuilder('n');
 
-        $allUnreadNotifications = $qb->select('n')
-            ->where(
-                'n.recipient = :recipientId'
-            )
-            ->andWhere(
-                $qb->expr()
-                    ->isNull('n.readOn')
-            )
-            ->setParameter('recipientId', $recipientId)
-            ->getQuery()
-            ->getResult();
-
+        $allUnreadNotifications =
+            $qb->select('n')
+                ->where(
+                    'n.recipient = :recipientId'
+                )
+                ->andWhere(
+                    $qb->expr()
+                        ->isNull('n.readOn')
+                )
+                ->setParameter('recipientId', $recipientId)
+                ->getQuery()
+                ->getResult();
 
         foreach ($allUnreadNotifications as $unreadNotification) {
             $unreadNotification->setReadOn(
@@ -373,37 +375,5 @@ class NotificationService
         $this->entityManager->flush();
 
         return $allUnreadNotifications;
-    }
-
-    public function sendTestNotification()
-    {
-        $optionBuilder = new OptionsBuilder();
-
-        $optionBuilder->setTimeToLive(60 * 20);
-
-        $notificationBuilder = new PayloadNotificationBuilder('my title');
-        $notificationBuilder->setBody('Hello world')
-            ->setSound('default');
-
-        $dataBuilder = new PayloadDataBuilder();
-        $dataBuilder->addData(['a_data' => 'my_data']);
-
-        $option = $optionBuilder->build();
-        $notification = $notificationBuilder->build();
-        $data = $dataBuilder->build();
-
-        $token = "a_registration_from_your_database";
-
-        $downstreamResponse = FCM::sendTo($token, $option, $notification, $data);
-
-        $downstreamResponse->numberSuccess();
-        $downstreamResponse->numberFailure();
-        $downstreamResponse->numberModification();
-        $downstreamResponse->tokensToDelete();
-        $downstreamResponse->tokensToModify();
-        $downstreamResponse->tokensToRetry();
-        $downstreamResponse->tokensWithError();
-
-        return true;
     }
 }

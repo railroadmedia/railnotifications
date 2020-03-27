@@ -55,6 +55,7 @@ class NotificationBroadcastService
     /**
      * @param int $notificationId
      * @param string $channelName
+     * @return NotificationBroadcast
      * @throws BroadcastNotificationFailure
      * @throws \Doctrine\ORM\ORMException
      * @throws \Doctrine\ORM\OptimisticLockException
@@ -79,6 +80,8 @@ class NotificationBroadcastService
         $job = new BroadcastNotification($notificationBroadcast->getId());
 
         dispatch_now($job);
+
+        return $notificationBroadcast;
     }
 
     /**
@@ -137,6 +140,7 @@ class NotificationBroadcastService
 
     /**
      * @param int $notificationBroadcastId
+     * @return object|null
      * @throws \Doctrine\ORM\ORMException
      * @throws \Doctrine\ORM\OptimisticLockException
      */
@@ -144,16 +148,23 @@ class NotificationBroadcastService
     {
         $notificationBroadcast = $this->notificationBroadcastRepository->find($notificationBroadcastId);
 
+        if(!$notificationBroadcast){
+            return $notificationBroadcast;
+        }
+
         $notificationBroadcast->setStatus(NotificationBroadcast::STATUS_SENT);
         $notificationBroadcast->setBroadcastOn(Carbon::now());
 
         $this->entityManager->persist($notificationBroadcast);
         $this->entityManager->flush();
+
+        return $notificationBroadcast;
     }
 
     /**
      * @param int $notificationBroadcastId
      * @param $message
+     * @return object|null
      * @throws \Doctrine\ORM\ORMException
      * @throws \Doctrine\ORM\OptimisticLockException
      */
@@ -161,12 +172,18 @@ class NotificationBroadcastService
     {
         $notificationBroadcast = $this->notificationBroadcastRepository->find($notificationBroadcastId);
 
+        if(!$notificationBroadcast){
+            return $notificationBroadcast;
+        }
+
         $notificationBroadcast->setStatus(NotificationBroadcast::STATUS_FAILED);
         $notificationBroadcast->setBroadcastOn(Carbon::now());
         $notificationBroadcast->setReport($message);
 
         $this->entityManager->persist($notificationBroadcast);
         $this->entityManager->flush();
+
+        return $notificationBroadcast;
     }
 
     public function get($id)

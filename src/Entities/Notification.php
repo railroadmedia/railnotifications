@@ -22,6 +22,12 @@ class Notification
 {
     use TimestampableEntity;
 
+    const TYPE_FORUM_POST_IN_FOLLOWED_THREAD = 'forum post in followed thread';
+    const TYPE_FORUM_POST_REPLY = 'forum post reply';
+    const TYPE_FORUM_POST_LIKED = 'forum post liked';
+    const TYPE_LESSON_COMMENT_LIKED = 'lesson comment liked';
+    const TYPE_LESSON_COMMENT_REPLY = 'lesson comment reply';
+
     /**
      * @ORM\Id @ORM\GeneratedValue @ORM\Column(type="integer")
      * @var int

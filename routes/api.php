@@ -68,6 +68,31 @@ Route::group(
             \Railroad\Railnotifications\Controllers\NotificationJsonController::class . '@countUnReadNotifications'
         )
             ->name('notification.count.unread');
+
+        // Broadcast notifications
+        Route::put(
+            '/broadcast',
+            \Railroad\Railnotifications\Controllers\BroadcastNotificationJsonController::class . '@broadcast'
+        )
+            ->name('notification.broadcast');
+
+        Route::put(
+            '/broadcast/mark-succeeded',
+            \Railroad\Railnotifications\Controllers\BroadcastNotificationJsonController::class . '@markAsSucceeded'
+        )
+            ->name('notification.broadcast.mark-succeeded');
+
+        Route::put(
+            '/broadcast/mark-failed',
+            \Railroad\Railnotifications\Controllers\BroadcastNotificationJsonController::class . '@markAsFailed'
+        )
+            ->name('notification.broadcast.mark-failed');
+
+        Route::get(
+            '/broadcast/{id}',
+            \Railroad\Railnotifications\Controllers\BroadcastNotificationJsonController::class . '@showNotificationBroadcast'
+        )
+            ->name('notification.broadcast.show');
     }
 );
 

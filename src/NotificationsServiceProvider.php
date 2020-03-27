@@ -17,6 +17,8 @@ use Railroad\Doctrine\Types\Carbon\CarbonDateTimeTimezoneType;
 use Railroad\Doctrine\Types\Carbon\CarbonDateTimeType;
 use Railroad\Doctrine\Types\Carbon\CarbonDateType;
 use Railroad\Doctrine\Types\Carbon\CarbonTimeType;
+use Railroad\Railnotifications\Events\NotificationBroadcast;
+use Railroad\Railnotifications\Listeners\NotificationEventListener;
 use Railroad\Railnotifications\Managers\RailnotificationsEntityManager;
 use Redis;
 use Railroad\Railnotifications\Types\UserType;
@@ -33,6 +35,10 @@ class NotificationsServiceProvider extends ServiceProvider
      */
     public function boot()
     {
+        $this->listen = [
+            NotificationBroadcast::class => [NotificationEventListener::class . '@handle'],
+        ];
+
         parent::boot();
 
         $this->loadMigrationsFrom(__DIR__ . '/../migrations');

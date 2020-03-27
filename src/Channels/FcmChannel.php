@@ -58,15 +58,15 @@ class FcmChannel implements ChannelInterface
         $firebaseTokenAndroid = $recipient->getFirebaseTokenAndroid();
 
         if ($firebaseTokenWeb) {
-            $this->sendToFcm($firebaseTokenWeb);
+            $this->sendToFcm($firebaseTokenWeb, $notification);
         }
 
         if ($firebaseTokenAndroid) {
-            $this->sendToFcm($firebaseTokenAndroid);
+            $this->sendToFcm($firebaseTokenAndroid, $notification);
         }
 
         if ($firebaseTokenIOS) {
-            $this->sendToFcm($firebaseTokenIOS);
+            $this->sendToFcm($firebaseTokenIOS, $notification);
         }
 
         if ($firebaseTokenWeb || $firebaseTokenIOS || $firebaseTokenAndroid) {
@@ -76,22 +76,30 @@ class FcmChannel implements ChannelInterface
 
     /**
      * @param $token
+     * @param $notification
      */
-    protected function sendToFcm($token)
+    protected function sendToFcm($token, $notification)
     {
         try {
             // Get the message based on notification type
-            $fcmMessage = "New Lesson Comment Reply: ";
+            $fcmMessage =
+                (array_key_exists($notification->getType(), config('railnotifications.data'))) ?
+                    config('railnotifications.data')[$notification->getType()]['message'] : 'New notification';
+
+            $fcmTitle =
+                (array_key_exists($notification->getType(), config('railnotifications.data'))) ?
+                    config('railnotifications.data')[$notification->getType()]['title'] : 'New notification';
+
 
             $optionBuilder = new OptionsBuilder();
             $optionBuilder->setTimeToLive(60 * 20);
 
-            $notificationBuilder = new PayloadNotificationBuilder('Notification title');
+            $notificationBuilder = new PayloadNotificationBuilder($fcmTitle);
             $notificationBuilder->setBody($fcmMessage)
                 ->setSound('default');
 
             $dataBuilder = new PayloadDataBuilder();
-           // $dataBuilder->addData(['a_data' => 'my_data']);
+            // $dataBuilder->addData(['a_data' => 'my_data']);
 
             $option = $optionBuilder->build();
             $notification = $notificationBuilder->build();

@@ -27,4 +27,14 @@ return [
             'namespace' => 'Railroad\Railnotifications\Entities',
         ],
     ],
+    'data' => [
+        \Railroad\Railnotifications\Entities\Notification::TYPE_LESSON_COMMENT_LIKED =>[
+            'title' => 'New reply to your comment',
+            'message' => 'New reply to your comment'
+        ],
+        \Railroad\Railnotifications\Entities\Notification::TYPE_LESSON_COMMENT_LIKED => [
+            'title' => 'New like to your comment',
+            'message' => 'New like to your comment'
+        ]
+    ]
 ];

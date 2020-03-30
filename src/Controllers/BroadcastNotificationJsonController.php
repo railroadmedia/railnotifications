@@ -45,7 +45,8 @@ class BroadcastNotificationJsonController extends Controller
     public function broadcast(Request $request)
     {
         $notificationBroadcast = $this->notificationBroadcastService->broadcast(
-            $request->get('notification_id')
+            $request->get('notification_id'),
+            $request->get('channel')
         );
 
         return ResponseService::notificationBroadcast($notificationBroadcast);
@@ -99,9 +100,9 @@ class BroadcastNotificationJsonController extends Controller
      * @throws OptimisticLockException
      * @throws Throwable
      */
-    public function markAsFailed(int $id)
+    public function markAsFailed(int $id, Request $request)
     {
-        $notificationBroadcast = $this->notificationBroadcastService->markFailed($id);
+        $notificationBroadcast = $this->notificationBroadcastService->markFailed($id, $request->get('message'));
 
         throw_if(
             is_null($notificationBroadcast),

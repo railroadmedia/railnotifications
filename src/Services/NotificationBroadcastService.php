@@ -60,7 +60,7 @@ class NotificationBroadcastService
      * @throws \Doctrine\ORM\ORMException
      * @throws \Doctrine\ORM\OptimisticLockException
      */
-    public function broadcast(int $notificationId, string $channelName)
+    public function broadcast(int $notificationId, string $channelName = '')
     {
         $notification = $this->notificationService->get($notificationId);
 
@@ -79,7 +79,7 @@ class NotificationBroadcastService
 
         $job = new BroadcastNotification($notificationBroadcast->getId());
 
-        dispatch_now($job);
+        dispatch($job);
 
         return $notificationBroadcast;
     }
@@ -168,7 +168,7 @@ class NotificationBroadcastService
      * @throws \Doctrine\ORM\ORMException
      * @throws \Doctrine\ORM\OptimisticLockException
      */
-    public function markFailed(int $notificationBroadcastId, $message)
+    public function markFailed(int $notificationBroadcastId, $message = '')
     {
         $notificationBroadcast = $this->notificationBroadcastRepository->find($notificationBroadcastId);
 

@@ -10,7 +10,6 @@ use Railroad\Railnotifications\Contracts\UserProviderInterface;
 use Railroad\Railnotifications\Entities\User;
 use Railroad\Railnotifications\Tests\TestCase;
 
-
 class UserProvider implements UserProviderInterface
 {
 
@@ -19,10 +18,20 @@ class UserProvider implements UserProviderInterface
      */
     public function getUserById(int $id)
     : ?\Railroad\Ecommerce\Entities\User {
-        $user = DB::table('users')->find($id);
+        $user =
+            DB::table('users')
+                ->find($id);
 
         if ($user) {
-            return new \Railroad\Ecommerce\Entities\User($id, $user->email, $user->display_name, $user->profile_picture_url);
+            return new \Railroad\Railnotifications\Entities\User(
+                $id,
+                $user->email,
+                $user->display_name,
+                $user->profile_picture_url,
+                $user->firebase_token_web,
+                $user->firebase_token_ios,
+                $user->firebase_token_android
+            );
         }
 
         return null;
@@ -33,10 +42,20 @@ class UserProvider implements UserProviderInterface
      */
     public function getRailnotificationsUserById(int $id)
     : ?User {
-        $user = DB::table('users')->find($id);
+        $user =
+            DB::table('users')
+                ->find($id);
 
         if ($user) {
-            return new \Railroad\Railnotifications\Entities\User($id, $user->email, $user->display_name, $user->profile_picture_url);
+            return new \Railroad\Railnotifications\Entities\User(
+                $id,
+                $user->email,
+                $user->display_name,
+                $user->profile_picture_url,
+                $user->firebase_token_web,
+                $user->firebase_token_ios,
+                $user->firebase_token_android
+            );
         }
 
         return null;
@@ -53,7 +72,7 @@ class UserProvider implements UserProviderInterface
     /**
      * @inheritDoc
      */
-    public function getUserId(\Railroad\Ecommerce\Entities\User $user)
+    public function getUserId($user)
     : int {
         return $user->getId();
     }
@@ -92,7 +111,7 @@ class UserProvider implements UserProviderInterface
         // TODO: Implement getCurrentUserId() method.
     }
 
-   /**
+    /**
      * @inheritDoc
      */
     public function createUser(string $email, string $password)
@@ -103,7 +122,8 @@ class UserProvider implements UserProviderInterface
     /**
      * @return TransformerAbstract
      */
-    public function getUserTransformer(): TransformerAbstract
+    public function getUserTransformer()
+    : TransformerAbstract
     {
         return new UserTransformer();
     }

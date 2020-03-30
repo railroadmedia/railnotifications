@@ -82,14 +82,31 @@ class FcmChannel implements ChannelInterface
     {
         try {
             // Get the message based on notification type
-            $fcmMessage =
-                (array_key_exists($notification->getType(), config('railnotifications.data'))) ?
-                    config('railnotifications.data')[$notification->getType()]['message'] : 'New notification';
+            $fcmMessage = $notification->getData()['comment']['user']['display_name'] . ' replied to your comment.
+            ';
+            $fcmMessage .= $notification->getData()['contentTitle'];
+            $fcmMessage .= '              
+            ' .
+                mb_strimwidth(
+                    htmlspecialchars(strip_tags($notification->getData()['comment']['comment'])),
+                    0,
+                    120,
+                    "..."
+                );
+
+            //strip_tags(html_entity_decode($notification->getData()['comment']['comment']));
+
+            //            .'
+            //            Original comment:  '. $notification->getData()['comment']['comment'];
+            //                (array_key_exists($notification->getType(), config('railnotifications.data'))) ?
+            //                    config('railnotifications.data')[$notification->getType()]['message'] : 'New notification';
+            //            $fcmMessage =
+            //                (array_key_exists($notification->getType(), config('railnotifications.data'))) ?
+            //                    config('railnotifications.data')[$notification->getType()]['message'] : 'New notification';
 
             $fcmTitle =
                 (array_key_exists($notification->getType(), config('railnotifications.data'))) ?
                     config('railnotifications.data')[$notification->getType()]['title'] : 'New notification';
-
 
             $optionBuilder = new OptionsBuilder();
             $optionBuilder->setTimeToLive(60 * 20);
@@ -99,7 +116,13 @@ class FcmChannel implements ChannelInterface
                 ->setSound('default');
 
             $dataBuilder = new PayloadDataBuilder();
-            // $dataBuilder->addData(['a_data' => 'my_data']);
+            $dataBuilder->addData(
+                [
+                    'image' => 'https://dpwjbsxqtam5n.cloudfront.net/sales/drumeo-method-app-screen.png',
+                    'uri' => 'https://staging.drumeo.com/members/lessons/songs/29250',
+                    'commentId' => 77073,
+                ]
+            );
 
             $option = $optionBuilder->build();
             $notification = $notificationBuilder->build();

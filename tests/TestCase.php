@@ -224,6 +224,9 @@ class TestCase extends BaseTestCase
                         $table->string('password');
                         $table->string('display_name');
                         $table->string('profile_picture_url')->nullable();
+                        $table->string('firebase_token_web')->nullable();
+                        $table->string('firebase_token_ios')->nullable();
+                        $table->string('firebase_token_android')->nullable();
                         $table->timestamps();
                     }
                 );
@@ -296,7 +299,7 @@ dd(Auth::shouldReceive('id'));
     }
 
     /**
-     * Helper method to seed a test product
+     * Helper method to seed a test notification
      *
      * @return array
      */
@@ -311,5 +314,24 @@ dd(Auth::shouldReceive('id'));
         $notification['id'] = $notificationId;
 
         return $notification;
+    }
+
+
+    /**
+     * Helper method to seed a test notification
+     *
+     * @return array
+     */
+    public function fakeNotificationBroadcast($notificationBroadcastStub = []): array
+    {
+        $notificationBroadcast = $this->faker->notificationBroadcast($notificationBroadcastStub);
+
+        $notificationBroadcastId =
+            $this->databaseManager->table('notification_broadcasts')
+                ->insertGetId($notificationBroadcast);
+
+        $notificationBroadcast['id'] = $notificationBroadcastId;
+
+        return $notificationBroadcast;
     }
 }

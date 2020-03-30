@@ -289,9 +289,6 @@ class NotificationJSONControllerTest extends TestCase
                 'data' => json_decode($notification['data']),
                 'read_on' => Carbon::now()
                     ->toDateTimeString(),
-                'recipient' => [
-                    'id' => $notification['recipient_id'],
-                ],
             ],
             $response->decodeResponseJson()
         );

@@ -77,13 +77,13 @@ Route::group(
             ->name('notification.broadcast');
 
         Route::put(
-            '/broadcast/mark-succeeded',
+            '/broadcast/mark-succeeded/{id}',
             \Railroad\Railnotifications\Controllers\BroadcastNotificationJsonController::class . '@markAsSucceeded'
         )
             ->name('notification.broadcast.mark-succeeded');
 
         Route::put(
-            '/broadcast/mark-failed',
+            '/broadcast/mark-failed/{id}',
             \Railroad\Railnotifications\Controllers\BroadcastNotificationJsonController::class . '@markAsFailed'
         )
             ->name('notification.broadcast.mark-failed');

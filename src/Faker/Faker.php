@@ -25,4 +25,21 @@ class Faker extends Generator
             $override
         );
     }
+
+    public function notificationBroadcast(array $override = [])
+    {
+        return array_merge(
+            [
+                'channel' => $this->text,
+                'type' => $this->text,
+                'status' => $this->text,
+                'report' => null,
+                'notification_id' => $this->randomNumber(),
+                'broadcast_on' => null,
+                'created_at' => Carbon::now()
+                    ->toDateTimeString(),
+            ],
+            $override
+        );
+    }
 }

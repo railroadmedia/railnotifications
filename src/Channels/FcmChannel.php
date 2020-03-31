@@ -6,7 +6,10 @@ use LaravelFCM\Facades\FCM;
 use LaravelFCM\Message\OptionsBuilder;
 use LaravelFCM\Message\PayloadDataBuilder;
 use LaravelFCM\Message\PayloadNotificationBuilder;
+use Railroad\Railnotifications\Entities\Notification;
 use Railroad\Railnotifications\Entities\NotificationBroadcast;
+use Railroad\Railnotifications\Notifications\FCM\LessonCommentReplyFCM;
+use Railroad\Railnotifications\Notifications\Mailers\LessonCommentReplyMailer;
 use Railroad\Railnotifications\Services\NotificationBroadcastService;
 use Railroad\Railnotifications\Services\NotificationService;
 
@@ -57,16 +60,34 @@ class FcmChannel implements ChannelInterface
 
         $firebaseTokenAndroid = $recipient->getFirebaseTokenAndroid();
 
+        switch ($notification->getType()) {
+//            case Notification::TYPE_FORUM_POST_IN_FOLLOWED_THREAD:
+//                $mailer = app()->make(FollowedForumThreadPostMailer::class);
+//                break;
+//            case Notification::TYPE_FORUM_POST_REPLY:
+//                $mailer = app()->make(ForumPostReplyMailer::class);
+//                break;
+            case Notification::TYPE_LESSON_COMMENT_REPLY:
+                $mailer = app()->make(LessonCommentReplyFCM::class);
+                break;
+            default:
+                throw new Exception(
+                    'No mailer found for notification broadcast id: ' . $notificationBroadcast->getId()
+                );
+        }
+
+        $this->notificationBroadcastService->markSucceeded($notificationBroadcast->getId());
+
         if ($firebaseTokenWeb) {
-            $this->sendToFcm($firebaseTokenWeb, $notification);
+            $mailer->send($firebaseTokenWeb, $notification);
         }
 
         if ($firebaseTokenAndroid) {
-            $this->sendToFcm($firebaseTokenAndroid, $notification);
+            $mailer->send($firebaseTokenAndroid, $notification);
         }
 
         if ($firebaseTokenIOS) {
-            $this->sendToFcm($firebaseTokenIOS, $notification);
+            $mailer->send($firebaseTokenIOS, $notification);
         }
 
         if ($firebaseTokenWeb || $firebaseTokenIOS || $firebaseTokenAndroid) {
@@ -75,84 +96,14 @@ class FcmChannel implements ChannelInterface
     }
 
     /**
-     * @param $token
-     * @param $notification
+     * @param array $notificationBroadcasts
+     * @throws \Doctrine\ORM\ORMException
+     * @throws \Doctrine\ORM\OptimisticLockException
      */
-    protected function sendToFcm($token, $notification)
-    {
-        try {
-            // Get the message based on notification type
-            $fcmMessage = $notification->getData()['comment']['user']['display_name'] . ' replied to your comment.
-            ';
-            $fcmMessage .= $notification->getData()['contentTitle'];
-            $fcmMessage .= '              
-            ' .
-                mb_strimwidth(
-                    htmlspecialchars(strip_tags($notification->getData()['comment']['comment'])),
-                    0,
-                    120,
-                    "..."
-                );
-
-            //strip_tags(html_entity_decode($notification->getData()['comment']['comment']));
-
-            //            .'
-            //            Original comment:  '. $notification->getData()['comment']['comment'];
-            //                (array_key_exists($notification->getType(), config('railnotifications.data'))) ?
-            //                    config('railnotifications.data')[$notification->getType()]['message'] : 'New notification';
-            //            $fcmMessage =
-            //                (array_key_exists($notification->getType(), config('railnotifications.data'))) ?
-            //                    config('railnotifications.data')[$notification->getType()]['message'] : 'New notification';
-
-            $fcmTitle =
-                (array_key_exists($notification->getType(), config('railnotifications.data'))) ?
-                    config('railnotifications.data')[$notification->getType()]['title'] : 'New notification';
-
-            $optionBuilder = new OptionsBuilder();
-            $optionBuilder->setTimeToLive(60 * 20);
-
-            $notificationBuilder = new PayloadNotificationBuilder($fcmTitle);
-            $notificationBuilder->setBody($fcmMessage)
-                ->setSound('default');
-
-            $dataBuilder = new PayloadDataBuilder();
-            $dataBuilder->addData(
-                [
-                    'image' => 'https://dpwjbsxqtam5n.cloudfront.net/sales/drumeo-method-app-screen.png',
-                    'uri' => 'https://staging.drumeo.com/members/lessons/songs/29250',
-                    'commentId' => 77073,
-                ]
-            );
-
-            $option = $optionBuilder->build();
-            $notification = $notificationBuilder->build();
-            $data = $dataBuilder->build();
-
-            FCM::sendTo($token, $option, $notification, $data);
-
-        } catch (\Exception $messagingException) {
-
-        }
-    }
-
-    /**
-     * @param $fcmMessage
-     * @param $tokens
-     *
-     * @return mixed
-     * @throws CouldNotSendNotification
-     */
-    protected function sendToFcmMulticast($fcmMessage, $tokens)
-    {
-        try {
-            return FirebaseMessaging::sendMulticast($fcmMessage, $tokens);
-        } catch (MessagingException $messagingException) {
-            throw CouldNotSendNotification::serviceRespondedWithAnError($messagingException);
-        }
-    }
-
     public function sendAggregated(array $notificationBroadcasts)
     {
-        // TODO: Implement sendAggregated() method.
+        foreach ($notificationBroadcasts as $notificationBroadcast){
+            $this->send($notificationBroadcast);
+        }
     }
 }

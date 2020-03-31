@@ -79,7 +79,7 @@ class NotificationBroadcastService
 
         $job = new BroadcastNotification($notificationBroadcast->getId());
 
-        dispatch($job);
+        dispatch_now($job);
 
         return $notificationBroadcast;
     }

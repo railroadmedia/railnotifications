@@ -2,24 +2,16 @@
 
 namespace Railroad\Railnotifications\Channels;
 
-//use App\DataMappers\User\UserDataMapper;
-//use App\Notifications\Emails\AggregatedNotificationsEmail;
-//use App\Notifications\Mailers\FollowedForumThreadPostMailer;
-//use App\Notifications\Mailers\ForumPostReplyMailer;
-//use App\Notifications\Mailers\LessonCommentReplyMailer;
-//use App\Notifications\NotificationServiceProvider;
-//use App\Notifications\Types\NotificationTypeFactory;
 use Exception;
 use Illuminate\Contracts\Mail\Mailer;
 use Railroad\Railmap\Helpers\RailmapHelpers;
-use Railroad\Railnotifications\Channels\ChannelInterface;
 use Railroad\Railnotifications\Entities\Notification;
 use Railroad\Railnotifications\Entities\NotificationBroadcast;
+use Railroad\Railnotifications\Notifications\Mailers\ForumPostReplyMailer;
 use Railroad\Railnotifications\Notifications\Mailers\LessonCommentReplyMailer;
 use Railroad\Railnotifications\Services\NotificationBroadcastService;
 use Railroad\Railnotifications\Services\NotificationService;
 
-//use Railroad\Usora\Repositories\UserRepository;
 
 class EmailChannel implements ChannelInterface
 {
@@ -36,15 +28,12 @@ class EmailChannel implements ChannelInterface
     public function __construct(
         NotificationBroadcastService $notificationBroadcastService,
         NotificationService $notificationService,
-//        NotificationTypeFactory $notificationTypeFactory,
         Mailer $mailer
-//        UserRepository $userRepository
-    ) {
+    )
+    {
         $this->notificationBroadcastService = $notificationBroadcastService;
         $this->notificationService = $notificationService;
-//        $this->notificationTypeFactory = $notificationTypeFactory;
         $this->mailer = $mailer;
-//        $this->userRepository = $userRepository;
     }
 
     public function send(NotificationBroadcast $notificationBroadcast)

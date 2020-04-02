@@ -7,13 +7,9 @@ use LaravelFCM\Message\OptionsBuilder;
 use LaravelFCM\Message\PayloadDataBuilder;
 use LaravelFCM\Message\PayloadNotificationBuilder;
 use Railroad\Railnotifications\Contracts\UserProviderInterface;
-use Railroad\Railnotifications\Entities\Notification;
-use Railroad\Railnotifications\Entities\NotificationBroadcast;
-use Railroad\Railnotifications\Notifications\Mailers\LessonCommentReplyMailer;
-use Railroad\Railnotifications\Services\NotificationBroadcastService;
-use Railroad\Railnotifications\Services\NotificationService;
 
-class LessonCommentReplyFCM
+
+class ForumPostReplyFCM
 {
     /**
      * @var UserProviderInterface
@@ -33,20 +29,21 @@ class LessonCommentReplyFCM
     public function send($token, $notification)
     {
         try {
-            $comment = $notification->getData()['comment'];
 
-            $lesson = $notification->getData()['content'];
+            $post = $notification->getData()['post'];
+
+            $thread = $notification->getData()['thread'];
 
             /**
              * @var $author User
              */
-            $author = $this->userProvider->getRailnotificationsUserById($comment['user_id']);
+            $author = $this->userProvider->getRailnotificationsUserById($post['author_id']);
 
             $fcmMessage = $author->getDisplayName() . ' replied to your comment.';
-            $fcmMessage .= $lesson->fetch('fields.title');
+            $fcmMessage .= $thread['title'];
             $fcmMessage .= '
 ' . mb_strimwidth(
-                    htmlspecialchars(strip_tags($comment['comment'])),
+                    htmlspecialchars(strip_tags($post['content'])),
                     0,
                     120,
                     "..."
@@ -67,8 +64,6 @@ class LessonCommentReplyFCM
             $dataBuilder->addData(
                 [
                     'image' => $author->getAvatar(),
-                    'uri' => $lesson['url'],
-                    'commentId' => $comment['id'],
                 ]
             );
 

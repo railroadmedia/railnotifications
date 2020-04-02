@@ -8,7 +8,9 @@ use LaravelFCM\Message\PayloadDataBuilder;
 use LaravelFCM\Message\PayloadNotificationBuilder;
 use Railroad\Railnotifications\Entities\Notification;
 use Railroad\Railnotifications\Entities\NotificationBroadcast;
+use Railroad\Railnotifications\Notifications\FCM\ForumPostReplyFCM;
 use Railroad\Railnotifications\Notifications\FCM\LessonCommentReplyFCM;
+use Railroad\Railnotifications\Notifications\Mailers\ForumPostReplyMailer;
 use Railroad\Railnotifications\Notifications\Mailers\LessonCommentReplyMailer;
 use Railroad\Railnotifications\Services\NotificationBroadcastService;
 use Railroad\Railnotifications\Services\NotificationService;
@@ -64,9 +66,9 @@ class FcmChannel implements ChannelInterface
 //            case Notification::TYPE_FORUM_POST_IN_FOLLOWED_THREAD:
 //                $mailer = app()->make(FollowedForumThreadPostMailer::class);
 //                break;
-//            case Notification::TYPE_FORUM_POST_REPLY:
-//                $mailer = app()->make(ForumPostReplyMailer::class);
-//                break;
+            case Notification::TYPE_FORUM_POST_REPLY:
+                $mailer = app()->make(ForumPostReplyFCM::class);
+                break;
             case Notification::TYPE_LESSON_COMMENT_REPLY:
                 $mailer = app()->make(LessonCommentReplyFCM::class);
                 break;

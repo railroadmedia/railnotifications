@@ -8,6 +8,7 @@ use LaravelFCM\Message\PayloadDataBuilder;
 use LaravelFCM\Message\PayloadNotificationBuilder;
 use Railroad\Railnotifications\Entities\Notification;
 use Railroad\Railnotifications\Entities\NotificationBroadcast;
+use Railroad\Railnotifications\Notifications\FCM\FollowedForumThreadPostFCM;
 use Railroad\Railnotifications\Notifications\FCM\ForumPostReplyFCM;
 use Railroad\Railnotifications\Notifications\FCM\LessonCommentReplyFCM;
 use Railroad\Railnotifications\Notifications\Mailers\ForumPostReplyMailer;
@@ -63,9 +64,9 @@ class FcmChannel implements ChannelInterface
         $firebaseTokenAndroid = $recipient->getFirebaseTokenAndroid();
 
         switch ($notification->getType()) {
-//            case Notification::TYPE_FORUM_POST_IN_FOLLOWED_THREAD:
-//                $mailer = app()->make(FollowedForumThreadPostMailer::class);
-//                break;
+            case Notification::TYPE_FORUM_POST_IN_FOLLOWED_THREAD:
+                $mailer = app()->make(FollowedForumThreadPostFCM::class);
+                break;
             case Notification::TYPE_FORUM_POST_REPLY:
                 $mailer = app()->make(ForumPostReplyFCM::class);
                 break;

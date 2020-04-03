@@ -9,7 +9,7 @@ use LaravelFCM\Message\PayloadNotificationBuilder;
 use Railroad\Railnotifications\Contracts\UserProviderInterface;
 
 
-class ForumPostReplyFCM
+class FollowedForumThreadPostFCM
 {
     /**
      * @var UserProviderInterface
@@ -39,7 +39,7 @@ class ForumPostReplyFCM
              */
             $author = $this->userProvider->getRailnotificationsUserById($post['author_id']);
 
-            $fcmMessage = $author->getDisplayName() . ' replied to your post.';
+            $fcmMessage = $author->getDisplayName() . ' posted in a thread you follow.';
             $fcmMessage .= $thread['title'];
             $fcmMessage .= '
 ' . mb_strimwidth(

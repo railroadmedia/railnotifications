@@ -7,6 +7,7 @@ use Illuminate\Contracts\Mail\Mailer;
 use Railroad\Railmap\Helpers\RailmapHelpers;
 use Railroad\Railnotifications\Entities\Notification;
 use Railroad\Railnotifications\Entities\NotificationBroadcast;
+use Railroad\Railnotifications\Notifications\Mailers\FollowedForumThreadPostMailer;
 use Railroad\Railnotifications\Notifications\Mailers\ForumPostReplyMailer;
 use Railroad\Railnotifications\Notifications\Mailers\LessonCommentReplyMailer;
 use Railroad\Railnotifications\Services\NotificationBroadcastService;

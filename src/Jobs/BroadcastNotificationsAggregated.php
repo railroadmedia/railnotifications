@@ -7,7 +7,6 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use Railroad\Railnotifications\Channels\ChannelFactory;
-use Railroad\Railnotifications\DataMappers\NotificationBroadcastDataMapper;
 use Railroad\Railnotifications\Exceptions\BroadcastNotificationsAggregatedFailure;
 use Railroad\Railnotifications\Services\NotificationBroadcastService;
 
@@ -22,27 +21,35 @@ class BroadcastNotificationsAggregated implements ShouldQueue
      */
     private $notificationBroadcastService;
 
+    /**
+     * BroadcastNotificationsAggregated constructor.
+     *
+     * @param array $notificationBroadcastIds
+     */
     public function __construct(array $notificationBroadcastIds)
     {
         $this->notificationBroadcastIds = $notificationBroadcastIds;
     }
 
+    /**
+     * @param NotificationBroadcastService $notificationBroadcastService
+     * @param ChannelFactory $channelFactory
+     * @throws BroadcastNotificationsAggregatedFailure
+     */
     public function handle(
         NotificationBroadcastService $notificationBroadcastService,
-        NotificationBroadcastDataMapper $notificationBroadcastDataMapper,
         ChannelFactory $channelFactory
     ) {
         try {
             $this->notificationBroadcastService = $notificationBroadcastService;
 
-            $notificationBroadcasts = $notificationBroadcastDataMapper->getMany(
+            $notificationBroadcasts = $this->notificationBroadcastService->getMany(
                 $this->notificationBroadcastIds
             );
 
             if (empty($notificationBroadcasts)) {
                 throw new Exception(
-                    'Could not find notification broadcasts with IDs: ' .
-                    implode(', ', $this->notificationBroadcastIds)
+                    'Could not find notification broadcasts with IDs: ' . implode(', ', $this->notificationBroadcastIds)
                 );
             }
 
@@ -62,6 +69,9 @@ class BroadcastNotificationsAggregated implements ShouldQueue
         }
     }
 
+    /**
+     * @param BroadcastNotificationsAggregatedFailure $exception
+     */
     public function failed(BroadcastNotificationsAggregatedFailure $exception)
     {
         $notificationBroadcastService = app(NotificationBroadcastService::class);

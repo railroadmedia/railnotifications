@@ -72,7 +72,7 @@ class NotificationBroadcastService
         $notificationBroadcast->setChannel($channelName);
         $notificationBroadcast->setType(NotificationBroadcast::TYPE_SINGLE);
         $notificationBroadcast->setStatus(NotificationBroadcast::STATUS_IN_TRANSIT);
-        $notificationBroadcast->setNotificationId($notificationId);
+        $notificationBroadcast->setNotification($notification);
 
         $this->entityManager->persist($notificationBroadcast);
         $this->entityManager->flush();
@@ -88,6 +88,7 @@ class NotificationBroadcastService
      * @param int $recipientId
      * @param string $channelName
      * @param string|null $createdAfterDateTimeString
+     * @return bool|void
      * @throws RecipientNotificationBroadcastFailure
      * @throws \Doctrine\ORM\ORMException
      * @throws \Doctrine\ORM\OptimisticLockException
@@ -100,6 +101,7 @@ class NotificationBroadcastService
         $notifications = $this->notificationService->getManyUnread($recipientId, $createdAfterDateTimeString);
 
         if (empty($notifications)) {
+            return true;
             throw new RecipientNotificationBroadcastFailure(
                 $recipientId, 'Recipient has no notifications in period after: ' . $createdAfterDateTimeString
             );
@@ -109,7 +111,7 @@ class NotificationBroadcastService
         $groupId = bin2hex(openssl_random_pseudo_bytes(32));
 
         foreach ($notifications as $notification) {
-            if ($notification->getBroadcastOn()) {
+            if ($notification->getReadOn()) {
                 continue;
             }
 
@@ -118,12 +120,12 @@ class NotificationBroadcastService
             $notificationBroadcast->setType(NotificationBroadcast::TYPE_AGGREGATED);
             $notificationBroadcast->setAggregationGroupId($groupId);
             $notificationBroadcast->setStatus(NotificationBroadcast::STATUS_IN_TRANSIT);
-            $notificationBroadcast->setNotificationId($notification->getId());
+            $notificationBroadcast->setNotification($notification);
 
             $this->entityManager->persist($notificationBroadcast);
             $this->entityManager->flush();
 
-            $notificationBroadcasts[] = $notificationBroadcast;
+            $notificationBroadcasts[] = $notificationBroadcast->getId();
         }
 
         if (empty($notificationBroadcasts)) {
@@ -132,10 +134,10 @@ class NotificationBroadcastService
 
         // note: railmap still does not have mass insert implemented, this will persist 1 at a time
         $job = new BroadcastNotificationsAggregated(
-            RailmapHelpers::entityArrayColumn($notificationBroadcasts, 'getId')
+            $notificationBroadcasts
         );
 
-        dispatch($job);
+        dispatch_now($job);
     }
 
     /**
@@ -148,7 +150,7 @@ class NotificationBroadcastService
     {
         $notificationBroadcast = $this->notificationBroadcastRepository->find($notificationBroadcastId);
 
-        if(!$notificationBroadcast){
+        if (!$notificationBroadcast) {
             return $notificationBroadcast;
         }
 
@@ -172,7 +174,7 @@ class NotificationBroadcastService
     {
         $notificationBroadcast = $this->notificationBroadcastRepository->find($notificationBroadcastId);
 
-        if(!$notificationBroadcast){
+        if (!$notificationBroadcast) {
             return $notificationBroadcast;
         }
 
@@ -186,8 +188,28 @@ class NotificationBroadcastService
         return $notificationBroadcast;
     }
 
+    /**
+     * @param $id
+     * @return object|null
+     */
     public function get($id)
     {
         return $this->notificationBroadcastRepository->find($id);
+    }
+
+    /**
+     * @param $ids
+     * @return mixed
+     */
+    public function getMany($ids)
+    {
+        $qb =
+            $this->notificationBroadcastRepository->createQueryBuilder('nb')
+                ->where(
+                    'nb.id IN (:ids)'
+                )
+                ->setParameter('ids', $ids);
+        return $qb->getQuery()
+            ->getResult();
     }
 }

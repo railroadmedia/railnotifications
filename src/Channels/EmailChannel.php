@@ -4,7 +4,7 @@ namespace Railroad\Railnotifications\Channels;
 
 use Exception;
 use Illuminate\Contracts\Mail\Mailer;
-use Railroad\Railmap\Helpers\RailmapHelpers;
+use Railroad\Railnotifications\Contracts\UserProviderInterface;
 use Railroad\Railnotifications\Entities\Notification;
 use Railroad\Railnotifications\Entities\NotificationBroadcast;
 use Railroad\Railnotifications\Notifications\Mailers\FollowedForumThreadPostMailer;
@@ -13,33 +13,42 @@ use Railroad\Railnotifications\Notifications\Mailers\LessonCommentReplyMailer;
 use Railroad\Railnotifications\Services\NotificationBroadcastService;
 use Railroad\Railnotifications\Services\NotificationService;
 
-
 class EmailChannel implements ChannelInterface
 {
+    /**
+     * @var NotificationBroadcastService
+     */
     private $notificationBroadcastService;
-    private $notificationService;
+
     private $notificationTypeFactory;
+    /**
+     * @var Mailer
+     */
     private $mailer;
 
     /**
      * @var UserRepository
      */
-    private $userRepository;
+    private $userProvider;
 
     public function __construct(
         NotificationBroadcastService $notificationBroadcastService,
-        NotificationService $notificationService,
-        Mailer $mailer
-    )
-    {
+        Mailer $mailer,
+        UserProviderInterface $userProvider
+    ) {
         $this->notificationBroadcastService = $notificationBroadcastService;
-        $this->notificationService = $notificationService;
         $this->mailer = $mailer;
+        $this->userProvider = $userProvider;
     }
 
+    /**
+     * @param NotificationBroadcast $notificationBroadcast
+     * @throws \Doctrine\ORM\ORMException
+     * @throws \Doctrine\ORM\OptimisticLockException
+     */
     public function send(NotificationBroadcast $notificationBroadcast)
     {
-        $notification = $this->notificationService->get($notificationBroadcast->getNotificationId());
+        $notification = $notificationBroadcast->getNotification();
 
         switch ($notification->getType()) {
             case Notification::TYPE_FORUM_POST_IN_FOLLOWED_THREAD:
@@ -62,14 +71,23 @@ class EmailChannel implements ChannelInterface
         $this->notificationBroadcastService->markSucceeded($notificationBroadcast->getId());
     }
 
+    /**
+     * @param array $notificationBroadcasts
+     * @throws \Doctrine\ORM\ORMException
+     * @throws \Doctrine\ORM\OptimisticLockException
+     * @throws \Throwable
+     */
     public function sendAggregated(array $notificationBroadcasts)
     {
         // Ex. send email using notification broadcasts
-        $notifications = $this->notificationService->getMany(
-            RailmapHelpers::entityArrayColumn($notificationBroadcasts, 'getNotificationId')
-        );
+        $notificationsGroupedByType = [];
+        $notifications = [];
 
-        $notificationsGroupedByType = RailmapHelpers::groupEntitiesByColumn($notifications, 'type');
+        foreach ($notificationBroadcasts as $notificationBroadcast) {
+            $notification = $notificationBroadcast->getNotification();
+            $notifications[] = $notification;
+            $notificationsGroupedByType[$notification->getType()][] = $notification;
+        }
 
         $renderedViewRows = [];
 
@@ -77,37 +95,36 @@ class EmailChannel implements ChannelInterface
             $viewName = null;
 
             switch ($type) {
-                case NotificationServiceProvider::TYPE_FORUM_POST_IN_FOLLOWED_THREAD:
+                case Notification::TYPE_FORUM_POST_IN_FOLLOWED_THREAD:
                     $viewName = 'notifications.forums.post-in-followed-thread-row';
                     break;
-                case NotificationServiceProvider::TYPE_FORUM_POST_REPLY:
+                case Notification::TYPE_FORUM_POST_REPLY:
                     $viewName = 'notifications.forums.forum-reply-posted-row';
                     break;
-                case NotificationServiceProvider::TYPE_LESSON_COMMENT_REPLY:
+                case Notification::TYPE_LESSON_COMMENT_REPLY:
                     $viewName = 'notifications.lessons.lesson-comment-reply-posted-row';
-                    break;
-                case NotificationServiceProvider::TYPE_FORUM_POST_LIKED:
-                    $viewName = 'notifications.forums.user-liked-forum-row';
                     break;
             }
 
             foreach ($notifications as $notification) {
-                $notificationType = $this->notificationTypeFactory->build($notification->getType());
+                //TODO: Views for aggregated notification
+                //                $notificationType = $this->notificationTypeFactory->build($notification->getType());
+                //
+                //                $notificationBuiltSuccessfully = $notificationType->fill($notification);
 
-                $notificationBuiltSuccessfully = $notificationType->fill($notification);
+                // if ($notificationBuiltSuccessfully) {
 
-                if ($notificationBuiltSuccessfully) {
-                    $renderedViewRows[] = view(
-                        $viewName,
-                        $notificationType->toArray()
-                    )->render();
-                } else {
-                    $this->notificationService->destroy($notification->getId());
-                }
+                $renderedViewRows[] = view(
+                    $viewName,
+                    $notifications
+                )->render();
+                //                } else {
+                //                    $this->notificationService->destroy($notification->getId());
+                //                }
             }
         }
-
-        $receivingUser = $this->userRepository->find(reset($notifications)->getRecipientId());
+        dd($renderedViewRows);
+        $receivingUser = $this->userProvider->getUserById(reset($notifications)->getRecipientId());
 
         $this->mailer->send(
             new AggregatedNotificationsEmail(

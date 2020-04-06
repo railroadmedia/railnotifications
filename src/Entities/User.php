@@ -143,10 +143,10 @@ class User implements UserEntityInterface
     }
 
     /**
-     * @return string
+     * @return ?array
      */
     public function getFirebaseTokenIOS()
-    : ?string
+    : ?array
     {
         return $this->firebaseTokenIOS;
     }
@@ -160,10 +160,10 @@ class User implements UserEntityInterface
     }
 
     /**
-     * @return string
+     * @return ?array
      */
     public function getFirebaseTokenAndroid()
-    : ?string
+    : ?array
     {
         return $this->firebaseTokenAndroid;
     }
@@ -177,10 +177,10 @@ class User implements UserEntityInterface
     }
 
     /**
-     * @return string
+     * @return ?array
      */
     public function getFirebaseTokenWeb()
-    : ?string
+    : ?array
     {
         return $this->firebaseTokenWeb;
     }

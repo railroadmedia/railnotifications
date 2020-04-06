@@ -23,10 +23,7 @@ class FcmChannel implements ChannelInterface
      * @var Client
      */
     protected $client;
-    /**
-     * @var NotificationService
-     */
-    private $notificationService;
+
     /**
      * @var NotificationBroadcastService
      */
@@ -35,14 +32,11 @@ class FcmChannel implements ChannelInterface
     /**
      * FcmChannel constructor.
      *
-     * @param NotificationService $notificationService
      * @param NotificationBroadcastService $notificationBroadcastService
      */
     public function __construct(
-        NotificationService $notificationService,
         NotificationBroadcastService $notificationBroadcastService
     ) {
-        $this->notificationService = $notificationService;
         $this->notificationBroadcastService = $notificationBroadcastService;
     }
 
@@ -53,7 +47,7 @@ class FcmChannel implements ChannelInterface
      */
     public function send(NotificationBroadcast $notificationBroadcast)
     {
-        $notification = $this->notificationService->get($notificationBroadcast->getNotificationId());
+        $notification = $notificationBroadcast->getNotification();
 
         $recipient = $notification->getRecipient();
 
@@ -105,6 +99,7 @@ class FcmChannel implements ChannelInterface
      */
     public function sendAggregated(array $notificationBroadcasts)
     {
+        // TODO: Decide if we should provide the aggregated option for FCM notifications
         foreach ($notificationBroadcasts as $notificationBroadcast){
             $this->send($notificationBroadcast);
         }

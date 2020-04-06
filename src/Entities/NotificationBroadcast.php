@@ -63,11 +63,11 @@ class NotificationBroadcast
     protected $report;
 
     /**
-     * @ORM\Column(type="integer")
+     * @ORM\ManyToOne(targetEntity="Railroad\Railnotifications\Entities\Notification")
+     * @ORM\JoinColumn(name="notification_id", referencedColumnName="id")
      *
-     * @var int
      */
-    protected $notificationId;
+    protected $notification;
 
     /**
      * @ORM\Column(type="string")
@@ -85,7 +85,8 @@ class NotificationBroadcast
     /**
      * @return int|null
      */
-    public function getId(): ?int
+    public function getId()
+    : ?int
     {
         return $this->id;
     }
@@ -93,7 +94,8 @@ class NotificationBroadcast
     /**
      * @return string
      */
-    public function getChannel(): string
+    public function getChannel()
+    : string
     {
         return $this->channel;
     }
@@ -109,7 +111,8 @@ class NotificationBroadcast
     /**
      * @return string
      */
-    public function getType(): string
+    public function getType()
+    : string
     {
         return $this->type;
     }
@@ -125,7 +128,8 @@ class NotificationBroadcast
     /**
      * @return string
      */
-    public function getStatus(): string
+    public function getStatus()
+    : string
     {
         return $this->status;
     }
@@ -141,7 +145,8 @@ class NotificationBroadcast
     /**
      * @return string|null
      */
-    public function getReport(): ?string
+    public function getReport()
+    : ?string
     {
         return $this->report;
     }
@@ -152,22 +157,6 @@ class NotificationBroadcast
     public function setReport(?string $report)
     {
         $this->report = $report;
-    }
-
-    /**
-     * @return int
-     */
-    public function getNotificationId(): int
-    {
-        return $this->notificationId;
-    }
-
-    /**
-     * @param int $notificationId
-     */
-    public function setNotificationId(int $notificationId)
-    {
-        $this->notificationId = $notificationId;
     }
 
     /**
@@ -200,5 +189,21 @@ class NotificationBroadcast
     public function setBroadcastOn(?\DateTimeInterface $broadcastOn)
     {
         $this->broadcastOn = $broadcastOn;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getNotification()
+    {
+        return $this->notification;
+    }
+
+    /**
+     * @param Notification $notification
+     */
+    public function setNotification(Notification $notification)
+    {
+        $this->notification = $notification;
     }
 }

@@ -282,17 +282,18 @@ class NotificationService
     {
         $qb =
             $this->notificationRepository->createQueryBuilder('n')
-                ->select('n.id');
+                ->select('n.recipient as id');
+
+        $result = $qb->where('n.readOn IS NULL');
 
         if ($createdAfterDateTimeString) {
-            $qb->where(
-                $qb->expr()
-                    ->isNull('n.readOn')
-            )
-                ->where('n.createdAt >= :createdAtDate')
-                ->setParameter('createdAtDate', $createdAfterDateTimeString);
+            $result =
+                $qb->andWhere('n.createdAt >= :createdAtDate')
+                    ->setParameter('createdAtDate', $createdAfterDateTimeString);
         }
-        return $qb->getQuery()
+
+        return $result->groupBy('n.recipient')
+            ->getQuery()
             ->getScalarResult();
     }
 

@@ -101,7 +101,6 @@ class NotificationBroadcastService
         $notifications = $this->notificationService->getManyUnread($recipientId, $createdAfterDateTimeString);
 
         if (empty($notifications)) {
-            return true;
             throw new RecipientNotificationBroadcastFailure(
                 $recipientId, 'Recipient has no notifications in period after: ' . $createdAfterDateTimeString
             );

@@ -52,6 +52,9 @@ class NotificationsServiceProvider extends ServiceProvider
         //load package routes file
         $this->loadRoutesFrom(__DIR__ . '/../routes/routes.php');
         $this->loadRoutesFrom(__DIR__ . '/../routes/api.php');
+
+        // views
+        $this->loadViewsFrom(__DIR__ . '/../views', 'railnotifications');
     }
 
     /**

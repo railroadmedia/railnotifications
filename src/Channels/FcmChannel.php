@@ -2,19 +2,13 @@
 
 namespace Railroad\Railnotifications\Channels;
 
-use LaravelFCM\Facades\FCM;
-use LaravelFCM\Message\OptionsBuilder;
-use LaravelFCM\Message\PayloadDataBuilder;
-use LaravelFCM\Message\PayloadNotificationBuilder;
+use Railroad\Railnotifications\Contracts\UserProviderInterface;
 use Railroad\Railnotifications\Entities\Notification;
 use Railroad\Railnotifications\Entities\NotificationBroadcast;
 use Railroad\Railnotifications\Notifications\FCM\FollowedForumThreadPostFCM;
 use Railroad\Railnotifications\Notifications\FCM\ForumPostReplyFCM;
 use Railroad\Railnotifications\Notifications\FCM\LessonCommentReplyFCM;
-use Railroad\Railnotifications\Notifications\Mailers\ForumPostReplyMailer;
-use Railroad\Railnotifications\Notifications\Mailers\LessonCommentReplyMailer;
 use Railroad\Railnotifications\Services\NotificationBroadcastService;
-use Railroad\Railnotifications\Services\NotificationService;
 
 class FcmChannel implements ChannelInterface
 {
@@ -30,14 +24,21 @@ class FcmChannel implements ChannelInterface
     private $notificationBroadcastService;
 
     /**
+     * @var UserProviderInterface
+     */
+    private $userProvider;
+
+    /**
      * FcmChannel constructor.
      *
      * @param NotificationBroadcastService $notificationBroadcastService
      */
     public function __construct(
-        NotificationBroadcastService $notificationBroadcastService
+        NotificationBroadcastService $notificationBroadcastService,
+        UserProviderInterface $userProvider
     ) {
         $this->notificationBroadcastService = $notificationBroadcastService;
+        $this->userProvider = $userProvider;
     }
 
     /**
@@ -51,11 +52,7 @@ class FcmChannel implements ChannelInterface
 
         $recipient = $notification->getRecipient();
 
-        $firebaseTokenWeb = $recipient->getFirebaseTokenWeb();
-
-        $firebaseTokenIOS = $recipient->getFirebaseTokenIOS();
-
-        $firebaseTokenAndroid = $recipient->getFirebaseTokenAndroid();
+        $firebaseTokens = $this->userProvider->getUserFirebaseTokens($recipient->getId());
 
         switch ($notification->getType()) {
             case Notification::TYPE_FORUM_POST_IN_FOLLOWED_THREAD:
@@ -73,21 +70,17 @@ class FcmChannel implements ChannelInterface
                 );
         }
 
-        $this->notificationBroadcastService->markSucceeded($notificationBroadcast->getId());
-
-        if ($firebaseTokenWeb) {
-            $mailer->send($firebaseTokenWeb, $notification);
+        $tokens = [];
+        foreach ($firebaseTokens as $firebaseToken) {
+            $tokens[] = $firebaseToken->getToken();
         }
 
-        if ($firebaseTokenAndroid) {
-            $mailer->send($firebaseTokenAndroid, $notification);
-        }
+        if (!empty($tokens)) {
 
-        if ($firebaseTokenIOS) {
-            $mailer->send($firebaseTokenIOS, $notification);
-        }
+            $downstreamResponse = $mailer->send($tokens, $notification);
 
-        if ($firebaseTokenWeb || $firebaseTokenIOS || $firebaseTokenAndroid) {
+            $this->userProvider->deleteUserFirebaseTokens($recipient->getId(), $downstreamResponse->tokensToDelete());
+
             $this->notificationBroadcastService->markSucceeded($notificationBroadcast->getId());
         }
     }
@@ -100,7 +93,7 @@ class FcmChannel implements ChannelInterface
     public function sendAggregated(array $notificationBroadcasts)
     {
         // TODO: Decide if we should provide the aggregated option for FCM notifications
-        foreach ($notificationBroadcasts as $notificationBroadcast){
+        foreach ($notificationBroadcasts as $notificationBroadcast) {
             $this->send($notificationBroadcast);
         }
     }

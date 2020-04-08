@@ -8,7 +8,6 @@ use LaravelFCM\Message\PayloadDataBuilder;
 use LaravelFCM\Message\PayloadNotificationBuilder;
 use Railroad\Railnotifications\Contracts\UserProviderInterface;
 
-
 class FollowedForumThreadPostFCM
 {
     /**
@@ -71,7 +70,9 @@ class FollowedForumThreadPostFCM
             $notification = $notificationBuilder->build();
             $data = $dataBuilder->build();
 
-            FCM::sendTo($token, $option, $notification, $data);
+            $response = FCM::sendTo($token, $option, $notification, $data);
+
+            return $response;
 
         } catch (\Exception $messagingException) {
 

@@ -4,6 +4,7 @@ namespace Tests;
 
 use Carbon\Carbon;
 use Railroad\Railnotifications\Services\NotificationService;
+use Railroad\Railnotifications\Tests\Fixtures\UserProvider;
 use Railroad\Railnotifications\Tests\TestCase as NotificationsTestCase;
 
 class NotificationServiceTest extends NotificationsTestCase
@@ -40,34 +41,6 @@ class NotificationServiceTest extends NotificationsTestCase
                 'recipient_id' => $recipient['id']
             ]
         );
-    }
-
-    public function _test_create_many()
-    {
-        $rowsData = [];
-
-        for ($i = 0; $i < 3; $i++) {
-            $rowsData[] = [
-                'type' => $this->faker->word,
-                'data' => [
-                    'data-1' => $this->faker->word,
-                    'data-2' => $this->faker->word,
-                    'data-3' => $this->faker->word
-                ],
-                'recipient_id' => $this->faker->randomNumber(),
-            ];
-        }
-
-        $responseNotifications = $this->classBeingTested->createMany($rowsData);
-
-        foreach ($rowsData as $rowData) {
-            $rowData['data'] = json_encode($rowData['data']);
-
-            $this->assertDatabaseHas(
-                'notifications',
-                $rowData
-            );
-        }
     }
 
     public function test_destroy()
@@ -159,7 +132,8 @@ class NotificationServiceTest extends NotificationsTestCase
     public function test_get_many_unread()
     {
         $notifications = [];
-        $recipientId = $this->createAndLogInNewUser();
+
+        $recipientId = rand();
 
         for ($i = 0; $i < 3; $i++) {
             $notification = $this->fakeNotification(['recipient_id' => $recipientId, 'read_on'=>null]);

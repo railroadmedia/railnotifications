@@ -8,7 +8,7 @@ use Railroad\Railnotifications\Contracts\UserProviderInterface;
 
 class UserType extends IntegerType
 {
-    const USER_TYPE = 'user';
+    const USER_TYPE = 'railnotification_user';
 
     public function getSQLDeclaration(array $fieldDeclaration, AbstractPlatform $platform)
     {
@@ -21,7 +21,7 @@ class UserType extends IntegerType
 
             $userProvider = app()->make(UserProviderInterface::class);
 
-            return $userProvider->getUserById($value);
+            return $userProvider->getRailnotificationsUserById($value);
         }
 
         return null;

@@ -127,4 +127,28 @@ class UserProvider implements UserProviderInterface
     {
         return new UserTransformer();
     }
+
+    /**
+     * @inheritDoc
+     */
+    public function getUserFirebaseTokens(int $userId, $types = [])
+    : ?array {
+        return ['test'];
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function deleteUserFirebaseTokens(int $userId, array $tokens)
+    {
+        // TODO: Implement deleteUserFirebaseTokens() method.
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function updateUserFirebaseToken($userId, $oldToken, $newToken)
+    {
+        // TODO: Implement updateUserFirebaseToken() method.
+    }
 }

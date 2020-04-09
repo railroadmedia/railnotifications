@@ -1,27 +1,28 @@
 <?php
 
-namespace Tests;
+namespace Railroad\Railnotifications\Tests\Services\Notifications;
 
 use Carbon\Carbon;
-use Railroad\Railmap\Helpers\RailmapHelpers;
 use Railroad\Railnotifications\Channels\ExampleChannel;
-use Railroad\Railnotifications\Entities\NotificationOld;
-use Railroad\Railnotifications\Entities\NotificationBroadcastOld;
+use Railroad\Railnotifications\Channels\FcmChannel;
+use Railroad\Railnotifications\Contracts\UserProviderInterface;
+use Railroad\Railnotifications\Entities\Notification;
+use Railroad\Railnotifications\Entities\NotificationBroadcast;
 use Railroad\Railnotifications\Exceptions\BroadcastNotificationFailure;
-use Railroad\Railnotifications\Exceptions\CannotDeleteFirstPostInThread;
 use Railroad\Railnotifications\Exceptions\BroadcastNotificationsAggregatedFailure;
 use Railroad\Railnotifications\Exceptions\RecipientNotificationBroadcastFailure;
 use Railroad\Railnotifications\Services\NotificationBroadcastService;
-use Tests\TestCase as NotificationsTestCase;
+use Railroad\Railnotifications\Tests\Fixtures\UserProvider;
+use Railroad\Railnotifications\Tests\TestCase;
 
-class NotificationBroadcastServiceTest extends NotificationsTestCase
+class NotificationBroadcastServiceTest extends TestCase
 {
     /**
-     * @var NotificationBroadcastService
+     * @var NotificationService
      */
     private $classBeingTested;
 
-    public function setUp()
+    protected function setUp()
     {
         parent::setUp();
 
@@ -32,23 +33,30 @@ class NotificationBroadcastServiceTest extends NotificationsTestCase
     {
         parent::getEnvironmentSetUp($app);
 
-        $app['config']->set('railnotifications.channels', ['example' => ExampleChannel::class]);
+        $app['config']->set(
+            'railnotifications.channels',
+            [
+                'example' => ExampleChannel::class,
+                'fcm' => FcmChannel::class,
+            ]
+        );
     }
 
     public function test_broadcast()
     {
-        $notification = new NotificationOld();
-        $notification->randomize();
-        $notification->persist();
 
-        $this->classBeingTested->broadcast($notification->getId(), 'example');
+        $recipient = $this->fakeUser();
+
+        $notification = $this->fakeNotification(['recipient_id' => $recipient['id']]);
+
+        $this->classBeingTested->broadcast($notification['id'], 'example');
 
         $this->assertDatabaseHas(
             'notification_broadcasts',
             [
-                'notification_id' => $notification->getId(),
-                'status' => NotificationBroadcastOld::STATUS_SENT,
-                'broadcast_on' => Carbon::now()
+                'notification_id' => $notification['id'],
+                'status' => NotificationBroadcast::STATUS_SENT,
+                'broadcast_on' => Carbon::now(),
             ]
         );
     }
@@ -57,18 +65,18 @@ class NotificationBroadcastServiceTest extends NotificationsTestCase
     {
         $this->expectException(BroadcastNotificationFailure::class);
 
-        $notification = new NotificationOld();
-        $notification->randomize();
-        $notification->persist();
+        $recipient = $this->fakeUser();
 
-        $this->classBeingTested->broadcast($notification->getId(), 'fail');
+        $notification = $this->fakeNotification(['recipient_id' => $recipient['id']]);
+
+        $this->classBeingTested->broadcast($notification['id'], 'fail');
 
         $this->assertDatabaseHas(
             'notification_broadcasts',
             [
-                'notification_id' => $notification->getId(),
-                'status' => NotificationBroadcastOld::STATUS_FAILED,
-                'broadcast_on' => Carbon::now()
+                'notification_id' => $notification['id'],
+                'status' => NotificationBroadcast::STATUS_FAILED,
+                'broadcast_on' => Carbon::now(),
             ]
         );
     }
@@ -84,8 +92,8 @@ class NotificationBroadcastServiceTest extends NotificationsTestCase
             'notification_broadcasts',
             [
                 'notification_id' => $notificationId,
-                'status' => NotificationBroadcastOld::STATUS_FAILED,
-                'broadcast_on' => Carbon::now()
+                'status' => NotificationBroadcast::STATUS_FAILED,
+                'broadcast_on' => Carbon::now(),
             ]
         );
     }
@@ -96,13 +104,7 @@ class NotificationBroadcastServiceTest extends NotificationsTestCase
         $notifications = [];
 
         for ($i = 0; $i < 3; $i++) {
-            $notification = new NotificationOld();
-            $notification->randomize();
-            $notification->setRecipientId($recipientId);
-            $notification->setReadOn(null);
-            $notification->persist();
-
-            $notifications[] = $notification;
+            $notifications[] = $this->fakeNotification(['recipient_id' => $recipientId]);
         }
 
         $this->classBeingTested->broadcastUnreadAggregated($recipientId, 'example');
@@ -111,9 +113,9 @@ class NotificationBroadcastServiceTest extends NotificationsTestCase
             $this->assertDatabaseHas(
                 'notification_broadcasts',
                 [
-                    'notification_id' => $notification->getId(),
-                    'status' => NotificationBroadcastOld::STATUS_SENT,
-                    'broadcast_on' => Carbon::now()
+                    'notification_id' => $notification['id'],
+                    'status' => NotificationBroadcast::STATUS_SENT,
+                    'broadcast_on' => Carbon::now(),
                 ]
             );
         }
@@ -125,30 +127,28 @@ class NotificationBroadcastServiceTest extends NotificationsTestCase
         $notifications = [];
 
         for ($i = 0; $i < 5; $i++) {
-            $notification = new NotificationOld();
-            $notification->randomize();
-            $notification->setRecipientId($recipientId);
-            $notification->setReadOn(null);
-            $notification->persist();
-
-            $notifications[] = $notification;
+            $notifications[] = $this->fakeNotification(
+                [
+                    'recipient_id' => $recipientId,
+                    'created_at' => Carbon::now()
+                        ->subDays($i),
+                ]
+            );
         }
-
-        $notifications = RailmapHelpers::sortEntitiesByDateAttribute($notifications, 'createdOn', 'desc');
 
         $this->classBeingTested->broadcastUnreadAggregated(
             $recipientId,
             'example',
-            $notifications[2]->getCreatedOn()
+            $notifications[2]['created_at']
         );
 
         foreach (array_slice($notifications, 0, 3) as $notification) {
             $this->assertDatabaseHas(
                 'notification_broadcasts',
                 [
-                    'notification_id' => $notification->getId(),
-                    'status' => NotificationBroadcastOld::STATUS_SENT,
-                    'broadcast_on' => Carbon::now()
+                    'notification_id' => $notification['id'],
+                    'status' => NotificationBroadcast::STATUS_SENT,
+                    'broadcast_on' => Carbon::now(),
                 ]
             );
         }
@@ -172,13 +172,7 @@ class NotificationBroadcastServiceTest extends NotificationsTestCase
         $this->expectException(BroadcastNotificationsAggregatedFailure::class);
 
         for ($i = 0; $i < 5; $i++) {
-            $notification = new NotificationOld();
-            $notification->randomize();
-            $notification->setRecipientId($recipientId);
-            $notification->setReadOn(null);
-            $notification->persist();
-
-            $notifications[] = $notification;
+            $notifications[] = $this->fakeNotification(['recipient_id' => $recipientId]);
         }
 
         $this->classBeingTested->broadcastUnreadAggregated(
@@ -190,9 +184,9 @@ class NotificationBroadcastServiceTest extends NotificationsTestCase
             $this->assertDatabaseHas(
                 'notification_broadcasts',
                 [
-                    'notification_id' => $notification->getId(),
-                    'status' => NotificationBroadcastOld::STATUS_FAILED,
-                    'broadcast_on' => Carbon::now()
+                    'notification_id' => $notification['id'],
+                    'status' => NotificationBroadcast::STATUS_FAILED,
+                    'broadcast_on' => Carbon::now(),
                 ]
             );
         }
@@ -200,41 +194,43 @@ class NotificationBroadcastServiceTest extends NotificationsTestCase
 
     public function test_mark_succeeded()
     {
-        $notificationBroadcast = new NotificationBroadcastOld();
-        $notificationBroadcast->randomize();
-        $notificationBroadcast->setStatus(NotificationBroadcastOld::STATUS_IN_TRANSIT);
-        $notificationBroadcast->persist();
+        $notificationBroadcast = $this->fakeNotificationBroadcast(
+            [
+                'status' => NotificationBroadcast::STATUS_IN_TRANSIT,
+            ]
+        );
 
-        $this->classBeingTested->markSucceeded($notificationBroadcast->getId());
+        $this->classBeingTested->markSucceeded($notificationBroadcast['id']);
 
         $this->assertDatabaseHas(
             'notification_broadcasts',
             [
-                'notification_id' => $notificationBroadcast->getNotificationId(),
-                'status' => NotificationBroadcastOld::STATUS_SENT,
-                'broadcast_on' => Carbon::now()
+                'notification_id' => $notificationBroadcast['notification_id'],
+                'status' => NotificationBroadcast::STATUS_SENT,
+                'broadcast_on' => Carbon::now(),
             ]
         );
     }
 
     public function test_mark_failed()
     {
-        $notificationBroadcast = new NotificationBroadcastOld();
-        $notificationBroadcast->randomize();
-        $notificationBroadcast->setStatus(NotificationBroadcastOld::STATUS_IN_TRANSIT);
-        $notificationBroadcast->persist();
+        $notificationBroadcast = $this->fakeNotificationBroadcast(
+            [
+                'status' => NotificationBroadcast::STATUS_IN_TRANSIT,
+            ]
+        );
 
         $message = $this->faker->sentence();
 
-        $this->classBeingTested->markFailed($notificationBroadcast->getId(), $message);
+        $this->classBeingTested->markFailed($notificationBroadcast['id'], $message);
 
         $this->assertDatabaseHas(
             'notification_broadcasts',
             [
-                'notification_id' => $notificationBroadcast->getNotificationId(),
-                'status' => NotificationBroadcastOld::STATUS_FAILED,
+                'notification_id' => $notificationBroadcast['notification_id'],
+                'status' => NotificationBroadcast::STATUS_FAILED,
                 'report' => $message,
-                'broadcast_on' => Carbon::now()
+                'broadcast_on' => Carbon::now(),
             ]
         );
     }

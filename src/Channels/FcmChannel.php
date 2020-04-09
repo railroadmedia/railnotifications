@@ -65,8 +65,8 @@ class FcmChannel implements ChannelInterface
                 $mailer = app()->make(LessonCommentReplyFCM::class);
                 break;
             default:
-                throw new Exception(
-                    'No mailer found for notification broadcast id: ' . $notificationBroadcast->getId()
+                throw new \Exception(
+                    'No fcm template found for notification broadcast id: ' . $notificationBroadcast->getId()
                 );
         }
 
@@ -81,7 +81,7 @@ class FcmChannel implements ChannelInterface
 
             $this->userProvider->deleteUserFirebaseTokens($recipient->getId(), $downstreamResponse->tokensToDelete());
 
-            foreach ($downstreamResponse->token  as $oldToken=>$newToken){
+            foreach ($downstreamResponse->tokensToModify()  as $oldToken=>$newToken){
                 $this->userProvider->updateUserFirebaseToken($recipient->getId(), $oldToken, $newToken);
             }
 

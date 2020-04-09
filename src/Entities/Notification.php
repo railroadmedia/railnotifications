@@ -47,12 +47,12 @@ class Notification
     protected $data;
 
     /**
-     * @ORM\Column(type="user", name="subject_id", nullable=true)
+     * @ORM\Column(type="railnotification_user", name="subject_id", nullable=true)
      */
     protected $subject;
 
     /**
-     * @ORM\Column(type="user", name="recipient_id", nullable=true)
+     * @ORM\Column(type="railnotification_user", name="recipient_id", nullable=true)
      */
     protected $recipient;
 

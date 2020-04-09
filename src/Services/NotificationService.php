@@ -6,13 +6,10 @@ use Carbon\Carbon;
 use FCM;
 use Railroad\Railnotifications\Contracts\UserProviderInterface;
 use Railroad\Railnotifications\Entities\Notification;
-use Railroad\Railnotifications\Entities\NotificationOld;
 use Railroad\Railnotifications\Managers\RailnotificationsEntityManager;
 
 class NotificationService
 {
-    private $notificationDataMapper;
-
     /**
      * @var RailnotificationsEntityManager
      */
@@ -108,31 +105,6 @@ class NotificationService
         } else {
             return $this->create($type, $data, $recipientId);
         }
-    }
-
-    /**
-     * Ex.
-     * [ ['type' => my_type, 'data' => my_data, 'recipient_id' => my_recipient], ... ]
-     *
-     * @param array $notificationsData
-     * @return NotificationOld[]
-     */
-    public function createMany(array $notificationsData)
-    {
-        //TODO: Check if it's in use - NOT IN USE
-        $notifications = [];
-
-        foreach ($notificationsData as $notificationData) {
-            $notification = new NotificationOld();
-
-            $notification->fill($notificationData);
-
-            $notifications[] = $notification;
-        }
-
-        $this->notificationDataMapper->persist($notifications);
-
-        return $notifications;
     }
 
     /**
@@ -248,7 +220,7 @@ class NotificationService
     /**
      * @param int $recipientId
      * @param string|null $createdAfterDateTimeString
-     * @return NotificationOld[]
+     * @return mixed
      */
     public function getManyUnread(int $recipientId, string $createdAfterDateTimeString = null)
     {

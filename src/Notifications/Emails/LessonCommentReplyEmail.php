@@ -41,12 +41,12 @@ class LessonCommentReplyEmail extends Mailable
             ->from('system@pianote.com', 'Pianote')
             ->replyTo('support@pianote.com')
             ->subject('Pianote - New Lesson Comment Reply: ' . $this->postAuthorDisplayName)
-            ->view('notifications.notification-email')
+            ->view('railnotifications::notification-email')
             ->with(
                 [
                     'notificationRows' => [
                         view(
-                            'notifications.lessons.lesson-comment-reply-posted-row',
+                            'railnotifications::lessons.lesson-comment-reply-posted-row',
                             [
                                 'title' => $this->lessonTitle,
                                 'content' => $this->postContent,

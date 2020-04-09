@@ -41,12 +41,12 @@ class ForumPostReplyEmail extends Mailable
             ->from('system@pianote.com', 'Pianote')
             ->replyTo('support@pianote.com')
             ->subject('Pianote Forums - New Thread Post: ' . $this->recipientEmail)
-            ->view('notifications.notification-email')
+            ->view('railnotifications::notification-email')
             ->with(
                 [
                     'notificationRows' => [
                         view(
-                            'notifications.forums.forum-reply-posted-row',
+                            'railnotifications::forums.forum-reply-posted-row',
                             [
                                 'title' => $this->threadTitle,
                                 'content' => $this->postContent,

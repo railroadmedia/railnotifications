@@ -33,10 +33,9 @@ class FollowedForumThreadPostMailer implements MailerInterface
         $this->userProvider = $userProvider;
     }
 
-
     /**
-     * @param NotificationBroadcast $notificationBroadcast
-     * @param Notification $notification
+     * @param array $notifications
+     * @throws Exception
      */
     public function send(array $notifications)
     {
@@ -64,8 +63,7 @@ class FollowedForumThreadPostMailer implements MailerInterface
         if(count($notifications) > 1){
             $this->mailer->send(
                 new AggregatedNotificationsEmail(
-                    'roxana@artsoft-consult.ro',
-                   // $receivingUser->getEmail(),
+                    $receivingUser->getEmail(),
                     $notifications
                 )
             );

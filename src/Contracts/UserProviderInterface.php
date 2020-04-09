@@ -91,4 +91,12 @@ interface UserProviderInterface
      * @return mixed
      */
     public function deleteUserFirebaseTokens(int $userId, array $tokens);
+
+    /**
+     * @param $userId
+     * @param $oldToken
+     * @param $newToken
+     * @return mixed
+     */
+    public function updateUserFirebaseToken($userId, $oldToken, $newToken);
 }

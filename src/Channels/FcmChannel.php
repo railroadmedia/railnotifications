@@ -81,6 +81,10 @@ class FcmChannel implements ChannelInterface
 
             $this->userProvider->deleteUserFirebaseTokens($recipient->getId(), $downstreamResponse->tokensToDelete());
 
+            foreach ($downstreamResponse->token  as $oldToken=>$newToken){
+                $this->userProvider->updateUserFirebaseToken($recipient->getId(), $oldToken, $newToken);
+            }
+
             $this->notificationBroadcastService->markSucceeded($notificationBroadcast->getId());
         }
     }

@@ -7,6 +7,7 @@ use Doctrine\ORM\ORMException;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Railroad\Railnotifications\Exceptions\NotFoundException;
+use Railroad\Railnotifications\Requests\BroadcastNotificationRequest;
 use Railroad\Railnotifications\Services\NotificationBroadcastService;
 use Railroad\Railnotifications\Services\ResponseService;
 use Spatie\Fractal\Fractal;
@@ -16,6 +17,8 @@ use Throwable;
  * Class BroadcastNotificationJsonController
  *
  * @package Railroad\Railnotifications\Controllers
+ *
+ * @group Notification Broadcast API
  */
 class BroadcastNotificationJsonController extends Controller
 {
@@ -42,7 +45,7 @@ class BroadcastNotificationJsonController extends Controller
      * @throws OptimisticLockException
      * @throws \Railroad\Railnotifications\Exceptions\BroadcastNotificationFailure
      */
-    public function broadcast(Request $request)
+    public function broadcast(BroadcastNotificationRequest $request)
     {
         $notificationBroadcast = $this->notificationBroadcastService->broadcast(
             $request->get('notification_id'),

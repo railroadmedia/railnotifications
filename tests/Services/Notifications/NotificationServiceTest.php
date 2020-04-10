@@ -133,7 +133,7 @@ class NotificationServiceTest extends NotificationsTestCase
     {
         $notifications = [];
 
-        $recipientId = rand();
+        $recipientId = $this->fakeUser()['id'];
 
         for ($i = 0; $i < 3; $i++) {
             $notification = $this->fakeNotification(['recipient_id' => $recipientId, 'read_on'=>null]);
@@ -154,7 +154,7 @@ class NotificationServiceTest extends NotificationsTestCase
     public function test_get_many_unread_created_after()
     {
         $notifications = [];
-        $recipientId = $this->createAndLogInNewUser();
+        $recipientId = $this->fakeUser()['id'];
 
         for ($i = 0; $i < 5; $i++) {
             $notification = $this->fakeNotification(['recipient_id' => $recipientId, 'read_on'=>null]);

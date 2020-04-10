@@ -8,6 +8,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Railroad\Railnotifications\Exceptions\NotFoundException;
+use Railroad\Railnotifications\Requests\NotificationRequest;
 use Railroad\Railnotifications\Services\NotificationService;
 use Railroad\Railnotifications\Services\ResponseService;
 use Spatie\Fractal\Fractal;
@@ -15,6 +16,8 @@ use Throwable;
 
 /**
  * Class NotificationJsonController
+ *
+ * @group Notifications API
  *
  * @package Railroad\Railnotifications\Controllers
  */
@@ -37,7 +40,10 @@ class NotificationJsonController extends Controller
     }
 
     /**
+     * @param body integer $id - notification id
+     *
      * @return mixed
+     *
      */
     public function index(Request $request)
     {
@@ -54,7 +60,7 @@ class NotificationJsonController extends Controller
      * @throws ORMException
      * @throws OptimisticLockException
      */
-    public function store(Request $request)
+    public function store(NotificationRequest $request)
     {
         $notification = $this->notificationService->create(
             $request->get('type'),
@@ -71,6 +77,8 @@ class NotificationJsonController extends Controller
      * @throws ORMException
      * @throws OptimisticLockException
      * @throws Throwable
+     *
+     * @param integer $id - notification id
      */
     public function delete($id)
     {
@@ -86,6 +94,8 @@ class NotificationJsonController extends Controller
      * @throws ORMException
      * @throws OptimisticLockException
      * @throws Throwable
+     *
+     * @param integer $id - notification id
      */
     public function markAsRead(int $id, Request $request)
     {
@@ -108,6 +118,8 @@ class NotificationJsonController extends Controller
      * @return Fractal
      * @throws ORMException
      * @throws OptimisticLockException
+     *
+     * @param integer $id - recipient user id
      */
     public function markAllAsRead(int $id, Request $request)
     {
@@ -126,7 +138,7 @@ class NotificationJsonController extends Controller
      * @throws OptimisticLockException
      * @throws \Doctrine\ORM\NonUniqueResultException
      */
-    public function syncNotification(Request $request)
+    public function syncNotification(NotificationRequest $request)
     {
         $notification = $this->notificationService->createOrUpdateWhereMatchingData(
             $request->get('type'),
@@ -141,6 +153,8 @@ class NotificationJsonController extends Controller
      * @param $id
      * @return Fractal
      * @throws Throwable
+     *
+     * @param integer $id - notification id
      */
     public function showNotification($id)
     {
@@ -162,6 +176,8 @@ class NotificationJsonController extends Controller
      * @throws ORMException
      * @throws OptimisticLockException
      * @throws Throwable
+     *
+     * @param integer $id - notification id
      */
     public function markAsUnRead(int $id)
     {

@@ -9,6 +9,7 @@ use Illuminate\Database\DatabaseManager;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Mpociot\ApiDoc\ApiDocGeneratorServiceProvider;
 use Orchestra\Testbench\TestCase as BaseTestCase;
 use Railroad\Doctrine\Providers\DoctrineServiceProvider;
 use Railroad\Doctrine\Types\Carbon\CarbonDateTimeTimezoneType;
@@ -89,11 +90,6 @@ class TestCase extends BaseTestCase
     {
         $defaultConfig = require(__DIR__ . '/../config/railnotifications.php');
 
-//        Type::overrideType('datetime', CarbonDateTimeType::class);
-//        Type::overrideType('datetimetz', CarbonDateTimeTimezoneType::class);
-//        Type::overrideType('date', CarbonDateType::class);
-//        Type::overrideType('time', CarbonTimeType::class);
-
         // Setup default database to use sqlite :memory:
         $app['config']->set('database.default', 'testbench');
         $app['config']->set(
@@ -160,6 +156,18 @@ class TestCase extends BaseTestCase
                 return $mock;
             }
         );
+
+        //apidoc
+        $apiDocConfig = require(__DIR__ . '/../config/apidoc.php');
+
+        $app['config']->set('apidoc.output', $apiDocConfig['output']);
+        $app['config']->set('apidoc.routes', $apiDocConfig['routes']);
+        $app['config']->set('apidoc.example_languages', $apiDocConfig['example_languages']);
+        $app['config']->set('apidoc.fractal', $apiDocConfig['fractal']);
+        $app['config']->set('apidoc.requiredEntities', $apiDocConfig['requiredEntities']);
+        $app['config']->set('apidoc.entityManager', $apiDocConfig['entityManager']);
+        $app['config']->set('apidoc.postman', $apiDocConfig['postman']);
+        $app->register(ApiDocGeneratorServiceProvider::class);
     }
 
     /**
@@ -220,9 +228,9 @@ class TestCase extends BaseTestCase
                     'users',
                     function (Blueprint $table) {
                         $table->increments('id');
-                        $table->string('email');
-                        $table->string('password');
-                        $table->string('display_name');
+                        $table->string('email')->nullable();
+                        $table->string('password')->nullable();
+                        $table->string('display_name')->nullable();
                         $table->string('profile_picture_url')->nullable();
                         $table->string('firebase_token_web')->nullable();
                         $table->string('firebase_token_ios')->nullable();

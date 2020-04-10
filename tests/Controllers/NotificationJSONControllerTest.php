@@ -3,6 +3,7 @@
 namespace Railroad\Railnotifications\Tests\Controllers;
 
 use Carbon\Carbon;
+use Railroad\Railnotifications\Entities\Notification;
 use Railroad\Railnotifications\Tests\TestCase;
 
 class NotificationJSONControllerTest extends TestCase
@@ -35,7 +36,9 @@ class NotificationJSONControllerTest extends TestCase
         }
 
         for ($i = 0; $i < 3; $i++) {
-            $notification = $this->fakeNotification(['recipient_id' => $recipient['id']]);
+            $notification = $this->fakeNotification(['recipient_id' => $recipient['id'],
+                'type' => Notification::TYPE_LESSON_COMMENT_REPLY,
+                ]);
 
             $notifications[] = $notification;
         }
@@ -61,6 +64,9 @@ class NotificationJSONControllerTest extends TestCase
         $type = $this->faker->word;
         $data = [
             'commentId' => rand(),
+            'content' => [
+                'id' => rand()
+            ]
         ];
         $recipient = $this->fakeUser();
 
@@ -73,7 +79,7 @@ class NotificationJSONControllerTest extends TestCase
                 'recipient_id' => $recipient['id'],
             ]
         );
-
+        dd($response);
         $this->assertEquals(200, $response->getStatusCode());
 
         $this->assertArraySubset(

@@ -3,9 +3,10 @@
 namespace Railroad\Railnotifications\Notifications\Mailers;
 
 use Illuminate\Contracts\Mail\Mailer;
+use Railroad\Railnotifications\Contracts\ContentProviderInterface;
 use Railroad\Railnotifications\Contracts\UserProviderInterface;
 use Railroad\Railnotifications\Notifications\Emails\AggregatedNotificationsEmail;
-use Railroad\Railnotifications\Notifications\Emails\LessonCommentReplyEmail;
+use Throwable;
 
 class LessonCommentReplyMailer implements MailerInterface
 {
@@ -19,71 +20,62 @@ class LessonCommentReplyMailer implements MailerInterface
      */
     private $userProvider;
 
+    /**
+     * @var ContentProviderInterface
+     */
+    private $contentProvider;
+
     public function __construct(
         Mailer $mailer,
-        UserProviderInterface $userProvider
+        UserProviderInterface $userProvider,
+        ContentProviderInterface $contentProvider
     ) {
         $this->mailer = $mailer;
         $this->userProvider = $userProvider;
+        $this->contentProvider = $contentProvider;
     }
 
     /**
      * @param array $notifications
-     * @throws \Throwable
+     * @throws Throwable
      */
     public function send(array $notifications)
     {
-        $notification = $notifications[0];
-        /**
-         * @var $receivingUser User
-         */
-        $receivingUser = $notification->getRecipient();
+        $notificationsViews = [];
 
-        $comment = $notification->getData()['comment'];
+        foreach ($notifications as $notification) {
+            $commentId = $notification->getData()['commentId'];
 
-        $lesson = $notification->getData()['content'];
+            $comment = $this->contentProvider->getCommentById($commentId);
 
-        /**
-         * @var $author User
-         */
-        $author = $this->userProvider->getRailnotificationsUserById($comment['user_id']);
+            $lesson = $this->contentProvider->getContentById($comment['content_id']);
 
-        if (count($notifications) > 1) {
-            $notificationsViews = [];
-            foreach ($notifications as $notification) {
-                $titleField =
-                    collect($notification->getData()['content']['fields'])
-                        ->where('key', '=', 'title')
-                        ->first();
-                $notificationsViews[] = view(
-                    'railnotifications::lessons.lesson-comment-reply-posted-row',
-                    [
-                        'title' => $titleField['value'],
-                        'content' => $notification->getData()['comment']['comment'],
-                        'displayName' => $this->userProvider->getRailnotificationsUserById($comment['user_id'])
-                            ->getDisplayName(),
-                        'avatarUrl' => $this->userProvider->getRailnotificationsUserById($comment['user_id'])
-                            ->getAvatar(),
-                        'contentUrl' => $notification->getData()['content']['url'] .
-                            '?goToComment=' .
-                            $notification->getData()['comment']['id'],
-                    ]
-                )->render();
+            $author = $this->userProvider->getRailnotificationsUserById($comment['user_id']);
+
+            $receivingUser = $notification->getRecipient();
+
+            $notificationsViews[$receivingUser->getEmail()][] = view(
+                'railnotifications::lessons.lesson-comment-reply-posted-row',
+                [
+                    'title' => $lesson->fetch('fields.title'),
+                    'content' => $comment['comment'],
+                    'displayName' => $author->getDisplayName(),
+                    'avatarUrl' => $author->getAvatar(),
+                    'contentUrl' => $lesson['url'] . '?goToComment=' . $comment['id'],
+                ]
+            )->render();
+        }
+
+        foreach ($notificationsViews as $recipientEmail => $notificationViews) {
+            if (count($notificationViews) > 1) {
+                $subject = 'You Have ' . count($notificationViews) . ' New Notifications '.$recipientEmail;
+            } else {
+                $subject = config('railnotifications.newLessonCommentReplySubject'). $recipientEmail;
             }
+
             $this->mailer->send(
                 new AggregatedNotificationsEmail(
-                    $receivingUser->getEmail(), $notificationsViews
-                )
-            );
-        } else {
-            $this->mailer->send(
-                new LessonCommentReplyEmail(
-                    $receivingUser->getEmail(),
-                    $lesson->fetch('fields.title'),
-                    $comment['comment'],
-                    $author->getDisplayName(),
-                    $author->getAvatar(),
-                    $lesson['url'] . '?goToComment=' . $comment['id']
+                    $recipientEmail, $notificationViews, $subject
                 )
             );
         }

@@ -4,13 +4,13 @@ namespace Railroad\Railnotifications\Notifications\Mailers;
 
 use Exception;
 use Illuminate\Contracts\Mail\Mailer;
+use Railroad\Railnotifications\Contracts\RailforumProviderInterface;
 use Railroad\Railnotifications\Entities\Notification;
 use Railroad\Railnotifications\Entities\NotificationBroadcast;
 use Railroad\Railnotifications\Contracts\UserProviderInterface;
 use Railroad\Railnotifications\Notifications\Emails\AggregatedNotificationsEmail;
 use Railroad\Railnotifications\Notifications\Emails\FollowedForumThreadPostEmail;
 use Railroad\Railnotifications\Notifications\Emails\ForumPostReplyEmail;
-
 
 class FollowedForumThreadPostMailer implements MailerInterface
 {
@@ -24,58 +24,68 @@ class FollowedForumThreadPostMailer implements MailerInterface
      */
     private $userProvider;
 
+    /**
+     * @var RailforumProviderInterface
+     */
+    private $railforumProvider;
+
+    /**
+     * FollowedForumThreadPostMailer constructor.
+     *
+     * @param Mailer $mailer
+     * @param UserProviderInterface $userProvider
+     * @param RailforumProviderInterface $railforumProvider
+     */
     public function __construct(
         Mailer $mailer,
-        UserProviderInterface $userProvider
-    )
-    {
+        UserProviderInterface $userProvider,
+        RailforumProviderInterface $railforumProvider
+    ) {
         $this->mailer = $mailer;
         $this->userProvider = $userProvider;
+        $this->railforumProvider = $railforumProvider;
     }
 
     /**
      * @param array $notifications
-     * @throws Exception
+     * @throws \Throwable
      */
     public function send(array $notifications)
     {
-        $notification = $notifications[0];
-        $post = $notification->getData()['post'] ?? [];
+        $notificationsViews = [];
 
-        $thread = $notification->getData()['thread'] ?? [];
+        foreach ($notifications as $notification) {
 
-        if(empty($post) || empty($thread))
-        {
-           throw new Exception('Old style notification '.$notifications[0]->getId()
-                );
+            $receivingUser = $notification->getRecipient();
+
+            $post = $this->railforumProvider->getPostById($notification->getData()['postId']);
+
+            $thread = $this->railforumProvider->getThreadById($post['thread_id']);
+
+            $author = $this->userProvider->getRailnotificationsUserById($post['author_id']);
+
+            $notificationsViews[$receivingUser->getEmail()][] = view(
+                'railnotifications::forums.post-in-followed-thread-row',
+                [
+                    'title' => $thread['title'],
+                    'content' => $post['content'],
+                    'displayName' => $author->getDisplayName(),
+                    'avatarUrl' => $author->getAvatar(),
+                    'contentUrl' => url()->route('forums.post.jump-to', $post['id']),
+                ]
+            )->render();
         }
 
-        /**
-         * @var $author User
-         */
-        $author = $this->userProvider->getRailnotificationsUserById($post['author_id']);
+        foreach ($notificationsViews as $recipientEmail => $notificationViews) {
+            if (count($notificationViews) > 1) {
+                $subject = 'You Have ' . count($notificationViews) . ' New Notifications';
+            } else {
+                $subject = config('railnotifications.newThreadPostSubject');
+            }
 
-        /**
-         * @var $receivingUser User
-         */
-        $receivingUser = $notification->getRecipient();
-
-        if(count($notifications) > 1){
             $this->mailer->send(
                 new AggregatedNotificationsEmail(
-                    $receivingUser->getEmail(),
-                    $notifications
-                )
-            );
-        } else {
-            $this->mailer->send(
-                new FollowedForumThreadPostEmail(
-                    $receivingUser->getEmail(),
-                    $thread['title'],
-                    $post['content'],
-                    $author->getDisplayName(),
-                    $author->getAvatar(),
-                    url()->route('forums.post.jump-to', $post['id'])
+                    $recipientEmail, $notificationViews, $subject
                 )
             );
         }

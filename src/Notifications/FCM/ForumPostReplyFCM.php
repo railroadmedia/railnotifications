@@ -2,12 +2,13 @@
 
 namespace Railroad\Railnotifications\Notifications\FCM;
 
+use Exception;
 use LaravelFCM\Facades\FCM;
 use LaravelFCM\Message\OptionsBuilder;
 use LaravelFCM\Message\PayloadDataBuilder;
 use LaravelFCM\Message\PayloadNotificationBuilder;
+use Railroad\Railnotifications\Contracts\RailforumProviderInterface;
 use Railroad\Railnotifications\Contracts\UserProviderInterface;
-
 
 class ForumPostReplyFCM
 {
@@ -16,31 +17,47 @@ class ForumPostReplyFCM
      */
     private $userProvider;
 
+    /**
+     * @var RailforumProviderInterface
+     */
+    private $railforumProvider;
+
     public function __construct(
-        UserProviderInterface $userProvider
+        UserProviderInterface $userProvider,
+        RailforumProviderInterface $railforumProvider
     ) {
         $this->userProvider = $userProvider;
+        $this->railforumProvider = $railforumProvider;
     }
 
     /**
      * @param $token
      * @param $notification
+     * @return mixed
      */
-    public function send($token, $notification)
+    public function send($notification)
     {
         try {
 
-            $post = $notification->getData()['post'];
+            $post = $this->railforumProvider->getPostById($notification->getData()['postId']);
 
-            $thread = $notification->getData()['thread'];
+            $thread = $this->railforumProvider->getThreadById($post->thread_id);
+
+            $receivingUser = $notification->getRecipient();
+
+            $firebaseTokens = $this->userProvider->getUserFirebaseTokens($receivingUser->getId());
+            $tokens = [];
+            foreach ($firebaseTokens as $firebaseToken) {
+                $tokens[] = $firebaseToken->getToken();
+            }
 
             /**
              * @var $author User
              */
             $author = $this->userProvider->getRailnotificationsUserById($post['author_id']);
 
-            $fcmMessage = $author->getDisplayName() . ' replied to your post.';
-            $fcmMessage .= $thread['title'];
+            $fcmTitle = $author->getDisplayName() . ' replied to your post.';
+            $fcmMessage = $thread['title'];
             $fcmMessage .= '
 ' . mb_strimwidth(
                     htmlspecialchars(strip_tags($post['content'])),
@@ -48,10 +65,6 @@ class ForumPostReplyFCM
                     120,
                     "..."
                 );
-
-            $fcmTitle =
-                (array_key_exists($notification->getType(), config('railnotifications.data'))) ?
-                    config('railnotifications.data')[$notification->getType()]['title'] : 'New notification';
 
             $optionBuilder = new OptionsBuilder();
             $optionBuilder->setTimeToLive(60 * 20);
@@ -71,11 +84,20 @@ class ForumPostReplyFCM
             $notification = $notificationBuilder->build();
             $data = $dataBuilder->build();
 
-            $response = FCM::sendTo($token, $option, $notification, $data);
+            $downstreamResponse = FCM::sendTo($tokens, $option, $notification, $data);
 
-            return $response;
+            $this->userProvider->deleteUserFirebaseTokens(
+                $receivingUser->getId(),
+                $downstreamResponse->tokensToDelete()
+            );
 
-        } catch (\Exception $messagingException) {
+            foreach ($downstreamResponse->tokensToModify() as $oldToken => $newToken) {
+                $this->userProvider->updateUserFirebaseToken($receivingUser->getId(), $oldToken, $newToken);
+            }
+
+            return $downstreamResponse;
+
+        } catch (Exception $messagingException) {
 
         }
     }

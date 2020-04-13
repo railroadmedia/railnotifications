@@ -2,31 +2,23 @@
 
 namespace Railroad\Railnotifications\Channels;
 
-use Railroad\Railnotifications\Contracts\UserProviderInterface;
+use Doctrine\ORM\OptimisticLockException;
+use Doctrine\ORM\ORMException;
+use Exception;
 use Railroad\Railnotifications\Entities\Notification;
 use Railroad\Railnotifications\Entities\NotificationBroadcast;
 use Railroad\Railnotifications\Notifications\FCM\FollowedForumThreadPostFCM;
 use Railroad\Railnotifications\Notifications\FCM\ForumPostReplyFCM;
+use Railroad\Railnotifications\Notifications\FCM\LessonCommentLikeFCM;
 use Railroad\Railnotifications\Notifications\FCM\LessonCommentReplyFCM;
 use Railroad\Railnotifications\Services\NotificationBroadcastService;
 
 class FcmChannel implements ChannelInterface
 {
-    const MAX_TOKEN_PER_REQUEST = 500;
-    /**
-     * @var Client
-     */
-    protected $client;
-
     /**
      * @var NotificationBroadcastService
      */
     private $notificationBroadcastService;
-
-    /**
-     * @var UserProviderInterface
-     */
-    private $userProvider;
 
     /**
      * FcmChannel constructor.
@@ -34,25 +26,19 @@ class FcmChannel implements ChannelInterface
      * @param NotificationBroadcastService $notificationBroadcastService
      */
     public function __construct(
-        NotificationBroadcastService $notificationBroadcastService,
-        UserProviderInterface $userProvider
+        NotificationBroadcastService $notificationBroadcastService
     ) {
         $this->notificationBroadcastService = $notificationBroadcastService;
-        $this->userProvider = $userProvider;
     }
 
     /**
      * @param NotificationBroadcast $notificationBroadcast
-     * @throws \Doctrine\ORM\ORMException
-     * @throws \Doctrine\ORM\OptimisticLockException
+     * @throws ORMException
+     * @throws OptimisticLockException
      */
     public function send(NotificationBroadcast $notificationBroadcast)
     {
         $notification = $notificationBroadcast->getNotification();
-
-        $recipient = $notification->getRecipient();
-
-        $firebaseTokens = $this->userProvider->getUserFirebaseTokens($recipient->getId());
 
         switch ($notification->getType()) {
             case Notification::TYPE_FORUM_POST_IN_FOLLOWED_THREAD:
@@ -64,41 +50,30 @@ class FcmChannel implements ChannelInterface
             case Notification::TYPE_LESSON_COMMENT_REPLY:
                 $mailer = app()->make(LessonCommentReplyFCM::class);
                 break;
+            case Notification::TYPE_LESSON_COMMENT_LIKED:
+                $mailer = app()->make(LessonCommentLikeFCM::class);
+                break;
             default:
-                throw new \Exception(
+                throw new Exception(
                     'No fcm template found for notification broadcast id: ' . $notificationBroadcast->getId()
                 );
         }
 
-        $tokens = [];
-        foreach ($firebaseTokens as $firebaseToken) {
-            $tokens[] = $firebaseToken->getToken();
-        }
+        $mailer->send($notification);
 
-        if (!empty($tokens)) {
-
-            $downstreamResponse = $mailer->send($tokens, $notification);
-
-            $this->userProvider->deleteUserFirebaseTokens($recipient->getId(), $downstreamResponse->tokensToDelete());
-
-            foreach ($downstreamResponse->tokensToModify()  as $oldToken=>$newToken){
-                $this->userProvider->updateUserFirebaseToken($recipient->getId(), $oldToken, $newToken);
-            }
-
-            $this->notificationBroadcastService->markSucceeded($notificationBroadcast->getId());
-        }
+        $this->notificationBroadcastService->markSucceeded($notificationBroadcast->getId());
     }
 
     /**
      * @param array $notificationBroadcasts
-     * @throws \Doctrine\ORM\ORMException
-     * @throws \Doctrine\ORM\OptimisticLockException
+     * @throws ORMException
+     * @throws OptimisticLockException
      */
     public function sendAggregated(array $notificationBroadcasts)
     {
         // TODO: Decide if we should provide the aggregated option for FCM notifications
-        foreach ($notificationBroadcasts as $notificationBroadcast) {
-            $this->send($notificationBroadcast);
-        }
+//        foreach ($notificationBroadcasts as $notificationBroadcast) {
+//            $this->send($notificationBroadcast);
+//        }
     }
 }

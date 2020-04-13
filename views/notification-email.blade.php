@@ -9,103 +9,7 @@
 
 
     {{--  Global CSS  --}}
-    <style>
-        th {
-            width: 100%;
-            background: #ff383f;
-            text-align: center;
-            padding: 20px 15px;
-        }
 
-        th img {
-            width: 250px;
-            height: auto;
-            display: inline-block;
-            max-width: 100%;
-        }
-
-        table {
-            margin: 0 auto;
-            max-width: 100% !important;
-            display: block;
-            border-collapse: collapse;
-        }
-
-        table td {
-            padding: 30px 0;
-        }
-
-        table td img {
-            width: 60px;
-            max-width: 60px;
-            border-radius: 50%;
-        }
-
-        table td h1 {
-            font: 300 16px/1em 'Open Sans', sans-serif;
-            color: #777;
-            margin-bottom: 15px;
-        }
-
-        table td h2 {
-            font: 700 16px/1em 'Open Sans', sans-serif;
-            color: #000;
-            margin-bottom: 10px;
-        }
-
-        table td p {
-            font: 300 16px/20px 'Open Sans', sans-serif;
-            color: #000;
-            margin-top: 0;
-            margin-bottom: 15px;
-        }
-
-        table td a {
-            display: inline-block;
-            text-decoration: none;
-            cursor: pointer;
-            background: #ff383f;
-            color: #fff !important;
-            border-radius: 5px;
-            text-transform: uppercase;
-            padding: 10px;
-        }
-
-        table tfoot td {
-            text-align: center;
-        }
-
-        table tfoot td a {
-            background: none;
-            border-radius: none;
-            padding: 0;
-        }
-
-        table tfoot td img {
-            width: 45px;
-            height: auto;
-            display: inline-block;
-            margin: 0 5px;
-        }
-
-        table tfoot td h6 {
-            font: 300 14px/1em 'Open Sans', sans-serif;
-            color: #777;
-            margin-bottom: 10px;
-        }
-
-        table tfoot td h6 a {
-            font-size: 14px;
-            text-transform: none;
-            text-decoration: underline;
-            color: #777 !important;
-        }
-
-        table tfoot td p {
-            font: 300 12px/1em 'Open Sans', sans-serif;
-            color: #777;
-        }
-    </style>
 </head>
 
 <body>
@@ -138,15 +42,15 @@
     <tfoot>
     <tr>
         <td colspan="2">
-            <a href="https://facebook.com/pianoteofficial">
-                <img src="{{ cdn('icons/facebook.png') }}">
-            </a>
-            <a href="https://youtube.com/user/pianolessonscom">
-                <img src="{{ cdn('icons/youtube.png') }}">
-            </a>
-            <a href="https://instagram.com/pianoteofficial">
-                <img src="{{ cdn('icons/instagram.png') }}">
-            </a>
+{{--            <a href="https://facebook.com/pianoteofficial">--}}
+{{--                <img src="{{ cdn('icons/facebook.png') }}">--}}
+{{--            </a>--}}
+{{--            <a href="https://youtube.com/user/pianolessonscom">--}}
+{{--                <img src="{{ cdn('icons/youtube.png') }}">--}}
+{{--            </a>--}}
+{{--            <a href="https://instagram.com/pianoteofficial">--}}
+{{--                <img src="{{ cdn('icons/instagram.png') }}">--}}
+{{--            </a>--}}
             <h6>Don't like receiving these emails? Change your <a
                         href="{{ url()->route('members.profile.settings') }}">notification settings</a> to limit
                 the emails you receive.</h6>

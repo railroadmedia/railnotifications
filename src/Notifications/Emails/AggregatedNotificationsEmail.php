@@ -7,14 +7,19 @@ use Illuminate\Mail\Mailable;
 class AggregatedNotificationsEmail extends Mailable
 {
     private $recipientEmail;
+
     private $renderedNotificationRows;
+
+    public $subject;
 
     public function __construct(
         $recipientEmail,
-        $renderedNotificationRows
+        $renderedNotificationRows,
+        $subject
     ) {
         $this->recipientEmail = $recipientEmail;
         $this->renderedNotificationRows = $renderedNotificationRows;
+        $this->subject = $subject;
     }
 
     /**
@@ -26,11 +31,9 @@ class AggregatedNotificationsEmail extends Mailable
     {
         return $this
             ->to($this->recipientEmail)
-            ->from('system@pianote.com', 'Pianote')
-            ->replyTo('support@pianote.com')
-            ->subject(
-                'You Have ' . count($this->renderedNotificationRows) . ' New Notifications - Pianote Forums'
-            )
+            ->from(config('railnotifications.emailAddressFrom'), config('railnotifications.emailBrandFrom'))
+            ->replyTo(config('railnotifications.replyAddress'))
+            ->subject($this->subject)
             ->view('railnotifications::all-notification-email')
             ->with(
                 [

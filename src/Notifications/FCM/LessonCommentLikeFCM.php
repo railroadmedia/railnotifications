@@ -2,14 +2,15 @@
 
 namespace Railroad\Railnotifications\Notifications\FCM;
 
+use Exception;
 use LaravelFCM\Facades\FCM;
 use LaravelFCM\Message\OptionsBuilder;
 use LaravelFCM\Message\PayloadDataBuilder;
 use LaravelFCM\Message\PayloadNotificationBuilder;
-use Railroad\Railnotifications\Contracts\RailforumProviderInterface;
+use Railroad\Railnotifications\Contracts\ContentProviderInterface;
 use Railroad\Railnotifications\Contracts\UserProviderInterface;
 
-class FollowedForumThreadPostFCM
+class LessonCommentLikeFCM
 {
     /**
      * @var UserProviderInterface
@@ -17,51 +18,53 @@ class FollowedForumThreadPostFCM
     private $userProvider;
 
     /**
-     * @var RailforumProviderInterface
+     * @var ContentProviderInterface
      */
-    private $railforumProvider;
+    private $contentProvider;
 
     /**
-     * FollowedForumThreadPostFCM constructor.
+     * LessonCommentReplyFCM constructor.
      *
      * @param UserProviderInterface $userProvider
-     * @param RailforumProviderInterface $railforumProvider
+     * @param ContentProviderInterface $contentProvider
      */
-    public function __construct(UserProviderInterface $userProvider, RailforumProviderInterface $railforumProvider)
+    public function __construct(UserProviderInterface $userProvider, ContentProviderInterface $contentProvider)
     {
         $this->userProvider = $userProvider;
-        $this->railforumProvider = $railforumProvider;
+        $this->contentProvider = $contentProvider;
     }
 
     /**
+     * @param $token
      * @param $notification
      * @return mixed
      */
     public function send($notification)
     {
         try {
-            $post = $this->railforumProvider->getPostById($notification->getData()['postId']);
 
-            $thread = $this->railforumProvider->getThreadById($post->thread_id);
+            $comment = $this->contentProvider->getCommentById($notification->getData()['commentId']);
+
+            $lesson = $this->contentProvider->getContentById($comment['content_id']);
 
             /**
              * @var $author User
              */
-            $author = $this->userProvider->getRailnotificationsUserById($post['author_id']);
+            $author = $notification->getRecipient();
 
             $receivingUser = $notification->getRecipient();
-
             $firebaseTokens = $this->userProvider->getUserFirebaseTokens($receivingUser->getId());
+
             $tokens = [];
             foreach ($firebaseTokens as $firebaseToken) {
                 $tokens[] = $firebaseToken->getToken();
             }
 
-            $fcmTitle = $author->getDisplayName() . ' posted in a thread you follow.';
-            $fcmMessage = $thread['title'];
+            $fcmTitle = $author->getDisplayName() . ' liked your comment.';
+            $fcmMessage = $lesson->fetch('fields.title');
             $fcmMessage .= '
 ' . mb_strimwidth(
-                    htmlspecialchars(strip_tags($post['content'])),
+                    htmlspecialchars(strip_tags($comment['comment'])),
                     0,
                     120,
                     "..."
@@ -78,6 +81,8 @@ class FollowedForumThreadPostFCM
             $dataBuilder->addData(
                 [
                     'image' => $author->getAvatar(),
+                    'uri' => $lesson['url'],
+                    'commentId' => $comment['id'],
                 ]
             );
 
@@ -95,7 +100,7 @@ class FollowedForumThreadPostFCM
 
             return $downstreamResponse;
 
-        } catch (\Exception $messagingException) {
+        } catch (Exception $messagingException) {
 
         }
     }

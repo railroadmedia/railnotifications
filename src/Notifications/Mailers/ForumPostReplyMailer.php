@@ -5,7 +5,7 @@ namespace Railroad\Railnotifications\Notifications\Mailers;
 use Illuminate\Contracts\Mail\Mailer;
 use Railroad\Railnotifications\Contracts\UserProviderInterface;
 use Railroad\Railnotifications\Notifications\Emails\AggregatedNotificationsEmail;
-use Railroad\Railnotifications\Notifications\Emails\ForumPostReplyEmail;
+use Throwable;
 
 class ForumPostReplyMailer implements MailerInterface
 {
@@ -29,69 +29,47 @@ class ForumPostReplyMailer implements MailerInterface
 
     /**
      * @param array $notifications
-     * @throws \Throwable
+     * @throws Throwable
      */
     public function send(array $notifications)
     {
-        if (count($notifications) > 1) {
-            $notificationsViews = [];
+        $notificationsViews = [];
 
-            foreach ($notifications as $notification) {
-                $post = $notification->getData()['post'];
-
-                $thread = $notification->getData()['thread'];
-
-                $receivingUser = $notification->getRecipient();
-
-                /**
-                 * @var $author User
-                 */
-                $author = $this->userProvider->getRailnotificationsUserById($post['author_id']);
-
-                $notificationsViews[] = view(
-                    'railnotifications::forums.forum-reply-posted-row',
-                    [
-                        'title' => $thread['title'],
-                        'content' => $post['content'],
-                        'displayName' => $author->getDisplayName(),
-                        'avatarUrl' => $author->getAvatar(),
-                        'contentUrl' => url()->route('forums.post.jump-to', $post['id']),
-                    ]
-                )->render();
-            }
-
-            $this->mailer->send(
-                new AggregatedNotificationsEmail(
-                    $receivingUser->getEmail(), $notificationsViews
-                )
-            );
-
-        } else {
-
-            $notification = $notifications[0];
-
+        foreach ($notifications as $notification) {
             $post = $notification->getData()['post'];
 
             $thread = $notification->getData()['thread'];
+
+            $receivingUser = $notification->getRecipient();
 
             /**
              * @var $author User
              */
             $author = $this->userProvider->getRailnotificationsUserById($post['author_id']);
 
-            /**
-             * @var $receivingUser User
-             */
-            $receivingUser = $notification->getRecipient();
+            $notificationsViews[$receivingUser->getEmail()][] = view(
+                'railnotifications::forums.forum-reply-posted-row',
+                [
+                    'title' => $thread['title'],
+                    'content' => $post['content'],
+                    'displayName' => $author->getDisplayName(),
+                    'avatarUrl' => $author->getAvatar(),
+                    'contentUrl' => url()->route('forums.post.jump-to', $post['id']),
+                ]
+            )->render();
+        }
+
+        foreach ($notificationsViews as $recipientEmail => $notificationViews) {
+
+            if (count($notificationViews) > 1) {
+                $subject = 'You Have ' . count($notificationViews) . ' New Notifications';
+            } else {
+                $subject = config('railnotifications.newThreadPostSubject');
+            }
 
             $this->mailer->send(
-                new ForumPostReplyEmail(
-                    $receivingUser->getEmail(),
-                    $thread['title'],
-                    $post['content'],
-                    $author->getDisplayName(),
-                    $author->getAvatar(),
-                    url()->route('forums.post.jump-to', $post['id'])
+                new AggregatedNotificationsEmail(
+                    $recipientEmail, $notificationViews, $subject
                 )
             );
         }

@@ -6,6 +6,7 @@ use LaravelFCM\Facades\FCM;
 use LaravelFCM\Message\OptionsBuilder;
 use LaravelFCM\Message\PayloadDataBuilder;
 use LaravelFCM\Message\PayloadNotificationBuilder;
+use Railroad\Railnotifications\Contracts\ContentProviderInterface;
 use Railroad\Railnotifications\Contracts\UserProviderInterface;
 use Railroad\Railnotifications\Entities\Notification;
 use Railroad\Railnotifications\Entities\NotificationBroadcast;
@@ -20,30 +21,51 @@ class LessonCommentReplyFCM
      */
     private $userProvider;
 
-    public function __construct(
-        UserProviderInterface $userProvider
-    ) {
+    /**
+     * @var ContentProviderInterface
+     */
+    private $contentProvider;
+
+    /**
+     * LessonCommentReplyFCM constructor.
+     *
+     * @param UserProviderInterface $userProvider
+     * @param ContentProviderInterface $contentProvider
+     */
+    public function __construct(UserProviderInterface $userProvider, ContentProviderInterface $contentProvider)
+    {
         $this->userProvider = $userProvider;
+        $this->contentProvider = $contentProvider;
     }
 
     /**
      * @param $token
      * @param $notification
+     * @return mixed
      */
-    public function send($token, $notification)
+    public function send($notification)
     {
         try {
-            $comment = $notification->getData()['comment'];
 
-            $lesson = $notification->getData()['content'];
+            $comment = $this->contentProvider->getCommentById($notification->getData()['commentId']);
 
             /**
              * @var $author User
              */
             $author = $this->userProvider->getRailnotificationsUserById($comment['user_id']);
 
-            $fcmMessage = $author->getDisplayName() . ' replied to your comment.';
-            $fcmMessage .= $lesson->fetch('fields.title');
+            $lesson = $this->contentProvider->getContentById($comment['content_id']);
+
+            $receivingUser = $notification->getRecipient();
+
+            $firebaseTokens = $this->userProvider->getUserFirebaseTokens($receivingUser->getId());
+            $tokens = [];
+            foreach ($firebaseTokens as $firebaseToken) {
+                $tokens[] = $firebaseToken->getToken();
+            }
+
+            $fcmTitle = $author->getDisplayName() . ' replied to your comment.';
+            $fcmMessage = $lesson->fetch('fields.title');
             $fcmMessage .= '
 ' . mb_strimwidth(
                     htmlspecialchars(strip_tags($comment['comment'])),
@@ -51,10 +73,6 @@ class LessonCommentReplyFCM
                     120,
                     "..."
                 );
-
-            $fcmTitle =
-                (array_key_exists($notification->getType(), config('railnotifications.data'))) ?
-                    config('railnotifications.data')[$notification->getType()]['title'] : 'New notification';
 
             $optionBuilder = new OptionsBuilder();
             $optionBuilder->setTimeToLive(60 * 20);
@@ -76,9 +94,15 @@ class LessonCommentReplyFCM
             $notification = $notificationBuilder->build();
             $data = $dataBuilder->build();
 
-            $response = FCM::sendTo($token, $option, $notification, $data);
+            $downstreamResponse = FCM::sendTo($tokens, $option, $notification, $data);
 
-            return $response;
+            $this->userProvider->deleteUserFirebaseTokens($receivingUser->getId(), $downstreamResponse->tokensToDelete());
+
+            foreach ($downstreamResponse->tokensToModify() as $oldToken => $newToken) {
+                $this->userProvider->updateUserFirebaseToken($receivingUser->getId(), $oldToken, $newToken);
+            }
+
+            return $downstreamResponse;
 
         } catch (\Exception $messagingException) {
 

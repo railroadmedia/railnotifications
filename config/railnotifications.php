@@ -36,5 +36,10 @@ return [
             'title' => 'New like to your comment',
             'message' => 'New like to your comment'
         ]
-    ]
+    ],
+    'emailAddressFrom' => 'system@pianote.com',
+    'emailBrandFrom' => 'Pianote',
+    'replyAddress' => 'suport@pianote.com',
+    'newThreadPostSubject' => 'Pianote Forums - New Thread Post: ',
+    'newLessonCommentReplySubject' => 'Pianote - New Lesson Comment Reply: '
 ];

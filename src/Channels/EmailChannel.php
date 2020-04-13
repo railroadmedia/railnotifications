@@ -7,6 +7,7 @@ use Illuminate\Contracts\Mail\Mailer;
 use Railroad\Railnotifications\Contracts\UserProviderInterface;
 use Railroad\Railnotifications\Entities\Notification;
 use Railroad\Railnotifications\Entities\NotificationBroadcast;
+use Railroad\Railnotifications\Notifications\FCM\LessonCommentLikeFCM;
 use Railroad\Railnotifications\Notifications\Mailers\FollowedForumThreadPostMailer;
 use Railroad\Railnotifications\Notifications\Mailers\ForumPostReplyMailer;
 use Railroad\Railnotifications\Notifications\Mailers\LessonCommentReplyMailer;
@@ -94,6 +95,9 @@ class EmailChannel implements ChannelInterface
                     $mailer = app()->make(ForumPostReplyMailer::class);
                     break;
                 case Notification::TYPE_LESSON_COMMENT_REPLY:
+                    $mailer = app()->make(LessonCommentReplyMailer::class);
+                    break;
+                case Notification::TYPE_LESSON_COMMENT_LIKED:
                     $mailer = app()->make(LessonCommentReplyMailer::class);
                     break;
             }

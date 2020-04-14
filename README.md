@@ -1,6 +1,29 @@
+- [railnotifications](#railnotifications)
+  * [Install](#install)
+  * [Package Configuration](#package-configuration)
+  * [API](#api)
+    + [Tables:](#tables-)
+    + [JSON Endpoints](#json-endpoints)
+      - [Get user notifications.](#get-user-notifications)
+      - [Create a new notification.](#create-a-new-notification)
+      - [Sync notification](#sync-notification)
+      - [Read a notification](#read-a-notification)
+      - [Unread a notification](#unread-a-notification)
+      - [Read all notifications for a user](#read-all-notifications-for-a-user)
+      - [Delete a notification](#delete-a-notification)
+      - [Show notification](#show-notification)
+      - [Count all the notifications that are marked as readed](#count-all-the-notifications-that-are-marked-as-readed)
+      - [Count all the unread notifications](#count-all-the-unread-notifications)
+      - [Broadcast notification on specified channels](#broadcast-notification-on-specified-channels)
+      - [Mark broadcast as succeeded](#mark-broadcast-as-succeeded)
+      - [Mark broadcast as failed](#mark-broadcast-as-failed)
+      - [Show broadcast](#show-broadcast)
+
+
+
 # railnotifications
-========================================================================================================================
 Railnotifications is an easy to use Laravel package for sending email and push notification with Firebase Cloud Messaging (FCM).
+
 
 ## Install
 
@@ -17,20 +40,350 @@ Railnotifications is an easy to use Laravel package for sending email and push n
 ```
 3. Publish the railnotifications config file: 
 > php artisan vendor:publish
-4. Fill the railnotifications.php config file
+4. Fill the railnotifications.php config file:
+```php
 
-## Package Configuration
+return array(
+    'channels' => [
+        'email' => \Railroad\Railnotifications\Channels\EmailChannel::class,
+        'fcm' => \Railroad\Railnotifications\Channels\FcmChannel::class
+    ],
 
-In the .env file should add the server key and the secret key for the Firebase Cloud Messaging:
+    // cache
+    'redis_host' => 'redis',
+    'redis_port' => 6379,
+
+    'development_mode' => true,
+
+    // database
+    'database_connection_name' => 'mysql',
+    'database_name' => env('DB_DATABASE'),
+    'database_user' => env('DB_USERNAME'),
+    'database_password' => env('DB_PASSWORD'),
+    'database_host' => env('DB_HOST'),
+    'database_driver' => 'pdo_mysql',
+    'database_in_memory' => false,
+    'enable_query_log' => false,
+
+    // entities
+    'entities' => [
+        [
+            'path' => __DIR__ . '/../src/Entities',
+            'namespace' => 'Railroad\Railnotifications\Entities',
+        ],
+    ],
+    'emailAddressFrom' => 'system@pianote.com',
+    'emailBrandFrom' => 'Pianote',
+    'replyAddress' => 'suport@pianote.com',
+    'newThreadPostSubject' => 'Pianote Forums - New Thread Post: ',
+    'newLessonCommentReplySubject' => 'Pianote - New Lesson Comment Reply: '
+);
+```
+5. In the .env file should add the server key and the secret key for the Firebase Cloud Messaging:
 ```
 FCM_SERVER_KEY=my_secret_server_key
 FCM_SENDER_ID=my_secret_sender_id
 ````
 The FCM keys can be find in Firebase (project settings -> cloud messaging) or in 1Password.
 
-## Notification API 
+6. Create new provider for Content that implements `ContentProviderInterface` from Railnotifications package. The provider should contain the following methods: `getContentById` and `getCommentById`, like bellow: 
+```php
+<?php
 
-### Table: `notifications`
+namespace App\Providers;
+
+use Railroad\Railcontent\Repositories\RepositoryBase;
+use Railroad\Railcontent\Services\CommentService;
+use Railroad\Railcontent\Services\ContentService;
+use Railroad\Railnotifications\Contracts\ContentProviderInterface;
+
+class RailcontentContentProvider implements ContentProviderInterface
+{
+    /**
+     * @var ContentService
+     */
+    private $contentService;
+
+    /**
+     * @var CommentService
+     */
+    private $commentService;
+
+    /**
+     * RailcontentContentProvider constructor.
+     *
+     * @param ContentService $contentService
+     * @param CommentService $commentService
+     */
+    public function __construct(
+        ContentService $contentService,
+        CommentService $commentService
+    ) {
+        $this->contentService = $contentService;
+        $this->commentService = $commentService;
+
+        RepositoryBase::$connectionMask = null;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getContentById($id)
+    {
+        return $this->contentService->getById($id);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getCommentById($id)
+    {
+        return $this->commentService->get($id);
+    }
+}
+
+```
+
+7. Create new provider for Forum that implements `RailforumProviderInterface` from Railnotifications package. The provider should contain the following methods: `getPostById`, `getThreadById` and `getThreadFollowerIds`, like bellow: 
+
+```php
+<?php
+
+namespace App\Providers;
+
+use Railroad\Railforums\Repositories\PostRepository;
+use Railroad\Railforums\Repositories\ThreadFollowRepository;
+use Railroad\Railforums\Repositories\ThreadRepository;
+use Railroad\Railnotifications\Contracts\RailforumProviderInterface;
+
+class RailforumProvider implements RailforumProviderInterface
+{
+    /**
+     * @var PostRepository
+     */
+    private $postRepository;
+
+    /**
+     * @var ThreadRepository
+     */
+    private $threadRepository;
+
+    /**
+     * @var ThreadFollowRepository
+     */
+    private $threadFollowRepository;
+
+    /**
+     * RailforumProvider constructor.
+     *
+     * @param PostRepository $postRepository
+     * @param ThreadRepository $threadRepository
+     * @param ThreadFollowRepository $threadFollowRepository
+     */
+    public function __construct(
+        PostRepository $postRepository,
+        ThreadRepository $threadRepository,
+        ThreadFollowRepository $threadFollowRepository
+    ) {
+        $this->postRepository = $postRepository;
+        $this->threadRepository = $threadRepository;
+        $this->threadFollowRepository = $threadFollowRepository;
+    }
+
+    /**
+     * @param int $postId
+     * @return array|\Railroad\Resora\Entities\Entity|null
+     */
+    public function getPostById($postId)
+    {
+        return $this->postRepository->read($postId);
+    }
+
+    /**
+     * @param int $threadId
+     * @return array|\Railroad\Resora\Entities\Entity|null
+     */
+    public function getThreadById($threadId)
+    {
+        return $this->threadRepository->read($threadId);
+    }
+
+    /**
+     * @param $threadId
+     * @return mixed
+     */
+    public function getThreadFollowerIds($threadId)
+    {
+        return $this->threadFollowRepository->getThreadFollowerIds($threadId)->toArray();
+    }
+}
+
+```
+8. Create new provider for Forum that implements `UserProviderInterface` from Railnotifications package. The provider should contain the following methods: `getRailnotificationsUserById`, `getUserFirebaseTokens`, `deleteUserFirebaseTokens` and `updateUserFirebaseToken`, like bellow: 
+
+```php
+<?php
+
+namespace App\Providers;
+
+use Doctrine\ORM\OptimisticLockException;
+use Doctrine\ORM\ORMException;
+use Railroad\Ecommerce\Entities\User;
+use Railroad\Railnotifications\Contracts\UserProviderInterface;
+use Railroad\Railnotifications\Entities\User as RailnotificationUser;
+use Railroad\Usora\Managers\UsoraEntityManager;
+use Railroad\Usora\Repositories\UserFirebaseTokensRepository;
+use Railroad\Usora\Repositories\UserRepository;
+
+class RailnotificationsUserProvider implements UserProviderInterface
+{
+    /**
+     * @var UserRepository
+     */
+    private $userRepository;
+
+    /**
+     * @var UserFirebaseTokensRepository
+     */
+    private $userFirebaseTokenRepository;
+
+    /**
+     * @var UsoraEntityManager
+     */
+    private $usoraEntityManager;
+
+    /**
+     * RailnotificationsUserProvider constructor.
+     *
+     * @param UsoraEntityManager $usoraEntityManager
+     * @param UserRepository $userRepository
+     * @param UserFirebaseTokensRepository $userFirebaseTokensRepository
+     */
+    public function __construct(
+        UsoraEntityManager $usoraEntityManager,
+        UserRepository $userRepository,
+        UserFirebaseTokensRepository $userFirebaseTokensRepository
+    ) {
+        $this->userRepository = $userRepository;
+        $this->userFirebaseTokenRepository = $userFirebaseTokensRepository;
+        $this->usoraEntityManager = $usoraEntityManager;
+    }
+
+    /**
+     * @param int $id
+     * @return User|null
+     */
+    public function getRailnotificationsUserById(int $id)
+    : ?RailnotificationUser {
+        $usoraUser = $this->userRepository->find($id);
+
+        if ($usoraUser) {
+            return new RailnotificationUser(
+                $usoraUser->getId(),
+                $usoraUser->getEmail(),
+                $usoraUser->getDisplayName(),
+                $usoraUser->getProfilePictureUrl()
+            );
+        }
+
+        return null;
+    }
+
+    /**
+     * @param int $userId
+     * @param string $type
+     * @return array|null
+     */
+    public function getUserFirebaseTokens(int $userId, $type = null)
+    : ?array {
+
+        $criteria = [
+            'user' => $userId,
+        ];
+
+        if ($type) {
+            $criteria += [
+                'type' => $type,
+            ];
+        }
+
+        return $this->userFirebaseTokenRepository->findBy($criteria);
+    }
+
+    /**
+     * @param int $userId
+     * @param array $tokens
+     * @return mixed|void
+     * @throws ORMException
+     * @throws OptimisticLockException
+     */
+    public function deleteUserFirebaseTokens(int $userId, array $tokens)
+    {
+        $qb = $this->userFirebaseTokenRepository->createQueryBuilder('f');
+        $qb->where('f.user = :user')
+            ->andWhere('f.token IN (:tokens)')
+            ->setParameters(
+                [
+                    'user' => $userId,
+                    'tokens' => $tokens,
+                ]
+            );
+
+        $userFirebaseTokens =
+            $qb->getQuery()
+                ->getResult();
+
+        foreach ($userFirebaseTokens as $userFirebaseToken) {
+            $this->usoraEntityManager->remove($userFirebaseToken);
+            $this->usoraEntityManager->flush();
+        }
+    }
+
+    /**
+     * @param $userId
+     * @param $oldToken
+     * @param $newToken
+     * @return mixed
+     * @throws ORMException
+     * @throws OptimisticLockException
+     */
+    public function updateUserFirebaseToken($userId, $oldToken, $newToken)
+    {
+        $qb = $this->userFirebaseTokenRepository->createQueryBuilder('f');
+        $qb->where('f.user = :user')
+            ->andWhere('f.token = :token')
+            ->setParameters(
+                [
+                    'user' => $userId,
+                    'token' => $oldToken,
+                ]
+            );
+        $userFirebaseToken =
+            $qb->getQuery()
+                ->getResult();
+
+        $userFirebaseToken->setToken($newToken);
+
+        $this->usoraEntityManager->persist($userFirebaseToken);
+        $this->usoraEntityManager->flush();
+
+        return $userFirebaseToken;
+    }
+}
+
+```
+9. In AppServiceProvider boot method create instance for the providers: 
+```php
+        app()->instance(\Railroad\Railnotifications\Contracts\UserProviderInterface::class, app()->make(RailnotificationsUserProvider::class));
+       
+        app()->instance(\Railroad\Railnotifications\Contracts\ContentProviderInterface::class, app()->make(RailcontentContentProvider::class));
+
+        app()->instance(\Railroad\Railnotifications\Contracts\RailforumProviderInterface::class, app()->make(RailforumProvider::class));
+```
+## API 
+
+### Tables: 
+`notifications`
 
 | Column | Data Type | Attributes | Default | Description |
 | --- | --- | --- | --- | --- |
@@ -42,22 +395,38 @@ The FCM keys can be find in Firebase (project settings -> cloud messaging) or in
 | `created_at` | DATETIME | Not null |  |  |
 | `updated_at` | DATETIME |  | NULL |  |
 
+`notification_broadcasts`
+| Column | Data Type | Attributes | Default | Description |
+| --- | --- | --- | --- | --- |
+| `id` | INT(10) UNSIGNED | Primary, Auto increment, Not null |  |  |
+| `channel` | VARCHAR(255) | Not null |  |  |
+| `type` | VARCHAR(255) | Not null |  |  |
+| `status` | VARCHAR(255) | Not null |  |  |
+| `report` | TEXT | Null |  |  |
+| `notification_id` | INT(11) | Not null |  |  |
+| `aggregation_group_id` |  VARCHAR(255) | Null |  |  |
+| `broadcast_on` | DATETIME |  | NULL |  |
+| `created_at` | DATETIME | Not null |  |  |
+| `updated_at` | DATETIME |  | NULL |  |
+
 ### JSON Endpoints
 
-## railnotifications/notifications
-Get user notifications.
+#### Get user notifications.
 
-### HTTP Request
+##### HTTP Request
     `GET railnotifications/notifications`
+    
+##### Mobile Request
+    `GET api/railnotifications/notifications`
 
-### Request Parameters
+##### Request Parameters
 
 |Type|Key|Required|Notes|
 |----|---|--------|-----|
 |body|user_id|    |IF user_id it's set on the request only the notifications for the specified user are returned, otherwise the notifications for authenticated user are returned.|
 
 
-### Request Example:
+##### Request Example:
 
 ```js
 $.ajax({
@@ -68,7 +437,7 @@ $.ajax({
 });
 ```
 
-### Response Example (200):
+##### Response Example (200):
 
 ```json
 {
@@ -77,13 +446,7 @@ $.ajax({
          "id":3,
          "type":"lesson comment reply",
          "data":{
-            "commentId":212738214,
-            "content":{
-               "id":99
-            },
-            "originalComment":{
-               "id":4887133
-            }
+            "commentId":212738214
          },
          "read_on":null,
          "created_at":"2020-04-10 14:31:27",
@@ -97,12 +460,6 @@ $.ajax({
          "type":"lesson comment reply",
          "data":{
             "commentId":8587559,
-            "content":{
-               "id":629
-            },
-            "originalComment":{
-               "id":29
-            }
          },
          "read_on":null,
          "created_at":"2020-04-10 14:31:27",
@@ -116,12 +473,6 @@ $.ajax({
          "type":"lesson comment reply",
          "data":{
             "commentId":58997,
-            "content":{
-               "id":67540
-            },
-            "originalComment":{
-               "id":466
-            }
          },
          "read_on":null,
          "created_at":"2020-04-10 14:31:27",
@@ -134,19 +485,22 @@ $.ajax({
 }
 ```
 
-## railnotifications/notification
-Create a new notification.
-### HTTP Request
+#### Create a new notification.
+
+##### HTTP Request
     `PUT railnotifications/notification`
 
-### Request Parameters
+##### Mobile Request
+    `PUT api/railnotifications/notification`
+
+##### Request Parameters
 |Type|Key|Required|Notes|
 |----|---|--------|-----|
 |body|type|  Yes  |Notification type.|
-|body|data|  Yes  |Data regarding the comment or thread|
+|body|data|  Yes  |Array with comment id or thread id (depends on the notification type)|
 |body|recipient_id|Yes   |The user that should receive the notification|
 
-### Validation Rules
+##### Validation Rules
 ```php
         return [
             'type' => 'required',
@@ -155,7 +509,7 @@ Create a new notification.
         ];
 ```
 
-### Request Example:
+##### Request Example:
 
 ```js
 $.ajax({
@@ -164,10 +518,7 @@ $.ajax({
 {
     "type": "lesson comment reply",
     "data":{
-      "commentId":1080185162,
-      "content":{
-         "id":185576414
-      }
+      "commentId":1082,
     },
     "recipient_id": "1"
 }
@@ -177,17 +528,14 @@ $.ajax({
 });
 ```
 
-### Response Example (200):
+##### Response Example (200):
 
 ```json
 {
    "id":1,
    "type":"lesson comment reply",
    "data":{
-      "commentId":1080185162,
-      "content":{
-         "id":185576414
-      }
+      "commentId":1082,
    },
    "read_on":null,
    "created_at":"2020-04-10 14:39:01",
@@ -198,12 +546,14 @@ $.ajax({
 }
 ```
 
-## railnotifications/sync-notification
-Sync a notification: if not exists it will be created, if exists will be updated.
-### HTTP Request
+#### Sync notification
+If not exists it will be created, if exists will be updated.
+##### HTTP Request
     `PUT railnotifications/sync-notification`
+##### Mobile Request
+    `PUT api/railnotifications/sync-notification`
 
-### Request Parameters
+##### Request Parameters
 
 
 |Type|Key|Required|Notes|
@@ -212,7 +562,7 @@ Sync a notification: if not exists it will be created, if exists will be updated
 |body|data|  Yes  ||
 |body|recipient_id|   Yes ||
 
-### Validation Rules
+##### Validation Rules
 ```php
         return [
             'type' => 'required',
@@ -221,7 +571,7 @@ Sync a notification: if not exists it will be created, if exists will be updated
         ];
 ```
 
-### Request Example:
+##### Request Example:
 
 ```js
 $.ajax({
@@ -230,10 +580,7 @@ $.ajax({
 {
     "type": "lesson comment reply",
     "data":{
-      "commentId":1080185162,
-      "content":{
-         "id":185576414
-      }
+      "commentId":10802,
     },
     "recipient_id": "1"
 }
@@ -243,17 +590,14 @@ $.ajax({
 });
 ```
 
-### Response Example (200):
+##### Response Example (200):
 
 ```json
 {
    "id":1,
    "type":"lesson comment reply",
    "data":{
-      "commentId":1080185162,
-      "content":{
-         "id":185576414
-      }
+      "commentId":10802,
    },
    "read_on":null,
    "created_at":"2020-04-10 14:39:01",
@@ -264,17 +608,20 @@ $.ajax({
 }
 ```
 
-## railnotifications/read/{id}
-Mark notification as read
-### HTTP Request
+#### Read a notification 
+##### HTTP Request
     `PUT railnotifications/read/{id}`
+##### Mobile Request
+    `PUT api/railnotifications/read/{id}`
 
-### Request Parameters
+##### Request Parameters
 |Type|Key|Required|Notes|
 |----|---|--------|-----|
+|query|id|yes|Id of the notification you want to mark as read.|
+|body|read_on_date_time|no|The date that it's set on the notification read on field. If not exists current date it's set.|
 
 
-### Request Example:
+##### Request Example:
 
 ```js
 $.ajax({
@@ -285,7 +632,7 @@ $.ajax({
 });
 ```
 
-### Response Example (200):
+##### Response Example (200):
 
 ```json
 {
@@ -298,28 +645,24 @@ $.ajax({
 }
 ```
 
+#### Unread a notification
 
+##### HTTP Request
 
-
-<!-- END_ad7948a32ea52914e5f88f68e14c6105 -->
-
-<!-- START_07e82af2d5f59d806eb25588b054b480 -->
-## railnotifications/unread/{id}
-
-### HTTP Request
     `PUT railnotifications/unread/{id}`
+##### Mobile Request
+    `PUT api/railnotifications/unread/{id}`
 
 
-### Permissions
-
-### Request Parameters
+##### Request Parameters
 
 
 |Type|Key|Required|Notes|
 |----|---|--------|-----|
+|query|id|yes|Id of notification you want to mark as unread|
 
 
-### Request Example:
+##### Request Example:
 
 ```js
 $.ajax({
@@ -330,7 +673,7 @@ $.ajax({
 });
 ```
 
-### Response Example (200):
+##### Response Example (200):
 
 ```json
 {
@@ -343,28 +686,23 @@ $.ajax({
 }
 ```
 
+#### Read all notifications for a user
 
+##### HTTP Request
+    `PUT railnotifications/read-all/{userId}`
+##### Mobile Request
+    `PUT api/railnotifications/read-all/{userId}`
 
-
-<!-- END_07e82af2d5f59d806eb25588b054b480 -->
-
-<!-- START_c0da64a2b2c1c1bfe484cf98d0b52a9c -->
-## railnotifications/read-all/{id}
-
-### HTTP Request
-    `PUT railnotifications/read-all/{id}`
-
-
-### Permissions
-
-### Request Parameters
+##### Request Parameters
 
 
 |Type|Key|Required|Notes|
 |----|---|--------|-----|
+|query|userId|yes|All the notifications for specified user id will be marked as read|
+|body|read_on_date_time|no|The date that it's set on the notification read on field. If not exists current date it's set.|
 
 
-### Request Example:
+##### Request Example:
 
 ```js
 $.ajax({
@@ -375,7 +713,7 @@ $.ajax({
 });
 ```
 
-### Response Example (200):
+##### Response Example (200):
 
 ```json
 {
@@ -383,28 +721,22 @@ $.ajax({
 }
 ```
 
+#### Delete a notification
 
-
-
-<!-- END_c0da64a2b2c1c1bfe484cf98d0b52a9c -->
-
-<!-- START_ded1a96cd2e19182b1a9f665d58ac327 -->
-## railnotifications/notification/{id}
-
-### HTTP Request
+##### HTTP Request
     `DELETE railnotifications/notification/{id}`
+##### Mobile Request
+    `DELETE api/railnotifications/notification/{id}`
 
-
-### Permissions
-
-### Request Parameters
+##### Request Parameters
 
 
 |Type|Key|Required|Notes|
 |----|---|--------|-----|
+|query|id|yes|Id of the notification you want to delete|
 
 
-### Request Example:
+##### Request Example:
 
 ```js
 $.ajax({
@@ -415,34 +747,28 @@ $.ajax({
 });
 ```
 
-### Response Example (204):
+##### Response Example (204):
 
 ```json
 null
 ```
 
+#### Show notification
 
-
-
-<!-- END_ded1a96cd2e19182b1a9f665d58ac327 -->
-
-<!-- START_f61fad23cfef0123880ac7a87d60dfb5 -->
-## railnotifications/notification/{id}
-
-### HTTP Request
+##### HTTP Request
     `GET railnotifications/notification/{id}`
+##### Mobile Request
+    `GET api/railnotifications/notification/{id}`
 
-
-### Permissions
-
-### Request Parameters
+##### Request Parameters
 
 
 |Type|Key|Required|Notes|
 |----|---|--------|-----|
+|query|id|yes|Id of the notification|
 
 
-### Request Example:
+##### Request Example:
 
 ```js
 $.ajax({
@@ -453,7 +779,7 @@ $.ajax({
 });
 ```
 
-### Response Example (404):
+##### Response Example (404):
 
 ```json
 {
@@ -464,28 +790,22 @@ $.ajax({
 }
 ```
 
+#### Count all the notifications that are marked as readed 
 
-
-
-<!-- END_f61fad23cfef0123880ac7a87d60dfb5 -->
-
-<!-- START_8a3aa539a0a37b8deb4ed6111740f1b5 -->
-## railnotifications/count-read
-
-### HTTP Request
+##### HTTP Request
     `GET railnotifications/count-read`
+##### Mobile Request
+    `GET api/railnotifications/count-read`
 
-
-### Permissions
-
-### Request Parameters
+##### Request Parameters
 
 
 |Type|Key|Required|Notes|
 |----|---|--------|-----|
+|body|user_id|no|If the user_id exists the notifications for the specified id are counted, otherwise the notifications for the authenticated user are counted|
 
 
-### Request Example:
+##### Request Example:
 
 ```js
 $.ajax({
@@ -496,36 +816,29 @@ $.ajax({
 });
 ```
 
-### Response Example (201):
+##### Response Example (201):
 
 ```json
 {
-    "data": "0"
+    "data": "10"
 }
 ```
 
+#### Count all the unread notifications
 
-
-
-<!-- END_8a3aa539a0a37b8deb4ed6111740f1b5 -->
-
-<!-- START_8f96b7a86188153807da7ee2aea64daf -->
-## railnotifications/count-unread
-
-### HTTP Request
+##### HTTP Request
     `GET railnotifications/count-unread`
+##### Mobile Request
+    `GET api/railnotifications/count-unread`
 
-
-### Permissions
-
-### Request Parameters
-
+##### Request Parameters
 
 |Type|Key|Required|Notes|
 |----|---|--------|-----|
+|body|user_id|no|If the user_id exists the notifications for the specified id are counted, otherwise the notifications for the authenticated user are counted|
 
 
-### Request Example:
+##### Request Example:
 
 ```js
 $.ajax({
@@ -536,497 +849,39 @@ $.ajax({
 });
 ```
 
-### Response Example (201):
+##### Response Example (201):
 
 ```json
 {
-    "data": "0"
+    "data": "2"
 }
 ```
 
-
-
-
-<!-- END_8f96b7a86188153807da7ee2aea64daf -->
-
-<!-- START_e27df8dfff6d7303d23aec5af1f3a1e9 -->
-## api/railnotifications/notifications
-
-### HTTP Request
-    `GET api/railnotifications/notifications`
-
-
-### Permissions
-
-### Request Parameters
-
-
-|Type|Key|Required|Notes|
-|----|---|--------|-----|
-
-
-### Request Example:
-
-```js
-$.ajax({
-    url: 'https://www.domain.com' +
-             '/api/railnotifications/notifications',
-    success: function(response) {},
-    error: function(response) {}
-});
-```
-
-### Response Example (200):
-
-```json
-{
-    "data": []
-}
-```
-
-
-
-
-<!-- END_e27df8dfff6d7303d23aec5af1f3a1e9 -->
-
-<!-- START_1fa1bb9b9556514c712e24aca05674cc -->
-## api/railnotifications/notification
-
-### HTTP Request
-    `PUT api/railnotifications/notification`
-
-
-### Permissions
-
-### Request Parameters
-
-
-|Type|Key|Required|Notes|
-|----|---|--------|-----|
-|body|type|    |Notification type.|
-|body|data|    ||
-|body|recipient_id|    ||
-
-### Validation Rules
-```php
-        return [
-            'type' => 'required',
-            'data' => 'required',
-            'recipient_id' => 'required',
-        ];
-```
-
-### Request Example:
-
-```js
-$.ajax({
-    url: 'https://www.domain.com' +
-             '/api/railnotifications/notification',
-{
-    "type": "lesson comment reply",
-    "data": "array",
-    "recipient_id": "1"
-}
-   ,
-    success: function(response) {},
-    error: function(response) {}
-});
-```
-
-### Response Example (500):
-
-```json
-{
-    "message": "Server Error"
-}
-```
-
-
-
-
-<!-- END_1fa1bb9b9556514c712e24aca05674cc -->
-
-<!-- START_24c538e86b858669ecd5686c3c6738ce -->
-## api/railnotifications/sync-notification
-
-### HTTP Request
-    `PUT api/railnotifications/sync-notification`
-
-
-### Permissions
-
-### Request Parameters
-
-
-|Type|Key|Required|Notes|
-|----|---|--------|-----|
-|body|type|    |Notification type.|
-|body|data|    ||
-|body|recipient_id|    ||
-
-### Validation Rules
-```php
-        return [
-            'type' => 'required',
-            'data' => 'required',
-            'recipient_id' => 'required',
-        ];
-```
-
-### Request Example:
-
-```js
-$.ajax({
-    url: 'https://www.domain.com' +
-             '/api/railnotifications/sync-notification',
-{
-    "type": "lesson comment reply",
-    "data": "array",
-    "recipient_id": "1"
-}
-   ,
-    success: function(response) {},
-    error: function(response) {}
-});
-```
-
-### Response Example (500):
-
-```json
-{
-    "message": "Server Error"
-}
-```
-
-
-
-
-<!-- END_24c538e86b858669ecd5686c3c6738ce -->
-
-<!-- START_d41e0754ac49ae07d08b91f9924c5d16 -->
-## api/railnotifications/read/{id}
-
-### HTTP Request
-    `PUT api/railnotifications/read/{id}`
-
-
-### Permissions
-
-### Request Parameters
-
-
-|Type|Key|Required|Notes|
-|----|---|--------|-----|
-
-
-### Request Example:
-
-```js
-$.ajax({
-    url: 'https://www.domain.com' +
-             '/api/railnotifications/read/1',
-    success: function(response) {},
-    error: function(response) {}
-});
-```
-
-### Response Example (404):
-
-```json
-{
-    "errors": {
-        "title": "Not found.",
-        "detail": "Mark as read failed, notification not found with id: 1"
-    }
-}
-```
-
-
-
-
-<!-- END_d41e0754ac49ae07d08b91f9924c5d16 -->
-
-<!-- START_e3d95e3e5dc2c464750b7c7cc2f2ab5c -->
-## api/railnotifications/unread/{id}
-
-### HTTP Request
-    `PUT api/railnotifications/unread/{id}`
-
-
-### Permissions
-
-### Request Parameters
-
-
-|Type|Key|Required|Notes|
-|----|---|--------|-----|
-
-
-### Request Example:
-
-```js
-$.ajax({
-    url: 'https://www.domain.com' +
-             '/api/railnotifications/unread/1',
-    success: function(response) {},
-    error: function(response) {}
-});
-```
-
-### Response Example (404):
-
-```json
-{
-    "errors": {
-        "title": "Not found.",
-        "detail": "Mark as read failed, notification not found with id: 1"
-    }
-}
-```
-
-
-
-
-<!-- END_e3d95e3e5dc2c464750b7c7cc2f2ab5c -->
-
-<!-- START_51a1a768a1fb9816252c72690c946596 -->
-## api/railnotifications/read-all/{id}
-
-### HTTP Request
-    `PUT api/railnotifications/read-all/{id}`
-
-
-### Permissions
-
-### Request Parameters
-
-
-|Type|Key|Required|Notes|
-|----|---|--------|-----|
-
-
-### Request Example:
-
-```js
-$.ajax({
-    url: 'https://www.domain.com' +
-             '/api/railnotifications/read-all/1',
-    success: function(response) {},
-    error: function(response) {}
-});
-```
-
-### Response Example (200):
-
-```json
-{
-    "data": []
-}
-```
-
-
-
-
-<!-- END_51a1a768a1fb9816252c72690c946596 -->
-
-<!-- START_9435efd23b86bf0872aee8a27d2a642a -->
-## api/railnotifications/notification/{id}
-
-### HTTP Request
-    `DELETE api/railnotifications/notification/{id}`
-
-
-### Permissions
-
-### Request Parameters
-
-
-|Type|Key|Required|Notes|
-|----|---|--------|-----|
-
-
-### Request Example:
-
-```js
-$.ajax({
-    url: 'https://www.domain.com' +
-             '/api/railnotifications/notification/1',
-    success: function(response) {},
-    error: function(response) {}
-});
-```
-
-### Response Example (204):
-
-```json
-null
-```
-
-
-
-
-<!-- END_9435efd23b86bf0872aee8a27d2a642a -->
-
-<!-- START_5ab0ef344fea947e55303d52cc709f45 -->
-## api/railnotifications/notification/{id}
-
-### HTTP Request
-    `GET api/railnotifications/notification/{id}`
-
-
-### Permissions
-
-### Request Parameters
-
-
-|Type|Key|Required|Notes|
-|----|---|--------|-----|
-
-
-### Request Example:
-
-```js
-$.ajax({
-    url: 'https://www.domain.com' +
-             '/api/railnotifications/notification/1',
-    success: function(response) {},
-    error: function(response) {}
-});
-```
-
-### Response Example (404):
-
-```json
-{
-    "errors": {
-        "title": "Not found.",
-        "detail": "Update failed, notification not found with id: 1"
-    }
-}
-```
-
-
-
-
-<!-- END_5ab0ef344fea947e55303d52cc709f45 -->
-
-<!-- START_7bb183753565535856ffecc39650f1ea -->
-## api/railnotifications/count-read
-
-### HTTP Request
-    `GET api/railnotifications/count-read`
-
-
-### Permissions
-
-### Request Parameters
-
-
-|Type|Key|Required|Notes|
-|----|---|--------|-----|
-
-
-### Request Example:
-
-```js
-$.ajax({
-    url: 'https://www.domain.com' +
-             '/api/railnotifications/count-read',
-    success: function(response) {},
-    error: function(response) {}
-});
-```
-
-### Response Example (201):
-
-```json
-{
-    "data": "0"
-}
-```
-
-
-
-
-<!-- END_7bb183753565535856ffecc39650f1ea -->
-
-<!-- START_ff3ce72cd2945b060f782ff8991d75b4 -->
-## api/railnotifications/count-unread
-
-### HTTP Request
-    `GET api/railnotifications/count-unread`
-
-
-### Permissions
-
-### Request Parameters
-
-
-|Type|Key|Required|Notes|
-|----|---|--------|-----|
-
-
-### Request Example:
-
-```js
-$.ajax({
-    url: 'https://www.domain.com' +
-             '/api/railnotifications/count-unread',
-    success: function(response) {},
-    error: function(response) {}
-});
-```
-
-### Response Example (201):
-
-```json
-{
-    "data": "0"
-}
-```
-
-
-
-
-<!-- END_ff3ce72cd2945b060f782ff8991d75b4 -->
-
-
-
-
-
-## Notification Broadcast API
-
- # Notification Broadcast API
+#### Broadcast notification on specified channels
  
- # JSON Endpoints
- 
- 
- <!-- START_da669914afb4f3fdeb108600e0cdd562 -->
- ## railnotifications/broadcast
- 
- ### HTTP Request
+##### HTTP Request
      `PUT railnotifications/broadcast`
+##### Mobile Request
+     `PUT api/railnotifications/broadcast`
  
- 
- ### Permissions
- 
- ### Request Parameters
+##### Request Parameters
  
  
  |Type|Key|Required|Notes|
  |----|---|--------|-----|
- |body|notification_id|    |Notification id.|
- |body|channel|    ||
+ |body|notification_id|  Yes  |Notification id.|
+ |body|channel| Yes   |The broadcast channel name. E.g: `email` or `fcm`|
  
- ### Validation Rules
+##### Validation Rules
+
  ```php
          return [
-             'channel' => 'string',
+             'channel' => 'string|required',
              'notification_id' => 'required',
          ];
  ```
  
- ### Request Example:
+ ##### Request Example:
  
  ```js
  $.ajax({
@@ -1034,7 +889,7 @@ $.ajax({
               '/railnotifications/broadcast',
  {
      "notification_id": "1",
-     "channel": "vero"
+     "channel": "fcm"
  }
     ,
      success: function(response) {},
@@ -1042,36 +897,51 @@ $.ajax({
  });
  ```
  
- ### Response Example (500):
+ ##### Response Example (200):
  
  ```json
- {
-     "message": "Server Error"
- }
+{
+   "id":1,
+   "channel":"fcm",
+   "type":"single",
+   "status":"sent",
+   "report":null,
+   "aggregation_group_id":null,
+   "broadcast_on":"2020-04-14 09:34:27",
+   "created_at":"2020-04-14 09:34:27",
+   "updated_at":"2020-04-14 09:34:27",
+   "notification":{
+      "id":1,
+      "type":"comment reply",
+      "data":{
+         "commentId":943
+      },
+      "read_on":null,
+      "created_at":"2020-04-14 09:34:27",
+      "updated_at":null,
+      "recipient":{
+         "id":1
+      }
+   }
+}
  ```
  
+
+ #### Mark broadcast as succeeded
  
- 
- 
- <!-- END_da669914afb4f3fdeb108600e0cdd562 -->
- 
- <!-- START_4c4954ef496e4a6fe3c1c24dc78b757c -->
- ## railnotifications/broadcast/mark-succeeded/{id}
- 
- ### HTTP Request
+ ##### HTTP Request
      `PUT railnotifications/broadcast/mark-succeeded/{id}`
+##### Mobile Request
+     `PUT api/railnotifications/broadcast/mark-succeeded/{id}`
  
- 
- ### Permissions
- 
- ### Request Parameters
- 
+ ##### Request Parameters
  
  |Type|Key|Required|Notes|
  |----|---|--------|-----|
+ |query|id|yes|Broadcast id|
  
  
- ### Request Example:
+ ##### Request Example:
  
  ```js
  $.ajax({
@@ -1082,7 +952,7 @@ $.ajax({
  });
  ```
  
- ### Response Example (404):
+ ##### Response Example (404):
  
  ```json
  {
@@ -1093,28 +963,52 @@ $.ajax({
  }
  ```
  
+ ##### Response Example (200)
+ ```json
+ {
+   "id":1,
+   "channel":"email",
+   "type":"single",
+   "status":"sent",
+   "report":null,
+   "aggregation_group_id":null,
+   "broadcast_on":"2020-04-14 09:39:05",
+   "created_at":"2020-04-14 09:39:05",
+   "updated_at":"2020-04-14 09:39:05",
+   "notification":{
+      "id":1,
+      "type":"comment reply.",
+      "data":{
+         "commentId":81912
+      },
+      "read_on":null,
+      "created_at":"2020-04-14 09:39:05",
+      "updated_at":null,
+      "recipient":{
+         "id":1
+      }
+   }
+}
+ ```
+
+ #### Mark broadcast as failed
  
- 
- 
- <!-- END_4c4954ef496e4a6fe3c1c24dc78b757c -->
- 
- <!-- START_404129e76142f21ae62b6e3a31f48e5e -->
- ## railnotifications/broadcast/mark-failed/{id}
- 
- ### HTTP Request
+ ##### HTTP Request
      `PUT railnotifications/broadcast/mark-failed/{id}`
+ ##### Mobile Request
+      `PUT api/railnotifications/broadcast/mark-failed/{id}`
+      
+ ##### Permissions
  
- 
- ### Permissions
- 
- ### Request Parameters
+ ##### Request Parameters
  
  
  |Type|Key|Required|Notes|
  |----|---|--------|-----|
+ |query|id|yes|Broadcast id|
  
  
- ### Request Example:
+ ##### Request Example:
  
  ```js
  $.ajax({
@@ -1125,7 +1019,7 @@ $.ajax({
  });
  ```
  
- ### Response Example (404):
+ ##### Response Example (404):
  
  ```json
  {
@@ -1135,29 +1029,52 @@ $.ajax({
      }
  }
  ```
+ ##### Response Example (200):
+ ```json
+ {
+   "id":1,
+   "channel":"email",
+   "type":"single",
+   "status":"failed",
+   "report":"Doloremque ipsum deserunt consectetur. Earum tempora placeat hic. Maxime eveniet reiciendis corporis non earum non. Enim provident ut et voluptas quas praesentium magni.",
+   "aggregation_group_id":null,
+   "broadcast_on":"2020-04-14 09:45:04",
+   "created_at":"2020-04-14 09:45:04",
+   "updated_at":"2020-04-14 09:45:04",
+   "notification":{
+      "id":1,
+      "type":"comment reply",
+      "data":{
+         "commentId":154
+      },
+      "read_on":null,
+      "created_at":"2020-04-14 09:45:04",
+      "updated_at":null,
+      "recipient":{
+         "id":1
+      }
+   }
+}
+ ```
+
+ #### Show broadcast
  
- 
- 
- 
- <!-- END_404129e76142f21ae62b6e3a31f48e5e -->
- 
- <!-- START_af86e7d26e1b540dee093b2d33070c3b -->
- ## railnotifications/broadcast/{id}
- 
- ### HTTP Request
+ ##### HTTP Request
      `GET railnotifications/broadcast/{id}`
+ ##### Mobile Request
+      `GET api/railnotifications/broadcast/{id}`
  
+ ##### Permissions
  
- ### Permissions
- 
- ### Request Parameters
+ ##### Request Parameters
  
  
  |Type|Key|Required|Notes|
  |----|---|--------|-----|
+ |query|id|yes||
  
  
- ### Request Example:
+ ##### Request Example:
  
  ```js
  $.ajax({
@@ -1168,7 +1085,7 @@ $.ajax({
  });
  ```
  
- ### Response Example (404):
+ ##### Response Example (404):
  
  ```json
  {
@@ -1179,185 +1096,37 @@ $.ajax({
  }
  ```
  
- 
- 
- 
- <!-- END_af86e7d26e1b540dee093b2d33070c3b -->
- 
- <!-- START_e865820cb971fda736367dabd76a0372 -->
- ## api/railnotifications/broadcast
- 
- ### HTTP Request
-     `PUT api/railnotifications/broadcast`
- 
- 
- ### Permissions
- 
- ### Request Parameters
- 
- 
- |Type|Key|Required|Notes|
- |----|---|--------|-----|
- |body|notification_id|    |Notification id.|
- |body|channel|    ||
- 
- ### Validation Rules
- ```php
-         return [
-             'channel' => 'string',
-             'notification_id' => 'required',
-         ];
- ```
- 
- ### Request Example:
- 
- ```js
- $.ajax({
-     url: 'https://www.domain.com' +
-              '/api/railnotifications/broadcast',
- {
-     "notification_id": "1",
-     "channel": "quia"
- }
-    ,
-     success: function(response) {},
-     error: function(response) {}
- });
- ```
- 
- ### Response Example (500):
- 
+ ##### Response Example (200):
  ```json
  {
-     "message": "Server Error"
- }
+   "id":1,
+   "channel":"fcm",
+   "type":"single",
+   "status":"sent",
+   "report":null,
+   "aggregation_group_id":null,
+   "broadcast_on":"2020-04-14 09:48:09",
+   "created_at":"2020-04-14 09:48:09",
+   "updated_at":null,
+   "notification":{
+      "id":1,
+      "type":"comment reply",
+      "data":{
+         "commentId":3881
+      },
+      "read_on":null,
+      "created_at":"2020-04-14 09:48:09",
+      "updated_at":null,
+      "recipient":{
+         "id":1
+      }
+   }
+}
  ```
  
- 
- 
- 
- <!-- END_e865820cb971fda736367dabd76a0372 -->
- 
- <!-- START_34f07ca3168d14a9aa6c0ae55a9feb7b -->
- ## api/railnotifications/broadcast/mark-succeeded
- 
- ### HTTP Request
-     `PUT api/railnotifications/broadcast/mark-succeeded`
- 
- 
- ### Permissions
- 
- ### Request Parameters
- 
- 
- |Type|Key|Required|Notes|
- |----|---|--------|-----|
- 
- 
- ### Request Example:
- 
- ```js
- $.ajax({
-     url: 'https://www.domain.com' +
-              '/api/railnotifications/broadcast/mark-succeeded',
-     success: function(response) {},
-     error: function(response) {}
- });
- ```
- 
- ### Response Example (500):
- 
- ```json
- {
-     "message": "Server Error"
- }
- ```
- 
- 
- 
- 
- <!-- END_34f07ca3168d14a9aa6c0ae55a9feb7b -->
- 
- <!-- START_e5c891c8cb009cf2af073814bf209068 -->
- ## api/railnotifications/broadcast/mark-failed
- 
- ### HTTP Request
-     `PUT api/railnotifications/broadcast/mark-failed`
- 
- 
- ### Permissions
- 
- ### Request Parameters
- 
- 
- |Type|Key|Required|Notes|
- |----|---|--------|-----|
- 
- 
- ### Request Example:
- 
- ```js
- $.ajax({
-     url: 'https://www.domain.com' +
-              '/api/railnotifications/broadcast/mark-failed',
-     success: function(response) {},
-     error: function(response) {}
- });
- ```
- 
- ### Response Example (500):
- 
- ```json
- {
-     "message": "Server Error"
- }
- ```
- 
- 
- 
- 
- <!-- END_e5c891c8cb009cf2af073814bf209068 -->
- 
- <!-- START_58b5da8fe0e830b0ee275b5e14296c94 -->
- ## api/railnotifications/broadcast/{id}
- 
- ### HTTP Request
-     `GET api/railnotifications/broadcast/{id}`
- 
- 
- ### Permissions
- 
- ### Request Parameters
- 
- 
- |Type|Key|Required|Notes|
- |----|---|--------|-----|
- 
- 
- ### Request Example:
- 
- ```js
- $.ajax({
-     url: 'https://www.domain.com' +
-              '/api/railnotifications/broadcast/1',
-     success: function(response) {},
-     error: function(response) {}
- });
- ```
- 
- ### Response Example (404):
- 
- ```json
- {
-     "errors": {
-         "title": "Not found.",
-         "detail": "Notification broadcast not found with id: 1"
-     }
- }
- ```
- 
- 
- 
- 
- <!-- END_58b5da8fe0e830b0ee275b5e14296c94 -->
+
+
+
+
+
  

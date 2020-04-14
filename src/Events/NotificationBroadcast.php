@@ -20,11 +20,6 @@ class NotificationBroadcast extends Event
     /**
      * @var string
      */
-    public $userId;
-
-    /**
-     * @var string
-     */
     public $channels;
 
     /**
@@ -32,14 +27,12 @@ class NotificationBroadcast extends Event
      *
      * @param $type
      * @param $data
-     * @param $userId
      * @param $channels
      */
-    public function __construct($type, $data, $userId, $channels)
+    public function __construct($type, $data,  $channels)
     {
         $this->type = $type;
         $this->data = $data;
-        $this->userId = $userId;
         $this->channels = $channels;
     }
 }

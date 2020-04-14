@@ -5,97 +5,19 @@
     + [Tables:](#tables-)
     + [JSON Endpoints](#json-endpoints)
       - [Get user notifications.](#get-user-notifications)
-        * [HTTP Request](#http-request)
-        * [Mobile Request](#mobile-request)
-        * [Request Parameters](#request-parameters)
-        * [Request Example:](#request-example-)
-        * [Response Example (200):](#response-example--200--)
       - [Create a new notification.](#create-a-new-notification)
-        * [HTTP Request](#http-request-1)
-        * [Mobile Request](#mobile-request-1)
-        * [Request Parameters](#request-parameters-1)
-        * [Validation Rules](#validation-rules)
-        * [Request Example:](#request-example--1)
-        * [Response Example (200):](#response-example--200---1)
       - [Sync notification](#sync-notification)
-        * [HTTP Request](#http-request-2)
-        * [Mobile Request](#mobile-request-2)
-        * [Request Parameters](#request-parameters-2)
-        * [Validation Rules](#validation-rules-1)
-        * [Request Example:](#request-example--2)
-        * [Response Example (200):](#response-example--200---2)
       - [Read a notification](#read-a-notification)
-        * [HTTP Request](#http-request-3)
-        * [Mobile Request](#mobile-request-3)
-        * [Request Parameters](#request-parameters-3)
-        * [Request Example:](#request-example--3)
-        * [Response Example (200):](#response-example--200---3)
       - [Unread a notification](#unread-a-notification)
-        * [HTTP Request](#http-request-4)
-        * [Mobile Request](#mobile-request-4)
-        * [Request Parameters](#request-parameters-4)
-        * [Request Example:](#request-example--4)
-        * [Response Example (200):](#response-example--200---4)
       - [Read all notifications for a user](#read-all-notifications-for-a-user)
-        * [HTTP Request](#http-request-5)
-        * [Mobile Request](#mobile-request-5)
-        * [Request Parameters](#request-parameters-5)
-        * [Request Example:](#request-example--5)
-        * [Response Example (200):](#response-example--200---5)
       - [Delete a notification](#delete-a-notification)
-        * [HTTP Request](#http-request-6)
-        * [Mobile Request](#mobile-request-6)
-        * [Request Parameters](#request-parameters-6)
-        * [Request Example:](#request-example--6)
-        * [Response Example (204):](#response-example--204--)
       - [Show notification](#show-notification)
-        * [HTTP Request](#http-request-7)
-        * [Mobile Request](#mobile-request-7)
-        * [Request Parameters](#request-parameters-7)
-        * [Request Example:](#request-example--7)
-        * [Response Example (404):](#response-example--404--)
       - [Count all the notifications that are marked as readed](#count-all-the-notifications-that-are-marked-as-readed)
-        * [HTTP Request](#http-request-8)
-        * [Mobile Request](#mobile-request-8)
-        * [Request Parameters](#request-parameters-8)
-        * [Request Example:](#request-example--8)
-        * [Response Example (201):](#response-example--201--)
       - [Count all the unread notifications](#count-all-the-unread-notifications)
-        * [HTTP Request](#http-request-9)
-        * [Mobile Request](#mobile-request-9)
-        * [Request Parameters](#request-parameters-9)
-        * [Request Example:](#request-example--9)
-        * [Response Example (201):](#response-example--201---1)
       - [Broadcast notification on specified channels](#broadcast-notification-on-specified-channels)
-        * [HTTP Request](#http-request-10)
-        * [Mobile Request](#mobile-request-10)
-        * [Request Parameters](#request-parameters-10)
-        * [Validation Rules](#validation-rules-2)
-        * [Request Example:](#request-example--10)
-        * [Response Example (200):](#response-example--200---6)
       - [Mark broadcast as succeeded](#mark-broadcast-as-succeeded)
-        * [HTTP Request](#http-request-11)
-        * [Mobile Request](#mobile-request-11)
-        * [Request Parameters](#request-parameters-11)
-        * [Request Example:](#request-example--11)
-        * [Response Example (404):](#response-example--404---1)
-        * [Response Example (200)](#response-example--200-)
       - [Mark broadcast as failed](#mark-broadcast-as-failed)
-        * [HTTP Request](#http-request-12)
-        * [Mobile Request](#mobile-request-12)
-        * [Permissions](#permissions)
-        * [Request Parameters](#request-parameters-12)
-        * [Request Example:](#request-example--12)
-        * [Response Example (404):](#response-example--404---2)
-        * [Response Example (200):](#response-example--200---7)
       - [Show broadcast](#show-broadcast)
-        * [HTTP Request](#http-request-13)
-        * [Mobile Request](#mobile-request-13)
-        * [Permissions](#permissions-1)
-        * [Request Parameters](#request-parameters-13)
-        * [Request Example:](#request-example--13)
-        * [Response Example (404):](#response-example--404---3)
-        * [Response Example (200):](#response-example--200---8)
 
 
 
@@ -164,7 +86,300 @@ FCM_SENDER_ID=my_secret_sender_id
 ````
 The FCM keys can be find in Firebase (project settings -> cloud messaging) or in 1Password.
 
-6. Create new provider for Content and Forum
+6. Create new provider for Content that implements `ContentProviderInterface` from Railnotifications package. The provider should contain the following methods: `getContentById` and `getCommentById`, like bellow: 
+```php
+<?php
+
+namespace App\Providers;
+
+use Railroad\Railcontent\Repositories\RepositoryBase;
+use Railroad\Railcontent\Services\CommentService;
+use Railroad\Railcontent\Services\ContentService;
+use Railroad\Railnotifications\Contracts\ContentProviderInterface;
+
+class RailcontentContentProvider implements ContentProviderInterface
+{
+    /**
+     * @var ContentService
+     */
+    private $contentService;
+
+    /**
+     * @var CommentService
+     */
+    private $commentService;
+
+    /**
+     * RailcontentContentProvider constructor.
+     *
+     * @param ContentService $contentService
+     * @param CommentService $commentService
+     */
+    public function __construct(
+        ContentService $contentService,
+        CommentService $commentService
+    ) {
+        $this->contentService = $contentService;
+        $this->commentService = $commentService;
+
+        RepositoryBase::$connectionMask = null;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getContentById($id)
+    {
+        return $this->contentService->getById($id);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getCommentById($id)
+    {
+        return $this->commentService->get($id);
+    }
+}
+
+```
+
+7. Create new provider for Forum that implements `RailforumProviderInterface` from Railnotifications package. The provider should contain the following methods: `getPostById`, `getThreadById` and `getThreadFollowerIds`, like bellow: 
+
+```php
+<?php
+
+namespace App\Providers;
+
+use Railroad\Railforums\Repositories\PostRepository;
+use Railroad\Railforums\Repositories\ThreadFollowRepository;
+use Railroad\Railforums\Repositories\ThreadRepository;
+use Railroad\Railnotifications\Contracts\RailforumProviderInterface;
+
+class RailforumProvider implements RailforumProviderInterface
+{
+    /**
+     * @var PostRepository
+     */
+    private $postRepository;
+
+    /**
+     * @var ThreadRepository
+     */
+    private $threadRepository;
+
+    /**
+     * @var ThreadFollowRepository
+     */
+    private $threadFollowRepository;
+
+    /**
+     * RailforumProvider constructor.
+     *
+     * @param PostRepository $postRepository
+     * @param ThreadRepository $threadRepository
+     * @param ThreadFollowRepository $threadFollowRepository
+     */
+    public function __construct(
+        PostRepository $postRepository,
+        ThreadRepository $threadRepository,
+        ThreadFollowRepository $threadFollowRepository
+    ) {
+        $this->postRepository = $postRepository;
+        $this->threadRepository = $threadRepository;
+        $this->threadFollowRepository = $threadFollowRepository;
+    }
+
+    /**
+     * @param int $postId
+     * @return array|\Railroad\Resora\Entities\Entity|null
+     */
+    public function getPostById($postId)
+    {
+        return $this->postRepository->read($postId);
+    }
+
+    /**
+     * @param int $threadId
+     * @return array|\Railroad\Resora\Entities\Entity|null
+     */
+    public function getThreadById($threadId)
+    {
+        return $this->threadRepository->read($threadId);
+    }
+
+    /**
+     * @param $threadId
+     * @return mixed
+     */
+    public function getThreadFollowerIds($threadId)
+    {
+        return $this->threadFollowRepository->getThreadFollowerIds($threadId)->toArray();
+    }
+}
+
+```
+8. Create new provider for Forum that implements `UserProviderInterface` from Railnotifications package. The provider should contain the following methods: `getRailnotificationsUserById`, `getUserFirebaseTokens`, `deleteUserFirebaseTokens` and `updateUserFirebaseToken`, like bellow: 
+
+```php
+<?php
+
+namespace App\Providers;
+
+use Doctrine\ORM\OptimisticLockException;
+use Doctrine\ORM\ORMException;
+use Railroad\Ecommerce\Entities\User;
+use Railroad\Railnotifications\Contracts\UserProviderInterface;
+use Railroad\Railnotifications\Entities\User as RailnotificationUser;
+use Railroad\Usora\Managers\UsoraEntityManager;
+use Railroad\Usora\Repositories\UserFirebaseTokensRepository;
+use Railroad\Usora\Repositories\UserRepository;
+
+class RailnotificationsUserProvider implements UserProviderInterface
+{
+    /**
+     * @var UserRepository
+     */
+    private $userRepository;
+
+    /**
+     * @var UserFirebaseTokensRepository
+     */
+    private $userFirebaseTokenRepository;
+
+    /**
+     * @var UsoraEntityManager
+     */
+    private $usoraEntityManager;
+
+    /**
+     * RailnotificationsUserProvider constructor.
+     *
+     * @param UsoraEntityManager $usoraEntityManager
+     * @param UserRepository $userRepository
+     * @param UserFirebaseTokensRepository $userFirebaseTokensRepository
+     */
+    public function __construct(
+        UsoraEntityManager $usoraEntityManager,
+        UserRepository $userRepository,
+        UserFirebaseTokensRepository $userFirebaseTokensRepository
+    ) {
+        $this->userRepository = $userRepository;
+        $this->userFirebaseTokenRepository = $userFirebaseTokensRepository;
+        $this->usoraEntityManager = $usoraEntityManager;
+    }
+
+    /**
+     * @param int $id
+     * @return User|null
+     */
+    public function getRailnotificationsUserById(int $id)
+    : ?RailnotificationUser {
+        $usoraUser = $this->userRepository->find($id);
+
+        if ($usoraUser) {
+            return new RailnotificationUser(
+                $usoraUser->getId(),
+                $usoraUser->getEmail(),
+                $usoraUser->getDisplayName(),
+                $usoraUser->getProfilePictureUrl()
+            );
+        }
+
+        return null;
+    }
+
+    /**
+     * @param int $userId
+     * @param string $type
+     * @return array|null
+     */
+    public function getUserFirebaseTokens(int $userId, $type = null)
+    : ?array {
+
+        $criteria = [
+            'user' => $userId,
+        ];
+
+        if ($type) {
+            $criteria += [
+                'type' => $type,
+            ];
+        }
+
+        return $this->userFirebaseTokenRepository->findBy($criteria);
+    }
+
+    /**
+     * @param int $userId
+     * @param array $tokens
+     * @return mixed|void
+     * @throws ORMException
+     * @throws OptimisticLockException
+     */
+    public function deleteUserFirebaseTokens(int $userId, array $tokens)
+    {
+        $qb = $this->userFirebaseTokenRepository->createQueryBuilder('f');
+        $qb->where('f.user = :user')
+            ->andWhere('f.token IN (:tokens)')
+            ->setParameters(
+                [
+                    'user' => $userId,
+                    'tokens' => $tokens,
+                ]
+            );
+
+        $userFirebaseTokens =
+            $qb->getQuery()
+                ->getResult();
+
+        foreach ($userFirebaseTokens as $userFirebaseToken) {
+            $this->usoraEntityManager->remove($userFirebaseToken);
+            $this->usoraEntityManager->flush();
+        }
+    }
+
+    /**
+     * @param $userId
+     * @param $oldToken
+     * @param $newToken
+     * @return mixed
+     * @throws ORMException
+     * @throws OptimisticLockException
+     */
+    public function updateUserFirebaseToken($userId, $oldToken, $newToken)
+    {
+        $qb = $this->userFirebaseTokenRepository->createQueryBuilder('f');
+        $qb->where('f.user = :user')
+            ->andWhere('f.token = :token')
+            ->setParameters(
+                [
+                    'user' => $userId,
+                    'token' => $oldToken,
+                ]
+            );
+        $userFirebaseToken =
+            $qb->getQuery()
+                ->getResult();
+
+        $userFirebaseToken->setToken($newToken);
+
+        $this->usoraEntityManager->persist($userFirebaseToken);
+        $this->usoraEntityManager->flush();
+
+        return $userFirebaseToken;
+    }
+}
+
+```
+9. In AppServiceProvider boot method create instance for the providers: 
+```php
+        app()->instance(\Railroad\Railnotifications\Contracts\UserProviderInterface::class, app()->make(RailnotificationsUserProvider::class));
+       
+        app()->instance(\Railroad\Railnotifications\Contracts\ContentProviderInterface::class, app()->make(RailcontentContentProvider::class));
+
+        app()->instance(\Railroad\Railnotifications\Contracts\RailforumProviderInterface::class, app()->make(RailforumProvider::class));
+```
 ## API 
 
 ### Tables: 

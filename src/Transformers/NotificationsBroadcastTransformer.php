@@ -10,7 +10,7 @@ use Railroad\Railnotifications\Entities\NotificationBroadcast;
 
 class NotificationsBroadcastTransformer extends TransformerAbstract
 {
-    protected $defaultIncludes = [];
+    protected $defaultIncludes = ['notification'];
 
     public function transform(NotificationBroadcast $notificationBroadcast)
     {
@@ -31,5 +31,14 @@ class NotificationsBroadcastTransformer extends TransformerAbstract
                 $notificationBroadcast->getUpdatedAt()->toDateTimeString()
                   : null,
         ];
+    }
+
+    public function includeNotification(NotificationBroadcast $notificationBroadcast)
+    {
+        return $this->item(
+            $notificationBroadcast->getNotification(),
+            new NotificationsTransformer(),
+            'notification'
+        );
     }
 }

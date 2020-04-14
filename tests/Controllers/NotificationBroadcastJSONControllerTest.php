@@ -93,7 +93,11 @@ class NotificationBroadcastJSONControllerTest extends TestCase
 
     public function test_mark_as_succeeded()
     {
-        $notificationBroadcast = $this->fakeNotificationBroadcast();
+        $recipientInitial = $this->fakeUser();
+
+        $notification = $this->fakeNotification(['recipient_id' => $recipientInitial['id']]);
+
+        $notificationBroadcast = $this->fakeNotificationBroadcast(['notification_id' => $notification['id']]);
 
         $response = $this->call(
             'PUT',
@@ -130,8 +134,15 @@ class NotificationBroadcastJSONControllerTest extends TestCase
 
     public function test_mark_as_failed()
     {
+        $recipientInitial = $this->fakeUser();
+
+        $notification = $this->fakeNotification(['recipient_id' => $recipientInitial['id']]);
+
         $notificationBroadcast = $this->fakeNotificationBroadcast(
             [
+                'channel' => 'email',
+                'type' => 'single',
+                'notification_id' => $notification['id'],
                 'broadcast_on' => Carbon::now()
                     ->toDateTimeString(),
             ]

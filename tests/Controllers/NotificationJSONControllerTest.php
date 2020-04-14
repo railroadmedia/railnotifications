@@ -53,7 +53,7 @@ class NotificationJSONControllerTest extends TestCase
 
         foreach ($response->decodeResponseJson('data') as $index => $resp) {
             $this->assertEquals($notifications[$index]['type'], $resp['type']);
-            $this->assertEquals(json_decode($notifications[$index]['data']), $resp['data']);
+            $this->assertEquals(json_decode($notifications[$index]['data'], true), $resp['data']);
             $this->assertEquals($notifications[$index]['read_on'], $resp['read_on']);
             $this->assertEquals($recipient['id'], $resp['recipient']['id']);
         }
@@ -63,10 +63,7 @@ class NotificationJSONControllerTest extends TestCase
     {
         $type = $this->faker->word;
         $data = [
-            'commentId' => rand(),
-            'content' => [
-                'id' => rand()
-            ]
+            'commentId' => rand()
         ];
         $recipient = $this->fakeUser();
 
@@ -79,7 +76,7 @@ class NotificationJSONControllerTest extends TestCase
                 'recipient_id' => $recipient['id'],
             ]
         );
-        dd($response);
+
         $this->assertEquals(200, $response->getStatusCode());
 
         $this->assertArraySubset(
@@ -252,7 +249,7 @@ class NotificationJSONControllerTest extends TestCase
         $this->assertArraySubset(
             [
                 'type' => $notification['type'],
-                'data' => json_decode($notification['data']),
+                'data' => json_decode($notification['data'], true),
                 'read_on' => null,
                 'recipient' => [
                     'id' => $recipientInitial['id'],
@@ -292,7 +289,7 @@ class NotificationJSONControllerTest extends TestCase
             [
                 'id' => $notification['id'],
                 'type' => $notification['type'],
-                'data' => json_decode($notification['data']),
+                'data' => json_decode($notification['data'], true),
                 'read_on' => Carbon::now()
                     ->toDateTimeString(),
             ],
@@ -335,7 +332,7 @@ class NotificationJSONControllerTest extends TestCase
             [
                 'id' => $notification['id'],
                 'type' => $notification['type'],
-                'data' => json_decode($notification['data']),
+                'data' => json_decode($notification['data'], true),
                 'read_on' => null,
             ],
             $response->decodeResponseJson()
@@ -381,7 +378,7 @@ class NotificationJSONControllerTest extends TestCase
 
         foreach ($response->decodeResponseJson('data') as $index => $resp) {
             $this->assertEquals($notifications[$index]['type'], $resp['type']);
-            $this->assertEquals(json_decode($notifications[$index]['data']), $resp['data']);
+            $this->assertEquals(json_decode($notifications[$index]['data'], true), $resp['data']);
             $this->assertEquals(
                 Carbon::now()
                     ->toDateTimeString(),

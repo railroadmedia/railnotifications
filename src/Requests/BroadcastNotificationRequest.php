@@ -34,7 +34,7 @@ class BroadcastNotificationRequest extends FormRequest
     public static function rules()
     {
         return [
-            'channel' => 'string',
+            'channel' => 'string|required',
             'notification_id' => 'required',
         ];
     }

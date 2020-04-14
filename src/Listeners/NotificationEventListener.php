@@ -72,9 +72,9 @@ class NotificationEventListener
             case Notification::TYPE_LESSON_COMMENT_REPLY:
                 $comment = $this->contentProvider->getCommentById($event->data['commentId']);
                 $originalComment = $this->contentProvider->getCommentById($comment['parent_id']);
-                $receivingUserIds = [$originalComment['user_id']];
+                $receivingUserIds = ($originalComment)?[$originalComment['user_id']]:[];
                 break;
-                case Notification::TYPE_LESSON_COMMENT_LIKED:
+            case Notification::TYPE_LESSON_COMMENT_LIKED:
                     $comment = $this->contentProvider->getCommentById($event->data['commentId']);
                     $receivingUserIds = [$comment['user_id']];
                     break;

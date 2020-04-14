@@ -66,7 +66,7 @@ class NotificationServiceTest extends NotificationsTestCase
         $responseNotification = $this->classBeingTested->get($notification['id']);
 
         $this->assertEquals($notification['type'], $responseNotification->getType());
-        $this->assertEquals(json_decode($notification['data']), $responseNotification->getData());
+        $this->assertEquals(json_decode($notification['data'], true), $responseNotification->getData());
     }
 
     public function test_get_empty()

@@ -15,7 +15,7 @@ class Faker extends Generator
         return array_merge(
             [
                 'type' => $this->text,
-                'data' => json_encode(['commentId'=>$this->randomNumber(), 'content'=>['id'=>$this->randomNumber()], 'originalComment'=>['id'=>$this->randomNumber()]]),
+                'data' => json_encode(['commentId'=>$this->randomNumber()]),
                 'subject_id' => null,
                 'recipient_id' => $this->randomNumber(),
                 'read_on' => null,

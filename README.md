@@ -33,7 +33,6 @@
         * [Response Example (200):](#response-example--200---4)
       - [Read all notifications for a user](#read-all-notifications-for-a-user)
         * [HTTP Request](#http-request-5)
-        * [Permissions](#permissions)
         * [Request Parameters](#request-parameters-5)
         * [Request Example:](#request-example--5)
         * [Response Example (200):](#response-example--200---5)
@@ -47,77 +46,76 @@
         * [Request Parameters](#request-parameters-7)
         * [Request Example:](#request-example--7)
         * [Response Example (404):](#response-example--404--)
-  * [railnotifications/count-read](#railnotifications-count-read)
-    + [HTTP Request](#http-request-8)
-    + [Permissions](#permissions-1)
-    + [Request Parameters](#request-parameters-8)
-    + [Request Example:](#request-example--8)
-    + [Response Example (201):](#response-example--201--)
-  * [railnotifications/count-unread](#railnotifications-count-unread)
-    + [HTTP Request](#http-request-9)
-    + [Permissions](#permissions-2)
-    + [Request Parameters](#request-parameters-9)
-    + [Request Example:](#request-example--9)
-    + [Response Example (201):](#response-example--201---1)
-  * [api/railnotifications/notifications](#api-railnotifications-notifications)
+      - [Count all the notifications that are marked as readed](#count-all-the-notifications-that-are-marked-as-readed)
+        * [HTTP Request](#http-request-8)
+        * [Request Parameters](#request-parameters-8)
+        * [Request Example:](#request-example--8)
+        * [Response Example (201):](#response-example--201--)
+      - [Count all the unread notifications](#count-all-the-unread-notifications)
+        * [HTTP Request](#http-request-9)
+        * [Request Parameters](#request-parameters-9)
+        * [Request Example:](#request-example--9)
+        * [Response Example (201):](#response-example--201---1)
+  * [Mobile API Endpoints](#mobile-api-endpoints)
+      - [api/railnotifications/notifications](#api-railnotifications-notifications)
     + [HTTP Request](#http-request-10)
-    + [Permissions](#permissions-3)
+    + [Permissions](#permissions)
     + [Request Parameters](#request-parameters-10)
     + [Request Example:](#request-example--10)
     + [Response Example (200):](#response-example--200---6)
   * [api/railnotifications/notification](#api-railnotifications-notification)
     + [HTTP Request](#http-request-11)
-    + [Permissions](#permissions-4)
+    + [Permissions](#permissions-1)
     + [Request Parameters](#request-parameters-11)
     + [Validation Rules](#validation-rules-2)
     + [Request Example:](#request-example--11)
     + [Response Example (500):](#response-example--500--)
   * [api/railnotifications/sync-notification](#api-railnotifications-sync-notification)
     + [HTTP Request](#http-request-12)
-    + [Permissions](#permissions-5)
+    + [Permissions](#permissions-2)
     + [Request Parameters](#request-parameters-12)
     + [Validation Rules](#validation-rules-3)
     + [Request Example:](#request-example--12)
     + [Response Example (500):](#response-example--500---1)
   * [api/railnotifications/read/{id}](#api-railnotifications-read--id-)
     + [HTTP Request](#http-request-13)
-    + [Permissions](#permissions-6)
+    + [Permissions](#permissions-3)
     + [Request Parameters](#request-parameters-13)
     + [Request Example:](#request-example--13)
     + [Response Example (404):](#response-example--404---1)
   * [api/railnotifications/unread/{id}](#api-railnotifications-unread--id-)
     + [HTTP Request](#http-request-14)
-    + [Permissions](#permissions-7)
+    + [Permissions](#permissions-4)
     + [Request Parameters](#request-parameters-14)
     + [Request Example:](#request-example--14)
     + [Response Example (404):](#response-example--404---2)
   * [api/railnotifications/read-all/{id}](#api-railnotifications-read-all--id-)
     + [HTTP Request](#http-request-15)
-    + [Permissions](#permissions-8)
+    + [Permissions](#permissions-5)
     + [Request Parameters](#request-parameters-15)
     + [Request Example:](#request-example--15)
     + [Response Example (200):](#response-example--200---7)
   * [api/railnotifications/notification/{id}](#api-railnotifications-notification--id-)
     + [HTTP Request](#http-request-16)
-    + [Permissions](#permissions-9)
+    + [Permissions](#permissions-6)
     + [Request Parameters](#request-parameters-16)
     + [Request Example:](#request-example--16)
     + [Response Example (204):](#response-example--204---1)
   * [api/railnotifications/notification/{id}](#api-railnotifications-notification--id--1)
     + [HTTP Request](#http-request-17)
-    + [Permissions](#permissions-10)
+    + [Permissions](#permissions-7)
     + [Request Parameters](#request-parameters-17)
     + [Request Example:](#request-example--17)
     + [Response Example (404):](#response-example--404---3)
   * [api/railnotifications/count-read](#api-railnotifications-count-read)
     + [HTTP Request](#http-request-18)
-    + [Permissions](#permissions-11)
+    + [Permissions](#permissions-8)
     + [Request Parameters](#request-parameters-18)
     + [Request Example:](#request-example--18)
     + [Response Example (201):](#response-example--201---2)
   * [api/railnotifications/count-unread](#api-railnotifications-count-unread)
     + [HTTP Request](#http-request-19)
-    + [Permissions](#permissions-12)
+    + [Permissions](#permissions-9)
     + [Request Parameters](#request-parameters-19)
     + [Request Example:](#request-example--19)
     + [Response Example (201):](#response-example--201---3)
@@ -126,56 +124,57 @@
 - [JSON Endpoints](#json-endpoints-1)
   * [railnotifications/broadcast](#railnotifications-broadcast)
     + [HTTP Request](#http-request-20)
-    + [Permissions](#permissions-13)
+    + [Permissions](#permissions-10)
     + [Request Parameters](#request-parameters-20)
     + [Validation Rules](#validation-rules-4)
     + [Request Example:](#request-example--20)
     + [Response Example (500):](#response-example--500---2)
   * [railnotifications/broadcast/mark-succeeded/{id}](#railnotifications-broadcast-mark-succeeded--id-)
     + [HTTP Request](#http-request-21)
-    + [Permissions](#permissions-14)
+    + [Permissions](#permissions-11)
     + [Request Parameters](#request-parameters-21)
     + [Request Example:](#request-example--21)
     + [Response Example (404):](#response-example--404---4)
   * [railnotifications/broadcast/mark-failed/{id}](#railnotifications-broadcast-mark-failed--id-)
     + [HTTP Request](#http-request-22)
-    + [Permissions](#permissions-15)
+    + [Permissions](#permissions-12)
     + [Request Parameters](#request-parameters-22)
     + [Request Example:](#request-example--22)
     + [Response Example (404):](#response-example--404---5)
   * [railnotifications/broadcast/{id}](#railnotifications-broadcast--id-)
     + [HTTP Request](#http-request-23)
-    + [Permissions](#permissions-16)
+    + [Permissions](#permissions-13)
     + [Request Parameters](#request-parameters-23)
     + [Request Example:](#request-example--23)
     + [Response Example (404):](#response-example--404---6)
   * [api/railnotifications/broadcast](#api-railnotifications-broadcast)
     + [HTTP Request](#http-request-24)
-    + [Permissions](#permissions-17)
+    + [Permissions](#permissions-14)
     + [Request Parameters](#request-parameters-24)
     + [Validation Rules](#validation-rules-5)
     + [Request Example:](#request-example--24)
     + [Response Example (500):](#response-example--500---3)
   * [api/railnotifications/broadcast/mark-succeeded](#api-railnotifications-broadcast-mark-succeeded)
     + [HTTP Request](#http-request-25)
-    + [Permissions](#permissions-18)
+    + [Permissions](#permissions-15)
     + [Request Parameters](#request-parameters-25)
     + [Request Example:](#request-example--25)
     + [Response Example (500):](#response-example--500---4)
   * [api/railnotifications/broadcast/mark-failed](#api-railnotifications-broadcast-mark-failed)
     + [HTTP Request](#http-request-26)
-    + [Permissions](#permissions-19)
+    + [Permissions](#permissions-16)
     + [Request Parameters](#request-parameters-26)
     + [Request Example:](#request-example--26)
     + [Response Example (500):](#response-example--500---5)
   * [api/railnotifications/broadcast/{id}](#api-railnotifications-broadcast--id-)
     + [HTTP Request](#http-request-27)
-    + [Permissions](#permissions-20)
+    + [Permissions](#permissions-17)
     + [Request Parameters](#request-parameters-27)
     + [Request Example:](#request-example--27)
     + [Response Example (404):](#response-example--404---7)
 
 <small><i><a href='http://ecotrust-canada.github.io/markdown-toc/'>Table of contents generated with markdown-toc</a></i></small>
+
 
 
 # railnotifications
@@ -420,6 +419,8 @@ $.ajax({
 ##### Request Parameters
 |Type|Key|Required|Notes|
 |----|---|--------|-----|
+|query|id|yes|Id of the notification you want to mark as read.|
+|body|read_on_date_time|no|The date that it's set on the notification read on field. If not exists current date it's set.|
 
 
 ##### Request Example:
@@ -449,8 +450,8 @@ $.ajax({
 #### Unread a notification
 
 ##### HTTP Request
-    `PUT railnotifications/unread/{id}`
 
+    `PUT railnotifications/unread/{id}`
 
 
 ##### Request Parameters
@@ -458,6 +459,7 @@ $.ajax({
 
 |Type|Key|Required|Notes|
 |----|---|--------|-----|
+|query|id|yes|Id of notification you want to mark as unread|
 
 
 ##### Request Example:
@@ -487,16 +489,15 @@ $.ajax({
 #### Read all notifications for a user
 
 ##### HTTP Request
-    `PUT railnotifications/read-all/{id}`
-
-
-##### Permissions
+    `PUT railnotifications/read-all/{userId}`
 
 ##### Request Parameters
 
 
 |Type|Key|Required|Notes|
 |----|---|--------|-----|
+|query|userId|yes|All the notifications for specified user id will be marked as read|
+|body|read_on_date_time|no|The date that it's set on the notification read on field. If not exists current date it's set.|
 
 
 ##### Request Example:
@@ -528,6 +529,7 @@ $.ajax({
 
 |Type|Key|Required|Notes|
 |----|---|--------|-----|
+|query|id|yes|Id of the notification you want to delete|
 
 
 ##### Request Example:
@@ -557,6 +559,7 @@ null
 
 |Type|Key|Required|Notes|
 |----|---|--------|-----|
+|query|id|yes|Id of the notification|
 
 
 ##### Request Example:
@@ -581,22 +584,20 @@ $.ajax({
 }
 ```
 
-## railnotifications/count-read
+#### Count all the notifications that are marked as readed 
 
-### HTTP Request
+##### HTTP Request
     `GET railnotifications/count-read`
 
-
-### Permissions
-
-### Request Parameters
+##### Request Parameters
 
 
 |Type|Key|Required|Notes|
 |----|---|--------|-----|
+|body|user_id|no|If the user_id exists the notifications for the specified id are counted, otherwise the notifications for the authenticated user are counted|
 
 
-### Request Example:
+##### Request Example:
 
 ```js
 $.ajax({
@@ -607,36 +608,27 @@ $.ajax({
 });
 ```
 
-### Response Example (201):
+##### Response Example (201):
 
 ```json
 {
-    "data": "0"
+    "data": "10"
 }
 ```
 
+#### Count all the unread notifications
 
-
-
-<!-- END_8a3aa539a0a37b8deb4ed6111740f1b5 -->
-
-<!-- START_8f96b7a86188153807da7ee2aea64daf -->
-## railnotifications/count-unread
-
-### HTTP Request
+##### HTTP Request
     `GET railnotifications/count-unread`
 
-
-### Permissions
-
-### Request Parameters
-
+##### Request Parameters
 
 |Type|Key|Required|Notes|
 |----|---|--------|-----|
+|body|user_id|no|If the user_id exists the notifications for the specified id are counted, otherwise the notifications for the authenticated user are counted|
 
 
-### Request Example:
+##### Request Example:
 
 ```js
 $.ajax({
@@ -647,21 +639,17 @@ $.ajax({
 });
 ```
 
-### Response Example (201):
+##### Response Example (201):
 
 ```json
 {
-    "data": "0"
+    "data": "2"
 }
 ```
 
+## Mobile API Endpoints
 
-
-
-<!-- END_8f96b7a86188153807da7ee2aea64daf -->
-
-<!-- START_e27df8dfff6d7303d23aec5af1f3a1e9 -->
-## api/railnotifications/notifications
+#### api/railnotifications/notifications
 
 ### HTTP Request
     `GET api/railnotifications/notifications`

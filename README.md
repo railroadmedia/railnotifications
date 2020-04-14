@@ -1,6 +1,7 @@
 - [railnotifications](#railnotifications)
   * [Install](#install)
-  * [Package Configuration](#package-configuration)
+  * [NotificationBroadcast event - WIP](#notificationbroadcast-event---wip)
+    + [Structure](#structure)
   * [API](#api)
     + [Tables:](#tables-)
     + [JSON Endpoints](#json-endpoints)
@@ -18,6 +19,9 @@
       - [Mark broadcast as succeeded](#mark-broadcast-as-succeeded)
       - [Mark broadcast as failed](#mark-broadcast-as-failed)
       - [Show broadcast](#show-broadcast)
+
+<small><i><a href='http://ecotrust-canada.github.io/markdown-toc/'>Table of contents generated with markdown-toc</a></i></small>
+
 
 
 
@@ -380,6 +384,36 @@ class RailnotificationsUserProvider implements UserProviderInterface
 
         app()->instance(\Railroad\Railnotifications\Contracts\RailforumProviderInterface::class, app()->make(RailforumProvider::class));
 ```
+## NotificationBroadcast event - WIP
+The package provide an event to create notifications and broadcast them over specified channels. 
+### Structure
+In order to create a new NotificationBroadcast event you need to specify:
+-  notification type: 
+-  data - an array with the commentId or postId
+-  the channels where the notification should be broadcast
+- 
+E.g:
+```php
+     event(
+            new NotificationBroadcast(
+                Notification::TYPE_LESSON_COMMENT_LIKED,
+                ['commentId' => $commentLiked->commentId],
+                $comment['user_id'],
+                ['fcm', 'email']
+            )
+        );
+        
+     event(
+            new NotificationBroadcast(
+                Notification::TYPE_FORUM_POST_IN_FOLLOWED_THREAD, 
+                ['postId' => $post->id],
+                ['email', 'fcm']
+                )
+            );
+```
+
+The notifications can be broadcast over `email` or `fcm` channels.
+
 ## API 
 
 ### Tables: 

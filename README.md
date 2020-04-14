@@ -2,7 +2,7 @@
   * [Install](#install)
   * [Package Configuration](#package-configuration)
   * [API](#api)
-    + [Tables](#tables-)
+    + [Tables:](#tables-)
     + [JSON Endpoints](#json-endpoints)
       - [Get user notifications.](#get-user-notifications)
         * [HTTP Request](#http-request)
@@ -12,65 +12,77 @@
         * [Response Example (200):](#response-example--200--)
       - [Create a new notification.](#create-a-new-notification)
         * [HTTP Request](#http-request-1)
+        * [Mobile Request](#mobile-request-1)
         * [Request Parameters](#request-parameters-1)
         * [Validation Rules](#validation-rules)
         * [Request Example:](#request-example--1)
         * [Response Example (200):](#response-example--200---1)
       - [Sync notification](#sync-notification)
         * [HTTP Request](#http-request-2)
+        * [Mobile Request](#mobile-request-2)
         * [Request Parameters](#request-parameters-2)
         * [Validation Rules](#validation-rules-1)
         * [Request Example:](#request-example--2)
         * [Response Example (200):](#response-example--200---2)
       - [Read a notification](#read-a-notification)
         * [HTTP Request](#http-request-3)
+        * [Mobile Request](#mobile-request-3)
         * [Request Parameters](#request-parameters-3)
         * [Request Example:](#request-example--3)
         * [Response Example (200):](#response-example--200---3)
       - [Unread a notification](#unread-a-notification)
         * [HTTP Request](#http-request-4)
+        * [Mobile Request](#mobile-request-4)
         * [Request Parameters](#request-parameters-4)
         * [Request Example:](#request-example--4)
         * [Response Example (200):](#response-example--200---4)
       - [Read all notifications for a user](#read-all-notifications-for-a-user)
         * [HTTP Request](#http-request-5)
+        * [Mobile Request](#mobile-request-5)
         * [Request Parameters](#request-parameters-5)
         * [Request Example:](#request-example--5)
         * [Response Example (200):](#response-example--200---5)
       - [Delete a notification](#delete-a-notification)
         * [HTTP Request](#http-request-6)
+        * [Mobile Request](#mobile-request-6)
         * [Request Parameters](#request-parameters-6)
         * [Request Example:](#request-example--6)
         * [Response Example (204):](#response-example--204--)
       - [Show notification](#show-notification)
         * [HTTP Request](#http-request-7)
+        * [Mobile Request](#mobile-request-7)
         * [Request Parameters](#request-parameters-7)
         * [Request Example:](#request-example--7)
         * [Response Example (404):](#response-example--404--)
       - [Count all the notifications that are marked as readed](#count-all-the-notifications-that-are-marked-as-readed)
         * [HTTP Request](#http-request-8)
+        * [Mobile Request](#mobile-request-8)
         * [Request Parameters](#request-parameters-8)
         * [Request Example:](#request-example--8)
         * [Response Example (201):](#response-example--201--)
       - [Count all the unread notifications](#count-all-the-unread-notifications)
         * [HTTP Request](#http-request-9)
+        * [Mobile Request](#mobile-request-9)
         * [Request Parameters](#request-parameters-9)
         * [Request Example:](#request-example--9)
         * [Response Example (201):](#response-example--201---1)
       - [Broadcast notification on specified channels](#broadcast-notification-on-specified-channels)
         * [HTTP Request](#http-request-10)
+        * [Mobile Request](#mobile-request-10)
         * [Request Parameters](#request-parameters-10)
         * [Validation Rules](#validation-rules-2)
         * [Request Example:](#request-example--10)
         * [Response Example (200):](#response-example--200---6)
       - [Mark broadcast as succeeded](#mark-broadcast-as-succeeded)
         * [HTTP Request](#http-request-11)
+        * [Mobile Request](#mobile-request-11)
         * [Request Parameters](#request-parameters-11)
         * [Request Example:](#request-example--11)
         * [Response Example (404):](#response-example--404---1)
         * [Response Example (200)](#response-example--200-)
       - [Mark broadcast as failed](#mark-broadcast-as-failed)
         * [HTTP Request](#http-request-12)
+        * [Mobile Request](#mobile-request-12)
         * [Permissions](#permissions)
         * [Request Parameters](#request-parameters-12)
         * [Request Example:](#request-example--12)
@@ -78,11 +90,12 @@
         * [Response Example (200):](#response-example--200---7)
       - [Show broadcast](#show-broadcast)
         * [HTTP Request](#http-request-13)
+        * [Mobile Request](#mobile-request-13)
         * [Permissions](#permissions-1)
         * [Request Parameters](#request-parameters-13)
         * [Request Example:](#request-example--13)
         * [Response Example (404):](#response-example--404---3)
-    + [Response Example (200):](#response-example--200---8)
+        * [Response Example (200):](#response-example--200---8)
 
 <small><i><a href='http://ecotrust-canada.github.io/markdown-toc/'>Table of contents generated with markdown-toc</a></i></small>
 
@@ -228,6 +241,9 @@ $.ajax({
 ##### HTTP Request
     `PUT railnotifications/notification`
 
+##### Mobile Request
+    `PUT api/railnotifications/notification`
+
 ##### Request Parameters
 |Type|Key|Required|Notes|
 |----|---|--------|-----|
@@ -285,6 +301,8 @@ $.ajax({
 If not exists it will be created, if exists will be updated.
 ##### HTTP Request
     `PUT railnotifications/sync-notification`
+##### Mobile Request
+    `PUT api/railnotifications/sync-notification`
 
 ##### Request Parameters
 
@@ -344,6 +362,8 @@ $.ajax({
 #### Read a notification 
 ##### HTTP Request
     `PUT railnotifications/read/{id}`
+##### Mobile Request
+    `PUT api/railnotifications/read/{id}`
 
 ##### Request Parameters
 |Type|Key|Required|Notes|
@@ -381,6 +401,8 @@ $.ajax({
 ##### HTTP Request
 
     `PUT railnotifications/unread/{id}`
+##### Mobile Request
+    `PUT api/railnotifications/unread/{id}`
 
 
 ##### Request Parameters
@@ -419,6 +441,8 @@ $.ajax({
 
 ##### HTTP Request
     `PUT railnotifications/read-all/{userId}`
+##### Mobile Request
+    `PUT api/railnotifications/read-all/{userId}`
 
 ##### Request Parameters
 
@@ -452,6 +476,8 @@ $.ajax({
 
 ##### HTTP Request
     `DELETE railnotifications/notification/{id}`
+##### Mobile Request
+    `DELETE api/railnotifications/notification/{id}`
 
 ##### Request Parameters
 
@@ -482,6 +508,8 @@ null
 
 ##### HTTP Request
     `GET railnotifications/notification/{id}`
+##### Mobile Request
+    `GET api/railnotifications/notification/{id}`
 
 ##### Request Parameters
 
@@ -517,6 +545,8 @@ $.ajax({
 
 ##### HTTP Request
     `GET railnotifications/count-read`
+##### Mobile Request
+    `GET api/railnotifications/count-read`
 
 ##### Request Parameters
 
@@ -549,6 +579,8 @@ $.ajax({
 
 ##### HTTP Request
     `GET railnotifications/count-unread`
+##### Mobile Request
+    `GET api/railnotifications/count-unread`
 
 ##### Request Parameters
 
@@ -580,6 +612,8 @@ $.ajax({
  
 ##### HTTP Request
      `PUT railnotifications/broadcast`
+##### Mobile Request
+     `PUT api/railnotifications/broadcast`
  
 ##### Request Parameters
  
@@ -648,10 +682,10 @@ $.ajax({
  
  ##### HTTP Request
      `PUT railnotifications/broadcast/mark-succeeded/{id}`
- 
+##### Mobile Request
+     `PUT api/railnotifications/broadcast/mark-succeeded/{id}`
  
  ##### Request Parameters
- 
  
  |Type|Key|Required|Notes|
  |----|---|--------|-----|
@@ -712,8 +746,9 @@ $.ajax({
  
  ##### HTTP Request
      `PUT railnotifications/broadcast/mark-failed/{id}`
- 
- 
+ ##### Mobile Request
+      `PUT api/railnotifications/broadcast/mark-failed/{id}`
+      
  ##### Permissions
  
  ##### Request Parameters
@@ -777,7 +812,8 @@ $.ajax({
  
  ##### HTTP Request
      `GET railnotifications/broadcast/{id}`
- 
+ ##### Mobile Request
+      `GET api/railnotifications/broadcast/{id}`
  
  ##### Permissions
  
@@ -811,7 +847,7 @@ $.ajax({
  }
  ```
  
- ### Response Example (200):
+ ##### Response Example (200):
  ```json
  {
    "id":1,

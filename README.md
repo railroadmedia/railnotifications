@@ -97,8 +97,6 @@
         * [Response Example (404):](#response-example--404---3)
         * [Response Example (200):](#response-example--200---8)
 
-<small><i><a href='http://ecotrust-canada.github.io/markdown-toc/'>Table of contents generated with markdown-toc</a></i></small>
-
 
 
 # railnotifications
@@ -120,17 +118,53 @@ Railnotifications is an easy to use Laravel package for sending email and push n
 ```
 3. Publish the railnotifications config file: 
 > php artisan vendor:publish
-4. Fill the railnotifications.php config file
+4. Fill the railnotifications.php config file:
+```php
 
-## Package Configuration
+return array(
+    'channels' => [
+        'email' => \Railroad\Railnotifications\Channels\EmailChannel::class,
+        'fcm' => \Railroad\Railnotifications\Channels\FcmChannel::class
+    ],
 
-In the .env file should add the server key and the secret key for the Firebase Cloud Messaging:
+    // cache
+    'redis_host' => 'redis',
+    'redis_port' => 6379,
+
+    'development_mode' => true,
+
+    // database
+    'database_connection_name' => 'mysql',
+    'database_name' => env('DB_DATABASE'),
+    'database_user' => env('DB_USERNAME'),
+    'database_password' => env('DB_PASSWORD'),
+    'database_host' => env('DB_HOST'),
+    'database_driver' => 'pdo_mysql',
+    'database_in_memory' => false,
+    'enable_query_log' => false,
+
+    // entities
+    'entities' => [
+        [
+            'path' => __DIR__ . '/../src/Entities',
+            'namespace' => 'Railroad\Railnotifications\Entities',
+        ],
+    ],
+    'emailAddressFrom' => 'system@pianote.com',
+    'emailBrandFrom' => 'Pianote',
+    'replyAddress' => 'suport@pianote.com',
+    'newThreadPostSubject' => 'Pianote Forums - New Thread Post: ',
+    'newLessonCommentReplySubject' => 'Pianote - New Lesson Comment Reply: '
+);
+```
+5. In the .env file should add the server key and the secret key for the Firebase Cloud Messaging:
 ```
 FCM_SERVER_KEY=my_secret_server_key
 FCM_SENDER_ID=my_secret_sender_id
 ````
 The FCM keys can be find in Firebase (project settings -> cloud messaging) or in 1Password.
 
+6. Create new provider for Content and Forum
 ## API 
 
 ### Tables: 

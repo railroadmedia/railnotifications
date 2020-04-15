@@ -291,10 +291,10 @@ class RailnotificationsUserProvider implements UserProviderInterface
     }
 
     /**
-     * @param $user
+     * @param RailnotificationUser $user
      * @return int|null
      */
-    public function getRailnotificationsUserId($user)
+    public function getRailnotificationsUserId(RailnotificationUser $user)
     : ?int {
         return $user->getId();
     }
@@ -380,8 +380,6 @@ class RailnotificationsUserProvider implements UserProviderInterface
         return $userFirebaseToken;
     }
 }
-
-
 ```
 9. In AppServiceProvider boot method create instance for the providers: 
 ```php
@@ -393,7 +391,7 @@ class RailnotificationsUserProvider implements UserProviderInterface
 ```
 ## NotificationBroadcast event
 The package provide an event to create notifications and broadcast them over the channels specified in config file (railnotifications.php - channels). 
-### Structure
+
 In order to create a new NotificationBroadcast event you must to specify:
 -  notification type - available options: `lesson comment reply`, `lesson comment liked`,  `forum post reply`, `forum post in followed thread`,  `forum post liked`
 -  data - an array with the commentId or postId, depends on notification type
@@ -418,7 +416,7 @@ E.g:
 
 ## API 
 
-### Tables: 
+### Tables 
 `notifications`
 
 | Column | Data Type | Attributes | Default | Description |
@@ -447,7 +445,7 @@ E.g:
 
 ### JSON Endpoints
 
-#### Get user notifications.
+#### Get user notifications
 
 ##### HTTP Request
     `GET railnotifications/notifications`
@@ -521,7 +519,7 @@ $.ajax({
 }
 ```
 
-#### Create a new notification.
+#### Create a new notification
 
 ##### HTTP Request
     `PUT railnotifications/notification`
@@ -581,7 +579,26 @@ $.ajax({
    }
 }
 ```
+##### Response Example (422):
 
+```json
+{
+   "errors":[
+      {
+         "source":"type",
+         "detail":"The type field is required."
+      },
+      {
+         "source":"data",
+         "detail":"The data field is required."
+      },
+      {
+         "source":"recipient_id",
+         "detail":"The recipient id field is required."
+      }
+   ]
+}
+```
 #### Sync notification
 If not exists it will be created, if exists will be updated.
 ##### HTTP Request
@@ -643,6 +660,26 @@ $.ajax({
    }
 }
 ```
+##### Response Example (422):
+
+```json
+{
+   "errors":[
+      {
+         "source":"type",
+         "detail":"The type field is required."
+      },
+      {
+         "source":"data",
+         "detail":"The data field is required."
+      },
+      {
+         "source":"recipient_id",
+         "detail":"The recipient id field is required."
+      }
+   ]
+}
+```
 
 #### Read a notification 
 ##### HTTP Request
@@ -680,7 +717,15 @@ $.ajax({
     "updated_at": "2020-04-10 13:55:00"
 }
 ```
-
+##### Response Example (404):
+```json
+{
+   "errors":{
+      "title":"Not found.",
+      "detail":"Notification not found with id: 1103380011"
+   }
+}
+```
 #### Unread a notification
 
 ##### HTTP Request
@@ -721,6 +766,15 @@ $.ajax({
     "updated_at": "2020-04-10 13:55:00"
 }
 ```
+##### Response Example (404):
+```json
+{
+   "errors":{
+      "title":"Not found.",
+      "detail":"Notification not found with id: 1103380011"
+   }
+}
+```
 
 #### Read all notifications for a user
 
@@ -753,7 +807,34 @@ $.ajax({
 
 ```json
 {
-    "data": []
+   "data":[
+      {
+         "id":1,
+         "type":"lesson comment liked",
+         "data":{
+            "commentId":2
+         },
+         "read_on":"2020-04-15 12:18:01",
+         "created_at":"2020-04-15 12:18:01",
+         "updated_at":"2020-04-15 12:18:01",
+         "recipient":{
+            "id":1
+         }
+      },
+      {
+         "id":2,
+         "type":"lesson comment reply",
+         "data":{
+            "commentId":4
+         },
+         "read_on":"2020-04-15 12:18:01",
+         "created_at":"2020-04-15 12:18:01",
+         "updated_at":"2020-04-15 12:18:01",
+         "recipient":{
+            "id":1
+         }
+      }
+   ]
 }
 ```
 
@@ -814,15 +895,29 @@ $.ajax({
     error: function(response) {}
 });
 ```
-
-##### Response Example (404):
-
+##### Response Example (200):
 ```json
 {
-    "errors": {
-        "title": "Not found.",
-        "detail": "Update failed, notification not found with id: 1"
-    }
+   "id":1,
+   "type":"lesson comment reply",
+   "data":{
+      "commentId":2
+   },
+   "read_on":null,
+   "created_at":"2020-04-15 12:25:21",
+   "updated_at":null,
+   "recipient":{
+      "id":1
+   }
+}
+```
+##### Response Example (404):
+```json
+{
+   "errors":{
+      "title":"Not found.",
+      "detail":"Notification not found with id: 1103380011"
+   }
 }
 ```
 

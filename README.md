@@ -1,6 +1,6 @@
 - [railnotifications](#railnotifications)
   * [Install](#install)
-  * [NotificationBroadcast event - WIP](#notificationbroadcast-event---wip)
+  * [NotificationBroadcast event](#notificationbroadcast-event)
     + [Structure](#structure)
   * [API](#api)
     + [Tables:](#tables-)
@@ -19,9 +19,6 @@
       - [Mark broadcast as succeeded](#mark-broadcast-as-succeeded)
       - [Mark broadcast as failed](#mark-broadcast-as-failed)
       - [Show broadcast](#show-broadcast)
-
-<small><i><a href='http://ecotrust-canada.github.io/markdown-toc/'>Table of contents generated with markdown-toc</a></i></small>
-
 
 
 
@@ -46,8 +43,8 @@ Railnotifications is an easy to use Laravel package for sending email and push n
 > php artisan vendor:publish
 4. Fill the railnotifications.php config file:
 ```php
-
 return array(
+    //the notifications will be broadcast on all the channels defined bellow
     'channels' => [
         'email' => \Railroad\Railnotifications\Channels\EmailChannel::class,
         'fcm' => \Railroad\Railnotifications\Channels\FcmChannel::class
@@ -223,7 +220,7 @@ class RailforumProvider implements RailforumProviderInterface
 }
 
 ```
-8. Create new provider for Forum that implements `UserProviderInterface` from Railnotifications package. The provider should contain the following methods: `getRailnotificationsUserById`, `getUserFirebaseTokens`, `deleteUserFirebaseTokens` and `updateUserFirebaseToken`, like bellow: 
+8. Create new provider for Forum that implements `UserProviderInterface` from Railnotifications package. The provider should contain the following methods: `getRailnotificationsUserById`, `getRailnotificationsUserId`, `getUserFirebaseTokens`, `deleteUserFirebaseTokens` and `updateUserFirebaseToken`, like bellow: 
 
 ```php
 <?php
@@ -291,6 +288,15 @@ class RailnotificationsUserProvider implements UserProviderInterface
         }
 
         return null;
+    }
+
+    /**
+     * @param RailnotificationUser $user
+     * @return int|null
+     */
+    public function getRailnotificationsUserId(RailnotificationUser $user)
+    : ?int {
+        return $user->getId();
     }
 
     /**
@@ -374,7 +380,6 @@ class RailnotificationsUserProvider implements UserProviderInterface
         return $userFirebaseToken;
     }
 }
-
 ```
 9. In AppServiceProvider boot method create instance for the providers: 
 ```php
@@ -384,39 +389,34 @@ class RailnotificationsUserProvider implements UserProviderInterface
 
         app()->instance(\Railroad\Railnotifications\Contracts\RailforumProviderInterface::class, app()->make(RailforumProvider::class));
 ```
-## NotificationBroadcast event - WIP
-The package provide an event to create notifications and broadcast them over specified channels. 
-### Structure
-In order to create a new NotificationBroadcast event you need to specify:
--  notification type: 
--  data - an array with the commentId or postId
--  the channels where the notification should be broadcast
-- 
+## NotificationBroadcast event
+The package provide an event to create notifications and broadcast them over the channels specified in config file (railnotifications.php - channels). 
+
+In order to create a new NotificationBroadcast event you must to specify:
+-  notification type - available options: `lesson comment reply`, `lesson comment liked`,  `forum post reply`, `forum post in followed thread`,  `forum post liked`
+-  data - an array with the commentId or postId, depends on notification type
+
 E.g:
 ```php
      event(
             new NotificationBroadcast(
                 Notification::TYPE_LESSON_COMMENT_LIKED,
-                ['commentId' => $commentLiked->commentId],
-                $comment['user_id'],
-                ['fcm', 'email']
+                ['commentId' => $commentLiked->commentId]
             )
         );
         
      event(
             new NotificationBroadcast(
                 Notification::TYPE_FORUM_POST_IN_FOLLOWED_THREAD, 
-                ['postId' => $post->id],
-                ['email', 'fcm']
-                )
-            );
+                ['postId' => $post->id]
+             )
+        );
 ```
 
-The notifications can be broadcast over `email` or `fcm` channels.
 
 ## API 
 
-### Tables: 
+### Tables 
 `notifications`
 
 | Column | Data Type | Attributes | Default | Description |
@@ -445,7 +445,7 @@ The notifications can be broadcast over `email` or `fcm` channels.
 
 ### JSON Endpoints
 
-#### Get user notifications.
+#### Get user notifications
 
 ##### HTTP Request
     `GET railnotifications/notifications`
@@ -519,7 +519,7 @@ $.ajax({
 }
 ```
 
-#### Create a new notification.
+#### Create a new notification
 
 ##### HTTP Request
     `PUT railnotifications/notification`
@@ -579,7 +579,26 @@ $.ajax({
    }
 }
 ```
+##### Response Example (422):
 
+```json
+{
+   "errors":[
+      {
+         "source":"type",
+         "detail":"The type field is required."
+      },
+      {
+         "source":"data",
+         "detail":"The data field is required."
+      },
+      {
+         "source":"recipient_id",
+         "detail":"The recipient id field is required."
+      }
+   ]
+}
+```
 #### Sync notification
 If not exists it will be created, if exists will be updated.
 ##### HTTP Request
@@ -641,6 +660,26 @@ $.ajax({
    }
 }
 ```
+##### Response Example (422):
+
+```json
+{
+   "errors":[
+      {
+         "source":"type",
+         "detail":"The type field is required."
+      },
+      {
+         "source":"data",
+         "detail":"The data field is required."
+      },
+      {
+         "source":"recipient_id",
+         "detail":"The recipient id field is required."
+      }
+   ]
+}
+```
 
 #### Read a notification 
 ##### HTTP Request
@@ -678,7 +717,15 @@ $.ajax({
     "updated_at": "2020-04-10 13:55:00"
 }
 ```
-
+##### Response Example (404):
+```json
+{
+   "errors":{
+      "title":"Not found.",
+      "detail":"Notification not found with id: 1103380011"
+   }
+}
+```
 #### Unread a notification
 
 ##### HTTP Request
@@ -719,6 +766,15 @@ $.ajax({
     "updated_at": "2020-04-10 13:55:00"
 }
 ```
+##### Response Example (404):
+```json
+{
+   "errors":{
+      "title":"Not found.",
+      "detail":"Notification not found with id: 1103380011"
+   }
+}
+```
 
 #### Read all notifications for a user
 
@@ -751,7 +807,34 @@ $.ajax({
 
 ```json
 {
-    "data": []
+   "data":[
+      {
+         "id":1,
+         "type":"lesson comment liked",
+         "data":{
+            "commentId":2
+         },
+         "read_on":"2020-04-15 12:18:01",
+         "created_at":"2020-04-15 12:18:01",
+         "updated_at":"2020-04-15 12:18:01",
+         "recipient":{
+            "id":1
+         }
+      },
+      {
+         "id":2,
+         "type":"lesson comment reply",
+         "data":{
+            "commentId":4
+         },
+         "read_on":"2020-04-15 12:18:01",
+         "created_at":"2020-04-15 12:18:01",
+         "updated_at":"2020-04-15 12:18:01",
+         "recipient":{
+            "id":1
+         }
+      }
+   ]
 }
 ```
 
@@ -812,15 +895,29 @@ $.ajax({
     error: function(response) {}
 });
 ```
-
-##### Response Example (404):
-
+##### Response Example (200):
 ```json
 {
-    "errors": {
-        "title": "Not found.",
-        "detail": "Update failed, notification not found with id: 1"
-    }
+   "id":1,
+   "type":"lesson comment reply",
+   "data":{
+      "commentId":2
+   },
+   "read_on":null,
+   "created_at":"2020-04-15 12:25:21",
+   "updated_at":null,
+   "recipient":{
+      "id":1
+   }
+}
+```
+##### Response Example (404):
+```json
+{
+   "errors":{
+      "title":"Not found.",
+      "detail":"Notification not found with id: 1103380011"
+   }
 }
 ```
 

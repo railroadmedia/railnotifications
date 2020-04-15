@@ -2,7 +2,6 @@
 
 namespace Railroad\Railnotifications\Requests;
 
-use Illuminate\Foundation\Http\FormRequest;
 
 /**
  * Class NotificationRequest

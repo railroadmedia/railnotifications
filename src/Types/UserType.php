@@ -33,7 +33,7 @@ class UserType extends IntegerType
 
             $userProvider = app()->make(UserProviderInterface::class);
 
-            return $userProvider->getUserId($value);
+            return $userProvider->getRailnotificationsUserId($value);
         }
 
         return null;

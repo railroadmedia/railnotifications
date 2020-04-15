@@ -101,6 +101,33 @@ class NotificationJSONControllerTest extends TestCase
         );
     }
 
+    public function test_store_validation_failed_response()
+    {
+        $response = $this->call(
+            'PUT',
+            'railnotifications/notification'
+        );
+
+        $this->assertEquals(422, $response->getStatusCode());
+
+        $errors = [
+            [
+                'source' => "type",
+                "detail" => "The type field is required.",
+            ],
+            [
+                'source' => "data",
+                "detail" => "The data field is required.",
+            ],
+            [
+                'source' => "recipient_id",
+                "detail" => "The recipient id field is required.",
+            ],
+        ];
+
+        $this->assertEquals($errors, $response->decodeResponseJson('errors'));
+    }
+
     public function test_delete_notification()
     {
         $notification = $this->fakeNotification();
@@ -237,7 +264,13 @@ class NotificationJSONControllerTest extends TestCase
     {
         $recipientInitial = $this->fakeUser();
 
-        $notification = $this->fakeNotification(['recipient_id' => $recipientInitial['id']]);
+        $notification = $this->fakeNotification(
+            [
+                'type' => $this->faker->randomElement([Notification::TYPE_LESSON_COMMENT_REPLY, Notification::TYPE_LESSON_COMMENT_LIKED]),
+                'read_on' => null,
+                'data' => json_encode(['commentId' => rand(2,4)]),
+                'recipient_id' => $recipientInitial['id']]
+        );
 
         $response = $this->call(
             'GET',
@@ -363,7 +396,9 @@ class NotificationJSONControllerTest extends TestCase
         for ($i = 0; $i < 5; $i++) {
             $notifications[] = $this->fakeNotification(
                 [
+                    'type' => $this->faker->randomElement([Notification::TYPE_LESSON_COMMENT_REPLY, Notification::TYPE_LESSON_COMMENT_LIKED]),
                     'read_on' => null,
+                    'data' => json_encode(['commentId' => rand(2,4)]),
                     'recipient_id' => $recipient['id'],
                 ]
             );

@@ -2,8 +2,6 @@
 
 namespace Railroad\Railnotifications\Contracts;
 
-use League\Fractal\TransformerAbstract;
-use Railroad\Ecommerce\Entities\User;
 use Railroad\Railnotifications\Entities\User as RailnotificationUser;
 
 interface UserProviderInterface
@@ -14,6 +12,12 @@ interface UserProviderInterface
      */
     public function getRailnotificationsUserById(int $id)
     : ?RailnotificationUser;
+
+    /**
+     * @param RailnotificationUser $user
+     * @return int|null
+     */
+    public function getRailnotificationsUserId(RailnotificationUser $user) :?int;
 
     /**
      * @param int $userId

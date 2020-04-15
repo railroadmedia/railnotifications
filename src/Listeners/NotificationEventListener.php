@@ -90,7 +90,7 @@ class NotificationEventListener
                 $receivingUserId
             );
 
-            foreach ($event->channels as $channel) {
+            foreach (array_keys(config('railnotifications.channels')) as $channel) {
                 $this->notificationBroadcastService->broadcast($notification->getId(), $channel);
             }
         }

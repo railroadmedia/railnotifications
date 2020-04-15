@@ -18,21 +18,14 @@ class NotificationBroadcast extends Event
     public $data;
 
     /**
-     * @var string
-     */
-    public $channels;
-
-    /**
      * NotificationBroadcast constructor.
      *
      * @param $type
      * @param $data
-     * @param $channels
      */
-    public function __construct($type, $data,  $channels)
+    public function __construct($type, $data)
     {
         $this->type = $type;
         $this->data = $data;
-        $this->channels = $channels;
     }
 }

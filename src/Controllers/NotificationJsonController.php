@@ -40,10 +40,8 @@ class NotificationJsonController extends Controller
     }
 
     /**
-     * @param body integer $id - notification id
-     *
-     * @return mixed
-     *
+     * @param Request $request
+     * @return Fractal
      */
     public function index(Request $request)
     {
@@ -106,7 +104,7 @@ class NotificationJsonController extends Controller
 
         throw_if(
             is_null($notification),
-            new NotFoundException('Mark as read failed, notification not found with id: ' . $id)
+            new NotFoundException('Notification not found with id: ' . $id)
         );
 
         return ResponseService::notification($notification);
@@ -164,7 +162,7 @@ class NotificationJsonController extends Controller
 
         throw_if(
             is_null($notification),
-            new NotFoundException('Update failed, notification not found with id: ' . $id)
+            new NotFoundException('Notification not found with id: ' . $id)
         );
 
         return ResponseService::notification($notification);
@@ -185,7 +183,7 @@ class NotificationJsonController extends Controller
 
         throw_if(
             is_null($notification),
-            new NotFoundException('Mark as read failed, notification not found with id: ' . $id)
+            new NotFoundException('Notification not found with id: ' . $id)
         );
 
         return ResponseService::notification($notification);

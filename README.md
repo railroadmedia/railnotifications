@@ -1,6 +1,6 @@
 - [railnotifications](#railnotifications)
   * [Install](#install)
-  * [NotificationBroadcast event - WIP](#notificationbroadcast-event---wip)
+  * [NotificationBroadcast event](#notificationbroadcast-event)
     + [Structure](#structure)
   * [API](#api)
     + [Tables:](#tables-)
@@ -19,9 +19,6 @@
       - [Mark broadcast as succeeded](#mark-broadcast-as-succeeded)
       - [Mark broadcast as failed](#mark-broadcast-as-failed)
       - [Show broadcast](#show-broadcast)
-
-<small><i><a href='http://ecotrust-canada.github.io/markdown-toc/'>Table of contents generated with markdown-toc</a></i></small>
-
 
 
 
@@ -46,8 +43,8 @@ Railnotifications is an easy to use Laravel package for sending email and push n
 > php artisan vendor:publish
 4. Fill the railnotifications.php config file:
 ```php
-
 return array(
+    //the notifications will be broadcast on all the channels defined bellow
     'channels' => [
         'email' => \Railroad\Railnotifications\Channels\EmailChannel::class,
         'fcm' => \Railroad\Railnotifications\Channels\FcmChannel::class
@@ -223,7 +220,7 @@ class RailforumProvider implements RailforumProviderInterface
 }
 
 ```
-8. Create new provider for Forum that implements `UserProviderInterface` from Railnotifications package. The provider should contain the following methods: `getRailnotificationsUserById`, `getUserFirebaseTokens`, `deleteUserFirebaseTokens` and `updateUserFirebaseToken`, like bellow: 
+8. Create new provider for Forum that implements `UserProviderInterface` from Railnotifications package. The provider should contain the following methods: `getRailnotificationsUserById`, `getRailnotificationsUserId`, `getUserFirebaseTokens`, `deleteUserFirebaseTokens` and `updateUserFirebaseToken`, like bellow: 
 
 ```php
 <?php
@@ -291,6 +288,15 @@ class RailnotificationsUserProvider implements UserProviderInterface
         }
 
         return null;
+    }
+
+    /**
+     * @param $user
+     * @return int|null
+     */
+    public function getRailnotificationsUserId($user)
+    : ?int {
+        return $user->getId();
     }
 
     /**
@@ -375,6 +381,7 @@ class RailnotificationsUserProvider implements UserProviderInterface
     }
 }
 
+
 ```
 9. In AppServiceProvider boot method create instance for the providers: 
 ```php
@@ -384,35 +391,30 @@ class RailnotificationsUserProvider implements UserProviderInterface
 
         app()->instance(\Railroad\Railnotifications\Contracts\RailforumProviderInterface::class, app()->make(RailforumProvider::class));
 ```
-## NotificationBroadcast event - WIP
-The package provide an event to create notifications and broadcast them over specified channels. 
+## NotificationBroadcast event
+The package provide an event to create notifications and broadcast them over the channels specified in config file (railnotifications.php - channels). 
 ### Structure
-In order to create a new NotificationBroadcast event you need to specify:
--  notification type: 
--  data - an array with the commentId or postId
--  the channels where the notification should be broadcast
-- 
+In order to create a new NotificationBroadcast event you must to specify:
+-  notification type - available options: `lesson comment reply`, `lesson comment liked`,  `forum post reply`, `forum post in followed thread`,  `forum post liked`
+-  data - an array with the commentId or postId, depends on notification type
+
 E.g:
 ```php
      event(
             new NotificationBroadcast(
                 Notification::TYPE_LESSON_COMMENT_LIKED,
-                ['commentId' => $commentLiked->commentId],
-                $comment['user_id'],
-                ['fcm', 'email']
+                ['commentId' => $commentLiked->commentId]
             )
         );
         
      event(
             new NotificationBroadcast(
                 Notification::TYPE_FORUM_POST_IN_FOLLOWED_THREAD, 
-                ['postId' => $post->id],
-                ['email', 'fcm']
-                )
-            );
+                ['postId' => $post->id]
+             )
+        );
 ```
 
-The notifications can be broadcast over `email` or `fcm` channels.
 
 ## API 
 

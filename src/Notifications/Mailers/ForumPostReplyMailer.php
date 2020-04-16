@@ -3,6 +3,7 @@
 namespace Railroad\Railnotifications\Notifications\Mailers;
 
 use Illuminate\Contracts\Mail\Mailer;
+use Railroad\Railnotifications\Contracts\RailforumProviderInterface;
 use Railroad\Railnotifications\Contracts\UserProviderInterface;
 use Railroad\Railnotifications\Notifications\Emails\AggregatedNotificationsEmail;
 use Throwable;
@@ -19,12 +20,19 @@ class ForumPostReplyMailer implements MailerInterface
      */
     private $userProvider;
 
+    /**
+     * @var RailforumProviderInterface
+     */
+    private $railforumProvider;
+
     public function __construct(
         Mailer $mailer,
-        UserProviderInterface $userProvider
+        UserProviderInterface $userProvider,
+        RailforumProviderInterface $railforumProvider
     ) {
         $this->mailer = $mailer;
         $this->userProvider = $userProvider;
+        $this->railforumProvider = $railforumProvider;
     }
 
     /**
@@ -36,11 +44,11 @@ class ForumPostReplyMailer implements MailerInterface
         $notificationsViews = [];
 
         foreach ($notifications as $notification) {
-            $post = $notification->getData()['post'];
-
-            $thread = $notification->getData()['thread'];
-
             $receivingUser = $notification->getRecipient();
+
+            $post = $this->railforumProvider->getPostById($notification->getData()['postId']);
+
+            $thread = $this->railforumProvider->getThreadById($post['thread_id']);
 
             /**
              * @var $author User
@@ -64,7 +72,7 @@ class ForumPostReplyMailer implements MailerInterface
             if (count($notificationViews) > 1) {
                 $subject = 'You Have ' . count($notificationViews) . ' New Notifications';
             } else {
-                $subject = config('railnotifications.newThreadPostSubject');
+                $subject = config('railnotifications.newThreadPostSubject').$recipientEmail;
             }
 
             $this->mailer->send(

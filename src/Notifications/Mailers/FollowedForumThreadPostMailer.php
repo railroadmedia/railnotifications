@@ -80,7 +80,7 @@ class FollowedForumThreadPostMailer implements MailerInterface
             if (count($notificationViews) > 1) {
                 $subject = 'You Have ' . count($notificationViews) . ' New Notifications';
             } else {
-                $subject = config('railnotifications.newThreadPostSubject');
+                $subject = config('railnotifications.newThreadPostSubject').$recipientEmail;
             }
 
             $this->mailer->send(

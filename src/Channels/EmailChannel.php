@@ -10,6 +10,7 @@ use Railroad\Railnotifications\Entities\NotificationBroadcast;
 use Railroad\Railnotifications\Notifications\FCM\LessonCommentLikeFCM;
 use Railroad\Railnotifications\Notifications\Mailers\FollowedForumThreadPostMailer;
 use Railroad\Railnotifications\Notifications\Mailers\ForumPostReplyMailer;
+use Railroad\Railnotifications\Notifications\Mailers\LessonCommentLikeMailer;
 use Railroad\Railnotifications\Notifications\Mailers\LessonCommentReplyMailer;
 use Railroad\Railnotifications\Services\NotificationBroadcastService;
 
@@ -58,6 +59,9 @@ class EmailChannel implements ChannelInterface
                 break;
             case Notification::TYPE_LESSON_COMMENT_REPLY:
                 $mailer = app()->make(LessonCommentReplyMailer::class);
+                break;
+            case Notification::TYPE_LESSON_COMMENT_LIKED:
+                $mailer = app()->make(LessonCommentLikeMailer::class);
                 break;
             default:
                 throw new Exception(

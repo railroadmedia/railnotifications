@@ -40,7 +40,7 @@ Route::group(
             ->name('notification.unread');
 
         Route::put(
-            '/read-all/{id}',
+            '/read-all',
             \Railroad\Railnotifications\Controllers\NotificationJsonController::class . '@markAllAsRead'
         )
             ->name('notification.read.all');

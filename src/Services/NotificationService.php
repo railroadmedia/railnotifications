@@ -4,6 +4,8 @@ namespace Railroad\Railnotifications\Services;
 
 use Carbon\Carbon;
 use FCM;
+use Railroad\Railnotifications\Contracts\ContentProviderInterface;
+use Railroad\Railnotifications\Contracts\RailforumProviderInterface;
 use Railroad\Railnotifications\Contracts\UserProviderInterface;
 use Railroad\Railnotifications\Entities\Notification;
 use Railroad\Railnotifications\Managers\RailnotificationsEntityManager;
@@ -26,6 +28,16 @@ class NotificationService
     private $userProvider;
 
     /**
+     * @var ContentProviderInterface
+     */
+    private $contentProvider;
+
+    /**
+     * @var RailforumProviderInterface
+     */
+    private $railforumProvider;
+
+    /**
      * NotificationService constructor.
      *
      * @param RailnotificationsEntityManager $entityManager
@@ -33,10 +45,14 @@ class NotificationService
      */
     public function __construct(
         RailnotificationsEntityManager $entityManager,
-        UserProviderInterface $userProvider
+        UserProviderInterface $userProvider,
+        ContentProviderInterface $contentProvider,
+    RailforumProviderInterface $railforumProvider
     ) {
         $this->entityManager = $entityManager;
         $this->userProvider = $userProvider;
+        $this->contentProvider = $contentProvider;
+        $this->railforumProvider = $railforumProvider;
 
         $this->notificationRepository = $this->entityManager->getRepository(Notification::class);
     }
@@ -348,5 +364,37 @@ class NotificationService
         $this->entityManager->flush();
 
         return $allUnreadNotifications;
+    }
+
+    public function getLinkedContent($notificationId)
+    {
+        $notification = $this->get($notificationId);
+        $results['notificationType'] = config('railnotifications.mappingTypes')[$notification->getType()];
+        if ($notification->getType() == Notification::TYPE_LESSON_COMMENT_LIKED ||
+            $notification->getType() == Notification::TYPE_LESSON_COMMENT_REPLY) {
+            $commentId = $notification->getData()['commentId'];
+
+            $comment = $this->contentProvider->getCommentById($commentId);
+
+            $lesson = $this->contentProvider->getContentById($comment['content_id']);
+            $lesson['title'] = $lesson->fetch('fields.title');
+            $lesson['url'] = $lesson['url']. '?goToComment=' . $comment['id'];
+            $results['content'] = $lesson;
+
+            $author = $this->userProvider->getRailnotificationsUserById($comment['user_id']);
+            $results['author'] = $author;
+        }else         if ($notification->getType() == Notification::TYPE_FORUM_POST_IN_FOLLOWED_THREAD ||
+            $notification->getType() == Notification::TYPE_FORUM_POST_REPLY) {
+
+            $post = $this->railforumProvider->getPostById($notification->getData()['postId']);
+
+            $thread = $this->railforumProvider->getThreadById($post['thread_id']);
+$thread['url'] =  url()->route('forums.post.jump-to', $post['id']);
+            $author = $this->userProvider->getRailnotificationsUserById($post['author_id']);
+
+            $results['content'] = $thread;
+            $results['author'] = $author;
+        }
+        return $results;
     }
 }

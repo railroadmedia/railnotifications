@@ -111,18 +111,16 @@ class NotificationJsonController extends Controller
     }
 
     /**
-     * @param int $id
      * @param Request $request
      * @return Fractal
      * @throws ORMException
      * @throws OptimisticLockException
-     *
-     * @param integer $id - recipient user id
      */
-    public function markAllAsRead(int $id, Request $request)
+    public function markAllAsRead( Request $request)
     {
+        $recipientId = $request->get('user_id', current_user()->getId());
         $notifications = $this->notificationService->markAllRead(
-            $id,
+            $recipientId,
             $request->get('read_on_date_time')
         );
 

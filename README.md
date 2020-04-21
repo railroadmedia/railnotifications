@@ -779,16 +779,16 @@ $.ajax({
 #### Read all notifications for a user
 
 ##### HTTP Request
-    `PUT railnotifications/read-all/{userId}`
+    `PUT railnotifications/read-all`
 ##### Mobile Request
-    `PUT api/railnotifications/read-all/{userId}`
+    `PUT api/railnotifications/read-all`
 
 ##### Request Parameters
 
 
 |Type|Key|Required|Notes|
 |----|---|--------|-----|
-|query|userId|yes|All the notifications for specified user id will be marked as read|
+|body|userId|no|All the notifications for specified user id or current user will be marked as read|
 |body|read_on_date_time|no|The date that it's set on the notification read on field. If not exists current date it's set.|
 
 

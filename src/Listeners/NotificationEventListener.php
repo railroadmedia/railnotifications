@@ -72,12 +72,14 @@ class NotificationEventListener
         switch ($event->type) {
             case Notification::TYPE_FORUM_POST_IN_FOLLOWED_THREAD:
                 $post = $this->railforumProvider->getPostById($event->data['postId']);
-                $receivingUserIds = $this->railforumProvider->getThreadFollowerIds($post->thread_id);
+                $threadFollowers = $this->railforumProvider->getThreadFollowerIds($post->thread_id);
+                $receivingUserIds =
+                    array_diff(($threadFollowers)?$threadFollowers->toArray():[], [$post['author_id']]);
                 break;
             case Notification::TYPE_FORUM_POST_REPLY:
                 $post = $this->railforumProvider->getPostById($event->data['postId']);
                 $thread = $this->railforumProvider->getThreadById($post->thread_id);
-                $receivingUserIds = [$thread['author_id']];
+                $receivingUserIds = ($thread['author_id'] != $post['author_id']) ? [$thread['author_id']] : [];
                 break;
             case Notification::TYPE_LESSON_COMMENT_REPLY:
                 $comment = $this->contentProvider->getCommentById($event->data['commentId']);
@@ -104,11 +106,11 @@ class NotificationEventListener
             $broadcastChannels = array_keys(config('railnotifications.channels'));
             //check if are instant notifications
             if (!empty($user->getNotificationsSummaryFrequencyMinutes())) {
-                $broadcastChannels = 'fcm';
+                $broadcastChannels = ['fcm'];
             }
 
             $shouldReceiveNotification = $this->shouldReceiveNotification($user, $event->type);
-            if($shouldReceiveNotification) {
+            if ($shouldReceiveNotification) {
                 foreach ($broadcastChannels as $channel) {
                     $this->notificationBroadcastService->broadcast($notification->getId(), $channel);
                 }

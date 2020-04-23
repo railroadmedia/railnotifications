@@ -13,7 +13,8 @@ use Gedmo\Timestampable\Traits\TimestampableEntity;
  *     indexes={
  *         @ORM\Index(name="notifications_type_index", columns={"type"}),
  *         @ORM\Index(name="notifications_recipient_id_index", columns={"recipient_id"}),
- *         @ORM\Index(name="notifications_subject_id_index", columns={"subject_id"})
+ *         @ORM\Index(name="notifications_subject_id_index", columns={"subject_id"}),
+ *         @ORM\Index(name="notifications_brand_index", columns={"brand"}),
  *     }
  * )
  *
@@ -64,9 +65,16 @@ class Notification
     protected $readOn;
 
     /**
+     * @ORM\Column(type="string")
+     * @var string
+     */
+    protected $brand;
+
+    /**
      * @return int|null
      */
-    public function getId(): ?int
+    public function getId()
+    : ?int
     {
         return $this->id;
     }
@@ -74,7 +82,8 @@ class Notification
     /**
      * @return string
      */
-    public function getType(): string
+    public function getType()
+    : string
     {
         return $this->type;
     }
@@ -106,7 +115,8 @@ class Notification
     /**
      * @return User|null
      */
-    public function getSubject(): ?User
+    public function getSubject()
+    : ?User
     {
         return $this->subject;
     }
@@ -138,7 +148,8 @@ class Notification
     /**
      * @return \DateTimeInterface|null
      */
-    public function getReadOn(): ?\DateTimeInterface
+    public function getReadOn()
+    : ?\DateTimeInterface
     {
         return $this->readOn;
     }
@@ -149,6 +160,23 @@ class Notification
     public function setReadOn(?\DateTimeInterface $readOn)
     {
         $this->readOn = $readOn;
+    }
+
+    /**
+     * @return string
+     */
+    public function getBrand()
+    : string
+    {
+        return $this->brand;
+    }
+
+    /**
+     * @param string $brand
+     */
+    public function setBrand(string $brand)
+    {
+        $this->brand = $brand;
     }
 
 }

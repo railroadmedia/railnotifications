@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-class CreateNotificationBroadcastsTable extends Migration
+class CreateNotificationSettingsTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,18 +13,17 @@ class CreateNotificationBroadcastsTable extends Migration
      */
     public function up()
     {
+
         Schema::connection(config('railnotifications.database_connection_name'))->create(
-            'notification_broadcasts',
+            'notification_settings',
             function (Blueprint $table) {
                 $table->increments('id');
-                $table->string('channel', 1500);
-                $table->string('type');
-                $table->string('status');
-                $table->text('report')->nullable();
-                $table->integer('notification_id');
-                $table->string('aggregation_group_id')->nullable();
-                $table->dateTime('broadcast_on')->nullable();
+                $table->integer('user_id')->index();
+                $table->string('setting_name')->index();
+                $table->string('setting_value')->index();
                 $table->timestamps();
+
+                $table->index(['user_id', 'setting_name'], 'notification_settings_usn');
             }
         );
     }
@@ -36,6 +35,6 @@ class CreateNotificationBroadcastsTable extends Migration
      */
     public function down()
     {
-        Schema::connection(config('railnotifications.database_connection_name'))->dropIfExists('notification_broadcasts');
+        Schema::connection(config('railnotifications.database_connection_name'))->dropIfExists('notification_settings');
     }
 }

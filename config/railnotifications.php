@@ -7,6 +7,9 @@ return array(
         'fcm' => \Railroad\Railnotifications\Channels\FcmChannel::class
     ],
 
+    // brand
+    'brand' => 'brand',
+
     // cache
     'redis_host' => 'redis',
     'redis_port' => 6379,
@@ -21,6 +24,7 @@ return array(
     'database_driver' => 'pdo_mysql',
     'database_in_memory' => false,
     'enable_query_log' => false,
+    'database_connection_name' => 'mysql',
 
     // entities
     'entities' => [

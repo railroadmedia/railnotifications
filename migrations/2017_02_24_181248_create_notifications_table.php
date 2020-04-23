@@ -13,7 +13,7 @@ class CreateNotificationsTable extends Migration
      */
     public function up()
     {
-        Schema::create(
+        Schema::connection(config('railnotifications.database_connection_name'))->create(
             'notifications',
             function (Blueprint $table) {
                 $table->increments('id');
@@ -35,6 +35,6 @@ class CreateNotificationsTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('notifications');
+        Schema::connection(config('railnotifications.database_connection_name'))->dropIfExists('notifications');
     }
 }

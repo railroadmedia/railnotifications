@@ -93,6 +93,31 @@ Route::group(
             \Railroad\Railnotifications\Controllers\BroadcastNotificationJsonController::class . '@showNotificationBroadcast'
         )
             ->name('notification.broadcast.show');
+
+        //User Notification Settings
+        Route::get(
+            '/user-notification-settings',
+            \Railroad\Railnotifications\Controllers\UserNotificationSettingsJsonController::class . '@index'
+        )
+            ->name('user-notification-settings.index');
+
+        Route::put(
+            '/user-notification-settings',
+            \Railroad\Railnotifications\Controllers\UserNotificationSettingsJsonController::class . '@store'
+        )
+            ->name('user-notification-settings.store');
+
+        Route::patch(
+            '/user-notification-settings',
+            \Railroad\Railnotifications\Controllers\UserNotificationSettingsJsonController::class . '@update'
+        )
+            ->name('user-notification-settings.update');
+
+        Route::delete(
+            '/user-notification-settings',
+            \Railroad\Railnotifications\Controllers\UserNotificationSettingsJsonController::class . '@delete'
+        )
+            ->name('user-notification-settings.delete');
     }
 );
 

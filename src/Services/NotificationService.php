@@ -73,6 +73,8 @@ class NotificationService
 
         $notification->setData($data);
 
+        $notification->setBrand(config('railnotifications.brand'));
+
         $user = $this->userProvider->getRailnotificationsUserById($recipientId);
 
         $notification->setRecipient($user);
@@ -101,9 +103,11 @@ class NotificationService
                 ->where('n.recipient IN (:recipientIdS)')
                 ->andWhere('n.type = :type')
                 ->andWhere('n.data = :data')
+                ->andWhere('n.brand = :brand')
                 ->setParameter('recipientIdS', $recipientId)
                 ->setParameter('type', $type)
                 ->setParameter('data', $data)
+                ->setParameter('brand', config('railnotifications.brand'))
                 ->getQuery()
                 ->getOneOrNullResult();
 
@@ -161,6 +165,8 @@ class NotificationService
             ->where(
                 'n.recipient IN (:recipientIdS)'
             )
+            ->andWhere('n.brand = :brand')
+            ->setParameter('brand', config('railnotifications.brand'))
             ->setParameter('recipientIdS', $ids)
             ->getQuery()
             ->getResult();
@@ -180,6 +186,8 @@ class NotificationService
             ->where(
                 'n.recipient = :recipientId'
             )
+            ->andWhere('n.brand = :brand')
+            ->setParameter('brand', config('railnotifications.brand'))
             ->setParameter('recipientId', $recipientId)
             ->setMaxResults($amount)
             ->setFirstResult($skip)
@@ -205,6 +213,8 @@ class NotificationService
                 $qb->expr()
                     ->isNull('n.readOn')
             )
+            ->andWhere('n.brand = :brand')
+            ->setParameter('brand', config('railnotifications.brand'))
             ->setParameter('recipientId', $recipientId)
             ->getQuery()
             ->getSingleScalarResult();
@@ -228,6 +238,8 @@ class NotificationService
                 $qb->expr()
                     ->isNotNull('n.readOn')
             )
+            ->andWhere('n.brand = :brand')
+            ->setParameter('brand', config('railnotifications.brand'))
             ->setParameter('recipientId', $recipientId)
             ->getQuery()
             ->getSingleScalarResult();
@@ -251,7 +263,9 @@ class NotificationService
                     $qb->expr()
                         ->isNull('n.readOn')
                 )
-                ->setParameter('recipientId', $recipientId);
+                ->setParameter('recipientId', $recipientId)
+                ->andWhere('n.brand = :brand')
+                ->setParameter('brand', config('railnotifications.brand'));
 
         if ($createdAfterDateTimeString) {
             $result =
@@ -272,7 +286,10 @@ class NotificationService
             $this->notificationRepository->createQueryBuilder('n')
                 ->select('n.recipient as id');
 
-        $result = $qb->where('n.readOn IS NULL');
+        $result =
+            $qb->where('n.readOn IS NULL')
+                ->andWhere('n.brand = :brand')
+                ->setParameter('brand', config('railnotifications.brand'));
 
         if ($createdAfterDateTimeString) {
             $result =
@@ -350,6 +367,8 @@ class NotificationService
                     $qb->expr()
                         ->isNull('n.readOn')
                 )
+                ->andWhere('n.brand = :brand')
+                ->setParameter('brand', config('railnotifications.brand'))
                 ->setParameter('recipientId', $recipientId)
                 ->getQuery()
                 ->getResult();
@@ -382,6 +401,7 @@ class NotificationService
             $commentId = $notification->getData()['commentId'];
 
             $comment = $this->contentProvider->getCommentById($commentId);
+            $commentText = $comment['comment'];
 
             $author = $this->userProvider->getRailnotificationsUserById($comment['user_id']);
 
@@ -393,6 +413,7 @@ class NotificationService
             $results['content'] = [
                 'title' => $lesson->fetch('fields.title'),
                 'url' => $lesson['url'] . '?goToComment=' . $comment['id'],
+                'comment' => $commentText
             ];
 
             $results['author'] = $author;

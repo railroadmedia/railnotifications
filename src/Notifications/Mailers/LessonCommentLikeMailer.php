@@ -6,6 +6,7 @@ use Illuminate\Contracts\Mail\Mailer;
 use Railroad\Railnotifications\Contracts\ContentProviderInterface;
 use Railroad\Railnotifications\Contracts\UserProviderInterface;
 use Railroad\Railnotifications\Notifications\Emails\AggregatedNotificationsEmail;
+use Railroad\Railnotifications\Services\NotificationService;
 use Throwable;
 
 class LessonCommentLikeMailer implements MailerInterface
@@ -25,14 +26,20 @@ class LessonCommentLikeMailer implements MailerInterface
      */
     private $contentProvider;
 
+    /**
+     * @var NotificationService
+     */
+    private $notificationService;
+
     public function __construct(
         Mailer $mailer,
         UserProviderInterface $userProvider,
-        ContentProviderInterface $contentProvider
+        ContentProviderInterface $contentProvider, NotificationService $notificationService
     ) {
         $this->mailer = $mailer;
         $this->userProvider = $userProvider;
         $this->contentProvider = $contentProvider;
+        $this->notificationService = $notificationService;
     }
 
     /**
@@ -44,24 +51,19 @@ class LessonCommentLikeMailer implements MailerInterface
         $notificationsViews = [];
 
         foreach ($notifications as $notification) {
-            $commentId = $notification->getData()['commentId'];
 
-            $comment = $this->contentProvider->getCommentById($commentId);
-
-            $lesson = $this->contentProvider->getContentById($comment['content_id']);
-
-            $author = $this->userProvider->getRailnotificationsUserById($comment['user_id']);
+            $linkedContent = $this->notificationService->getLinkedContent($notification->getId());
 
             $receivingUser = $notification->getRecipient();
 
             $notificationsViews[$receivingUser->getEmail()][] = view(
                 'railnotifications::lessons.lesson-comment-liked-row',
                 [
-                    'title' => $lesson->fetch('fields.title'),
-                    'content' => $comment['comment'],
-                    'displayName' => $author->getDisplayName(),
-                    'avatarUrl' => $author->getAvatar(),
-                    'contentUrl' => $lesson['url'] . '?goToComment=' . $comment['id'],
+                    'title' => $linkedContent['content']['title'],
+                    'content' => $linkedContent['content']['comment'],
+                    'displayName' => $linkedContent['author']->getDisplayName(),
+                    'avatarUrl' => $linkedContent['author']->getAvatar(),
+                    'contentUrl' => $linkedContent['content']['url'],
                 ]
             )->render();
         }

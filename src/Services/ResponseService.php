@@ -7,6 +7,7 @@ use League\Fractal\Serializer\ArraySerializer;
 use Railroad\Doctrine\Services\FractalResponseService;
 use Railroad\Railnotifications\Transformers\NotificationsBroadcastTransformer;
 use Railroad\Railnotifications\Transformers\NotificationsTransformer;
+use Railroad\Railnotifications\Transformers\UserNotificationsSettingsTransformer;
 use Spatie\Fractal\Fractal;
 
 class ResponseService extends FractalResponseService
@@ -47,6 +48,27 @@ class ResponseService extends FractalResponseService
             $entityOrEntities,
             '',
             new NotificationsBroadcastTransformer(),
+            new ArraySerializer(),
+            $queryBuilder
+        )
+            ->parseIncludes($includes);
+    }
+
+    /**
+     * @param $entityOrEntities
+     * @param QueryBuilder|null $queryBuilder
+     * @param array $includes
+     * @return Fractal
+     */
+    public static function userNotificationSettings(
+        $entityOrEntities,
+        QueryBuilder $queryBuilder = null,
+        array $includes = []
+    ) {
+        return self::create(
+            $entityOrEntities,
+            '',
+            new UserNotificationsSettingsTransformer(),
             new ArraySerializer(),
             $queryBuilder
         )

@@ -13,7 +13,7 @@ class AddMainIndexesTable extends Migration
      */
     public function up()
     {
-        Schema::table(
+        Schema::connection(config('railnotifications.database_connection_name'))->table(
             'notifications',
             function (Blueprint $table) {
                 $table->index('subject_id');
@@ -26,7 +26,7 @@ class AddMainIndexesTable extends Migration
             }
         );
 
-        Schema::table(
+        Schema::connection(config('railnotifications.database_connection_name'))->table(
             'notification_broadcasts',
             function (Blueprint $table) {
                 $table->index('channel');

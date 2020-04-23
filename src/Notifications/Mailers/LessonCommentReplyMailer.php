@@ -3,9 +3,8 @@
 namespace Railroad\Railnotifications\Notifications\Mailers;
 
 use Illuminate\Contracts\Mail\Mailer;
-use Railroad\Railnotifications\Contracts\ContentProviderInterface;
-use Railroad\Railnotifications\Contracts\UserProviderInterface;
 use Railroad\Railnotifications\Notifications\Emails\AggregatedNotificationsEmail;
+use Railroad\Railnotifications\Services\NotificationService;
 use Throwable;
 
 class LessonCommentReplyMailer implements MailerInterface
@@ -16,23 +15,16 @@ class LessonCommentReplyMailer implements MailerInterface
     private $mailer;
 
     /**
-     * @var UserProviderInterface
+     * @var NotificationService
      */
-    private $userProvider;
-
-    /**
-     * @var ContentProviderInterface
-     */
-    private $contentProvider;
+    private $notificationService;
 
     public function __construct(
         Mailer $mailer,
-        UserProviderInterface $userProvider,
-        ContentProviderInterface $contentProvider
+        NotificationService $notificationService
     ) {
         $this->mailer = $mailer;
-        $this->userProvider = $userProvider;
-        $this->contentProvider = $contentProvider;
+        $this->notificationService = $notificationService;
     }
 
     /**
@@ -44,33 +36,28 @@ class LessonCommentReplyMailer implements MailerInterface
         $notificationsViews = [];
 
         foreach ($notifications as $notification) {
-            $commentId = $notification->getData()['commentId'];
 
-            $comment = $this->contentProvider->getCommentById($commentId);
-
-            $lesson = $this->contentProvider->getContentById($comment['content_id']);
-
-            $author = $this->userProvider->getRailnotificationsUserById($comment['user_id']);
+            $linkedContent = $this->notificationService->getLinkedContent($notification->getId());
 
             $receivingUser = $notification->getRecipient();
 
             $notificationsViews[$receivingUser->getEmail()][] = view(
                 'railnotifications::lessons.lesson-comment-reply-posted-row',
                 [
-                    'title' => $lesson->fetch('fields.title'),
-                    'content' => $comment['comment'],
-                    'displayName' => $author->getDisplayName(),
-                    'avatarUrl' => $author->getAvatar(),
-                    'contentUrl' => $lesson['url'] . '?goToComment=' . $comment['id'],
+                    'title' => $linkedContent['content']['title'],
+                    'content' => $linkedContent['content']['comment'],
+                    'displayName' => $linkedContent['author']->getDisplayName(),
+                    'avatarUrl' => $linkedContent['author']->getAvatar(),
+                    'contentUrl' => $linkedContent['content']['url'],
                 ]
             )->render();
         }
 
         foreach ($notificationsViews as $recipientEmail => $notificationViews) {
             if (count($notificationViews) > 1) {
-                $subject = 'You Have ' . count($notificationViews) . ' New Notifications '.$recipientEmail;
+                $subject = 'You Have ' . count($notificationViews) . ' New Notifications ' . $recipientEmail;
             } else {
-                $subject = config('railnotifications.newLessonCommentReplySubject'). $recipientEmail;
+                $subject = config('railnotifications.newLessonCommentReplySubject') . $recipientEmail;
             }
 
             $this->mailer->send(

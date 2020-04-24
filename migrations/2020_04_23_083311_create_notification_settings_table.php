@@ -20,7 +20,7 @@ class CreateNotificationSettingsTable extends Migration
                 $table->increments('id');
                 $table->integer('user_id')->index();
                 $table->string('setting_name')->index();
-                $table->string('setting_value')->index();
+                $table->boolean('setting_value')->default(true);
                 $table->timestamps();
 
                 $table->index(['user_id', 'setting_name'], 'notification_settings_usn');

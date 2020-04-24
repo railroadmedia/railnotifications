@@ -118,7 +118,7 @@ class NotificationJsonController extends Controller
      */
     public function markAllAsRead( Request $request)
     {
-        $recipientId = $request->get('user_id', current_user()->getId());
+        $recipientId = $request->get('user_id', auth()->user());
         $notifications = $this->notificationService->markAllRead(
             $recipientId,
             $request->get('read_on_date_time')

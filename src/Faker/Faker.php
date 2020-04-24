@@ -19,6 +19,7 @@ class Faker extends Generator
                 'subject_id' => null,
                 'recipient_id' => $this->randomNumber(),
                 'read_on' => null,
+                'brand' => config('railnotifications.brand'),
                 'created_at' => Carbon::now()
                     ->toDateTimeString(),
             ],
@@ -36,6 +37,20 @@ class Faker extends Generator
                 'report' => null,
                 'notification_id' => $this->randomNumber(),
                 'broadcast_on' => null,
+                'created_at' => Carbon::now()
+                    ->toDateTimeString(),
+            ],
+            $override
+        );
+    }
+
+    public function userNotificationSetting(array $override = [])
+    {
+        return array_merge(
+            [
+                'setting_name' => $this->text,
+                'setting_value' => $this->boolean,
+                'user_id' => $this->randomNumber(),
                 'created_at' => Carbon::now()
                     ->toDateTimeString(),
             ],

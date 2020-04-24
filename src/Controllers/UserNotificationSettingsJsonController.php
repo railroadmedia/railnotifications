@@ -7,6 +7,7 @@ use Doctrine\ORM\ORMException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Railroad\Railnotifications\Requests\UserNotificationSettingsDeleteRequest;
 use Railroad\Railnotifications\Requests\UserNotificationSettingsRequest;
 use Railroad\Railnotifications\Services\NotificationSettingsService;
 use Railroad\Railnotifications\Services\ResponseService;
@@ -45,7 +46,8 @@ class UserNotificationSettingsJsonController extends Controller
 
         $userNotificationsSettings = $this->notificationSettingsService->getUserNotificationSettings($userId);
 
-        return ResponseService::userNotificationSettings($userNotificationsSettings);
+        return ResponseService::empty(200)
+            ->setData(['data' => $userNotificationsSettings]);
     }
 
     /**
@@ -88,7 +90,7 @@ class UserNotificationSettingsJsonController extends Controller
      * @throws ORMException
      * @throws OptimisticLockException
      */
-    public function delete(Request $request)
+    public function delete(UserNotificationSettingsDeleteRequest $request)
     {
         $this->notificationSettingsService->destroy(
             $request->get('user_id', auth()->id()),

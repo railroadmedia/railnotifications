@@ -33,17 +33,6 @@ class User implements UserEntityInterface
      */
     private $avatar;
 
-    private $notifyOnLessonCommentReply;
-
-    private $notifyWeeklyUpdate;
-
-    private $notifyOnForumPostLike;
-
-    private $notifyOnForumFollowedThreadReply;
-
-    private $notifyOnForumPostReply;
-
-    private $notifyOnLessonCommentLike;
 
     private $notificationsSummaryFrequencyMinutes;
 
@@ -54,12 +43,6 @@ class User implements UserEntityInterface
      * @param $email
      * @param $displayName
      * @param $avatar
-     * @param $notifyOnLessonCommentReply
-     * @param $notifyWeeklyUpdate
-     * @param $notifyOnForumPostLike
-     * @param $notifyOnForumFollowedThreadReply
-     * @param $notifyOnForumPostReply
-     * @param $notifyOnLessonCommentLike
      * @param $notificationsSummaryFrequencyMinutes
      */
     public function __construct(
@@ -67,24 +50,12 @@ class User implements UserEntityInterface
         $email,
         $displayName,
         $avatar,
-        $notifyOnLessonCommentReply,
-        $notifyWeeklyUpdate,
-        $notifyOnForumPostLike,
-        $notifyOnForumFollowedThreadReply,
-        $notifyOnForumPostReply,
-        $notifyOnLessonCommentLike,
         $notificationsSummaryFrequencyMinutes
     ) {
         $this->id = $id;
         $this->email = $email;
         $this->displayName = $displayName;
         $this->avatar = $avatar;
-        $this->notifyOnLessonCommentReply = $notifyOnLessonCommentReply;
-        $this->notifyWeeklyUpdate = $notifyWeeklyUpdate;
-        $this->notifyOnForumPostLike = $notifyOnForumPostLike;
-        $this->notifyOnForumFollowedThreadReply = $notifyOnForumFollowedThreadReply;
-        $this->notifyOnForumPostReply = $notifyOnForumPostReply;
-        $this->notifyOnLessonCommentLike = $notifyOnLessonCommentLike;
         $this->notificationsSummaryFrequencyMinutes = $notificationsSummaryFrequencyMinutes;
     }
 
@@ -156,101 +127,6 @@ class User implements UserEntityInterface
         $this->avatar = $avatar;
     }
 
-    /**
-     * @return bool
-     */
-    public function getNotifyOnLessonCommentReply()
-    {
-        return $this->notifyOnLessonCommentReply;
-    }
-
-    /**
-     * @param bool $notifyOnLessonCommentReply
-     */
-    public function setNotifyOnLessonCommentReply($notifyOnLessonCommentReply)
-    {
-        $this->notifyOnLessonCommentReply = $notifyOnLessonCommentReply;
-    }
-
-    /**
-     * @return bool
-     */
-    public function getNotifyWeeklyUpdate()
-    {
-        return $this->notifyWeeklyUpdate;
-    }
-
-    /**
-     * @param bool $notifyWeeklyUpdate
-     */
-    public function setNotifyWeeklyUpdate($notifyWeeklyUpdate)
-    {
-        $this->notifyWeeklyUpdate = $notifyWeeklyUpdate;
-    }
-
-    /**
-     * @return bool
-     */
-    public function getNotifyOnForumPostLike()
-    {
-        return $this->notifyOnForumPostLike;
-    }
-
-    /**
-     * @param bool $notifyOnForumPostLike
-     */
-    public function setNotifyOnForumPostLike($notifyOnForumPostLike)
-    {
-        $this->notifyOnForumPostLike = $notifyOnForumPostLike;
-    }
-
-    /**
-     * @return bool
-     */
-    public function getNotifyOnForumFollowedThreadReply()
-    {
-        return $this->notifyOnForumFollowedThreadReply;
-    }
-
-    /**
-     * @param bool $notifyOnForumFollowedThreadReply
-     */
-    public function setNotifyOnForumFollowedThreadReply($notifyOnForumFollowedThreadReply)
-    {
-        $this->notifyOnForumFollowedThreadReply = $notifyOnForumFollowedThreadReply;
-    }
-
-    /**
-     * @return bool
-     */
-    public function getNotifyOnForumPostReply()
-    {
-        return $this->notifyOnForumPostReply;
-    }
-
-    /**
-     * @param bool $notifyOnForumPostReply
-     */
-    public function setNotifyOnForumPostReply($notifyOnForumPostReply)
-    {
-        $this->notifyOnForumPostReply = $notifyOnForumPostReply;
-    }
-
-    /**
-     * @return bool
-     */
-    public function getNotifyOnLessonCommentLike()
-    {
-        return $this->notifyOnLessonCommentLike;
-    }
-
-    /**
-     * @param bool $notifyOnLessonCommentLike
-     */
-    public function setNotifyOnLessonCommentLike($notifyOnLessonCommentLike)
-    {
-        $this->notifyOnLessonCommentLike = $notifyOnLessonCommentLike;
-    }
 
     /**
      * @return int|null

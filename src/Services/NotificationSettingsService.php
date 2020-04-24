@@ -87,15 +87,13 @@ class NotificationSettingsService
             $qb->select('ns')
                 ->where('ns.user IN (:userIds)')
                 ->andWhere('ns.settingName = :settingName')
-                ->andWhere('ns.settingValue = :settingValue')
                 ->setParameter('userIds', $userId)
                 ->setParameter('settingName', $settingName)
-                ->setParameter('settingValue', $settingValue)
                 ->getQuery()
                 ->getOneOrNullResult();
 
         if (!empty($existingNotificationSetting)) {
-            $existingNotificationSetting->setSettingName($settingName);
+
             $existingNotificationSetting->setSettingValue($settingValue);
 
             $this->entityManager->persist($existingNotificationSetting);
@@ -139,6 +137,7 @@ class NotificationSettingsService
      * @param int $userId
      * @param string|null $settingName
      * @return mixed
+     * @throws \Doctrine\ORM\NonUniqueResultException
      */
     public function getUserNotificationSettings(int $userId, ?string $settingName = null)
     {
@@ -151,10 +150,24 @@ class NotificationSettingsService
         if ($settingName) {
             $qb->andWhere('ns.settingName = :settingName')
                 ->setParameter('settingName', $settingName);
+
+            $result =
+                $qb->getQuery()
+                    ->getOneOrNullResult();
+
+            return $result->getSettingValue();
         }
 
-        return $qb->getQuery()
-            ->getResult();
+        $settings =
+            $qb->getQuery()
+                ->getResult();
+        $results = [];
+
+        foreach ($settings as $result) {
+            $results[$result->getSettingName()] = $result->getSettingValue();
+        }
+
+        return $results;
     }
 
 }

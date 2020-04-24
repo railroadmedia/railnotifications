@@ -3,18 +3,13 @@
 namespace Railroad\Railnotifications\Requests;
 
 /**
- * Class BroadcastNotificationRequest
+ * Class UserNotificationSettingsDeleteRequest
  *
  * @package Railroad\Railnotifications\Requests
- *
- * @bodyParam notification_id required  Notification id. Example: 1
- * @bodyParam channel  Example:
  */
-class BroadcastNotificationRequest extends FormRequest
+class UserNotificationSettingsDeleteRequest extends FormRequest
 {
-    /** * @bodyParam type required  Notification type. Example: Permission 1
- * @bodyParam data required Example:
- * @bodyParam recipient_id required
+    /**
      * Determine if the user is authorized to make this request.
      *
      * @return bool
@@ -32,7 +27,7 @@ class BroadcastNotificationRequest extends FormRequest
     public static function rules()
     {
         return [
-            'notification_id' => 'required',
+            'setting_name' => 'required',
         ];
     }
 }

@@ -14,7 +14,6 @@ use Gedmo\Timestampable\Traits\TimestampableEntity;
  *         @ORM\Index(name="notification_settings_usn", columns={"user_id","setting_name"}),
  *         @ORM\Index(name="notification_settings_user_id_index", columns={"user_id"}),
  *         @ORM\Index(name="notifications_settings_setting_name_index", columns={"setting_name"}),
- *         @ORM\Index(name="notifications_settings_value_index", columns={"setting_value"})
  *     }
  * )
  *
@@ -36,8 +35,8 @@ class NotificationSetting
     protected $settingName;
 
     /**
-     * @ORM\Column(type="string", name="setting_value")
-     * @var string
+     * @ORM\Column(type="boolean", name="setting_value")
+     * @var boolean
      */
     protected $settingValue;
 
@@ -72,17 +71,17 @@ class NotificationSetting
     }
 
     /**
-     * @return string
+     * @return bool
      */
-    public function getSettingValue(): string
+    public function getSettingValue()
     {
         return $this->settingValue;
     }
 
     /**
-     * @param string $settingValue
+     * @param bool $settingValue
      */
-    public function setSettingValue(string $settingValue)
+    public function setSettingValue(bool $settingValue)
     {
         $this->settingValue = $settingValue;
     }

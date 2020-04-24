@@ -16,10 +16,14 @@ use Railroad\Doctrine\Types\Carbon\CarbonDateTimeTimezoneType;
 use Railroad\Doctrine\Types\Carbon\CarbonDateTimeType;
 use Railroad\Doctrine\Types\Carbon\CarbonDateType;
 use Railroad\Doctrine\Types\Carbon\CarbonTimeType;
+use Railroad\Railnotifications\Contracts\ContentProviderInterface;
+use Railroad\Railnotifications\Contracts\RailforumProviderInterface;
 use Railroad\Railnotifications\Contracts\UserProviderInterface;
 use Railroad\Railnotifications\Faker\Factory;
 use Railroad\Railnotifications\Managers\RailnotificationsEntityManager;
 use Railroad\Railnotifications\NotificationsServiceProvider;
+use Railroad\Railnotifications\Tests\Fixtures\ContentProvider;
+use Railroad\Railnotifications\Tests\Fixtures\ForumProvider;
 use Railroad\Railnotifications\Tests\Fixtures\UserProvider;
 use Railroad\Railnotifications\Entities\User;
 
@@ -69,6 +73,12 @@ class TestCase extends BaseTestCase
         $this->app->instance(DoctrineArrayHydratorUserProviderInterface::class, $userProvider);
         $this->app->instance(DoctrineUserProviderInterface::class, $userProvider);
 
+        $contentProvider = new ContentProvider();
+        $this->app->instance(ContentProviderInterface::class, $contentProvider);
+
+        $railforumProvider = new ForumProvider();
+        $this->app->instance(RailforumProviderInterface::class, $railforumProvider);
+
         $this->artisan('migrate', []);
 
         $this->faker = Factory::create();
@@ -116,6 +126,8 @@ class TestCase extends BaseTestCase
         $app['config']->set('railnotifications.database_in_memory', true);
         $app['config']->set('railnotifications.development_mode', true);
 
+        $app['config']->set('railnotifications.brand', $defaultConfig['brand']);
+
         $app->register(NotificationsServiceProvider::class);
 
         $app['config']->set('doctrine.redis_host', $defaultConfig['redis_host']);
@@ -156,6 +168,26 @@ class TestCase extends BaseTestCase
                 return $mock;
             }
         );
+
+        $app->bind(
+            'ContentProviderInterface',
+            function () {
+                $mock =
+                    $this->getMockBuilder('ContentProviderInterface')
+                        ->setMethods(['getContentById'])
+                        ->getMock();
+
+                $mock->method('getContentById')
+                    ->willReturn(
+                        [
+                            'id' => 1,
+                            'email' => $this->faker->email,
+                        ]
+                    );
+                return $mock;
+            }
+        );
+
 
         //apidoc
         $apiDocConfig = require(__DIR__ . '/../config/apidoc.php');
@@ -326,7 +358,7 @@ dd(Auth::shouldReceive('id'));
 
 
     /**
-     * Helper method to seed a test notification
+     * Helper method to seed a test notification broadcast
      *
      * @return array
      */
@@ -341,5 +373,23 @@ dd(Auth::shouldReceive('id'));
         $notificationBroadcast['id'] = $notificationBroadcastId;
 
         return $notificationBroadcast;
+    }
+
+    /**
+     * Helper method to seed a test user notification setting
+     *
+     * @return array
+     */
+    public function fakeUserNotificationSetting($notificationSettingStub = []): array
+    {
+        $userNotificationSetting = $this->faker->userNotificationSetting($notificationSettingStub);
+
+        $notificationSettingId =
+            $this->databaseManager->table('notification_settings')
+                ->insertGetId($userNotificationSetting);
+
+        $userNotificationSetting['id'] = $notificationSettingId;
+
+        return $userNotificationSetting;
     }
 }

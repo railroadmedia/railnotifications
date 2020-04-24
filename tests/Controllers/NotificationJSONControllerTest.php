@@ -406,7 +406,7 @@ class NotificationJSONControllerTest extends TestCase
 
         $response = $this->call(
             'PUT',
-            'railnotifications/read-all/' . $recipient['id']
+            'railnotifications/read-all',[ 'user_id' => $recipient['id']]
         );
 
         $this->assertEquals(200, $response->getStatusCode());
@@ -427,7 +427,9 @@ class NotificationJSONControllerTest extends TestCase
     {
         $response = $this->call(
             'PUT',
-            'railnotifications/read-all/' . rand()
+            'railnotifications/read-all/' ,[
+                'user_id' => rand()
+            ]
         );
 
         $this->assertEquals(200, $response->getStatusCode());

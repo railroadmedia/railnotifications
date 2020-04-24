@@ -19,7 +19,7 @@ class AddBrandToNotificationsTable extends Migration
                  * @var $table \Illuminate\Database\Schema\Blueprint
                  */
 
-                $table->string('brand', 64)->after('read_on')->index();
+                $table->string('brand', 64)->after('read_on')->nullable()->index();
             }
         );
     }

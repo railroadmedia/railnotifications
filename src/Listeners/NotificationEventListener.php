@@ -12,6 +12,7 @@ use Railroad\Railnotifications\Entities\Notification;
 use Railroad\Railnotifications\Exceptions\BroadcastNotificationFailure;
 use Railroad\Railnotifications\Services\NotificationBroadcastService;
 use Railroad\Railnotifications\Services\NotificationService;
+use Railroad\Railnotifications\Services\NotificationSettingsService;
 
 class NotificationEventListener
 {
@@ -41,24 +42,34 @@ class NotificationEventListener
     private $userProvider;
 
     /**
+     * @var NotificationSettingsService
+     */
+    private $userNotificationSettingsService;
+
+    /**
      * NotificationEventListener constructor.
      *
      * @param NotificationService $notificationService
      * @param NotificationBroadcastService $notificationBroadcastService
      * @param ContentProviderInterface $contentProvider
+     * @param RailforumProviderInterface $railforumProvider
+     * @param UserProviderInterface $userProvider
+     * @param NotificationSettingsService $notificationSettingsService
      */
     public function __construct(
         NotificationService $notificationService,
         NotificationBroadcastService $notificationBroadcastService,
         ContentProviderInterface $contentProvider,
         RailforumProviderInterface $railforumProvider,
-        UserProviderInterface $userProvider
+        UserProviderInterface $userProvider,
+        NotificationSettingsService $notificationSettingsService
     ) {
         $this->notificationService = $notificationService;
         $this->notificationBroadcastService = $notificationBroadcastService;
         $this->contentProvider = $contentProvider;
         $this->railforumProvider = $railforumProvider;
         $this->userProvider = $userProvider;
+        $this->userNotificationSettingsService = $notificationSettingsService;
     }
 
     /**
@@ -74,7 +85,7 @@ class NotificationEventListener
                 $post = $this->railforumProvider->getPostById($event->data['postId']);
                 $threadFollowers = $this->railforumProvider->getThreadFollowerIds($post->thread_id);
                 $receivingUserIds =
-                    array_diff(($threadFollowers)?$threadFollowers->toArray():[], [$post['author_id']]);
+                    array_diff(($threadFollowers) ? $threadFollowers->toArray() : [], [$post['author_id']]);
                 break;
             case Notification::TYPE_FORUM_POST_REPLY:
                 $post = $this->railforumProvider->getPostById($event->data['postId']);
@@ -104,12 +115,14 @@ class NotificationEventListener
             $user = $this->userProvider->getRailnotificationsUserById($receivingUserId);
 
             $broadcastChannels = array_keys(config('railnotifications.channels'));
+
             //check if are instant notifications
             if (!empty($user->getNotificationsSummaryFrequencyMinutes())) {
                 $broadcastChannels = ['fcm'];
             }
 
             $shouldReceiveNotification = $this->shouldReceiveNotification($user, $event->type);
+
             if ($shouldReceiveNotification) {
                 foreach ($broadcastChannels as $channel) {
                     $this->notificationBroadcastService->broadcast($notification->getId(), $channel);
@@ -121,22 +134,35 @@ class NotificationEventListener
     /**
      * @param $user
      * @param $type
-     * @return bool
+     * @return bool|mixed
+     * @throws \Doctrine\ORM\NonUniqueResultException
      */
     private function shouldReceiveNotification($user, $type)
     {
         switch ($type) {
             case Notification::TYPE_FORUM_POST_IN_FOLLOWED_THREAD:
-                $shouldReceive = $user->getNotifyOnForumFollowedThreadReply();
+                $shouldReceive = $this->userNotificationSettingsService->getUserNotificationSettings(
+                        $user->getId(),
+                        'on_post_in_followed_forum_thread'
+                    ) ?? true;
                 break;
             case Notification::TYPE_FORUM_POST_REPLY:
-                $shouldReceive = $user->getNotifyOnForumPostReply();
+                $shouldReceive = $this->userNotificationSettingsService->getUserNotificationSettings(
+                        $user->getId(),
+                        'on_forum_post_reply'
+                    ) ?? true;
                 break;
             case Notification::TYPE_LESSON_COMMENT_REPLY:
-                $shouldReceive = $user->getNotifyOnLessonCommentReply();
+                $shouldReceive = $this->userNotificationSettingsService->getUserNotificationSettings(
+                        $user->getId(),
+                        'on_comment_reply'
+                    ) ?? true;
                 break;
             case Notification::TYPE_LESSON_COMMENT_LIKED:
-                $shouldReceive = $user->getNotifyOnLessonCommentLike();
+                $shouldReceive = $this->userNotificationSettingsService->getUserNotificationSettings(
+                        $user->getId(),
+                        'on_comment_like'
+                    ) ?? true;
                 break;
             default:
                 $shouldReceive = true;

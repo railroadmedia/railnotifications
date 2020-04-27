@@ -47,5 +47,15 @@
     "psr-4": {
       "Railroad\\Railnotifications\\Tests\\": "tests/"
     }
+  },
+  "extra": {
+    "laravel": {
+      "providers": [
+        "LaravelFCM\\FCMServiceProvider::class,"
+      ],
+      "aliases": {
+        "FCM": "LaravelFCM\\Facades\\FCM::class"
+      }
+    }
   }
 }

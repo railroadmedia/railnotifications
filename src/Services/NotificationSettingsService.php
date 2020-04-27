@@ -155,7 +155,7 @@ class NotificationSettingsService
                 $qb->getQuery()
                     ->getOneOrNullResult();
 
-            return $result->getSettingValue();
+            return ($result)?$result->getSettingValue():$result;
         }
 
         $settings =

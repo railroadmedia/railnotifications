@@ -2,16 +2,8 @@
 
 namespace Railroad\Railnotifications\Channels;
 
-use Exception;
-use Illuminate\Contracts\Mail\Mailer;
-use Railroad\Railnotifications\Contracts\UserProviderInterface;
-use Railroad\Railnotifications\Entities\Notification;
 use Railroad\Railnotifications\Entities\NotificationBroadcast;
-use Railroad\Railnotifications\Notifications\FCM\LessonCommentLikeFCM;
-use Railroad\Railnotifications\Notifications\Mailers\FollowedForumThreadPostMailer;
-use Railroad\Railnotifications\Notifications\Mailers\ForumPostReplyMailer;
-use Railroad\Railnotifications\Notifications\Mailers\LessonCommentLikeMailer;
-use Railroad\Railnotifications\Notifications\Mailers\LessonCommentReplyMailer;
+use Railroad\Railnotifications\Notifications\Email\NotificationMailer;
 use Railroad\Railnotifications\Services\NotificationBroadcastService;
 
 class EmailChannel implements ChannelInterface
@@ -22,23 +14,14 @@ class EmailChannel implements ChannelInterface
     private $notificationBroadcastService;
 
     /**
-     * @var Mailer
+     * EmailChannel constructor.
+     *
+     * @param NotificationBroadcastService $notificationBroadcastService
      */
-    private $mailer;
-
-    /**
-     * @var UserRepository
-     */
-    private $userProvider;
-
     public function __construct(
-        NotificationBroadcastService $notificationBroadcastService,
-        Mailer $mailer,
-        UserProviderInterface $userProvider
+        NotificationBroadcastService $notificationBroadcastService
     ) {
         $this->notificationBroadcastService = $notificationBroadcastService;
-        $this->mailer = $mailer;
-        $this->userProvider = $userProvider;
     }
 
     /**
@@ -50,24 +33,7 @@ class EmailChannel implements ChannelInterface
     {
         $notification = $notificationBroadcast->getNotification();
 
-        switch ($notification->getType()) {
-            case Notification::TYPE_FORUM_POST_IN_FOLLOWED_THREAD:
-                $mailer = app()->make(FollowedForumThreadPostMailer::class);
-                break;
-            case Notification::TYPE_FORUM_POST_REPLY:
-                $mailer = app()->make(ForumPostReplyMailer::class);
-                break;
-            case Notification::TYPE_LESSON_COMMENT_REPLY:
-                $mailer = app()->make(LessonCommentReplyMailer::class);
-                break;
-            case Notification::TYPE_LESSON_COMMENT_LIKED:
-                $mailer = app()->make(LessonCommentLikeMailer::class);
-                break;
-            default:
-                throw new Exception(
-                    'No mailer found for notification broadcast id: ' . $notificationBroadcast->getId()
-                );
-        }
+        $mailer = app()->make(NotificationMailer::class);
 
         $mailer->send([$notification]);
 
@@ -91,20 +57,8 @@ class EmailChannel implements ChannelInterface
         }
 
         foreach ($notificationsGroupedByType as $type => $notifications) {
-            switch ($type) {
-                case Notification::TYPE_FORUM_POST_IN_FOLLOWED_THREAD:
-                    $mailer = app()->make(FollowedForumThreadPostMailer::class);
-                    break;
-                case Notification::TYPE_FORUM_POST_REPLY:
-                    $mailer = app()->make(ForumPostReplyMailer::class);
-                    break;
-                case Notification::TYPE_LESSON_COMMENT_REPLY:
-                    $mailer = app()->make(LessonCommentReplyMailer::class);
-                    break;
-                case Notification::TYPE_LESSON_COMMENT_LIKED:
-                    $mailer = app()->make(LessonCommentReplyMailer::class);
-                    break;
-            }
+
+            $mailer = app()->make(NotificationMailer::class);
 
             $mailer->send($notifications);
         }

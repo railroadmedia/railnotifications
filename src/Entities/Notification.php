@@ -28,6 +28,7 @@ class Notification
     const TYPE_FORUM_POST_LIKED = 'forum post liked';
     const TYPE_LESSON_COMMENT_LIKED = 'lesson comment liked';
     const TYPE_LESSON_COMMENT_REPLY = 'lesson comment reply';
+    const TYPE_NEW_CONTENT_RELEASES = 'new_content_releases';
 
     /**
      * @ORM\Id @ORM\GeneratedValue @ORM\Column(type="integer")

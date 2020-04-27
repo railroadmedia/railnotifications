@@ -114,16 +114,11 @@ class NotificationEventListener
             );
             $user = $this->userProvider->getRailnotificationsUserById($receivingUserId);
 
-            $broadcastChannels = array_keys(config('railnotifications.channels'));
-
-            //check if are instant notifications
-            if (!empty($user->getNotificationsSummaryFrequencyMinutes())) {
-                $broadcastChannels = ['fcm'];
-            }
-
             $shouldReceiveNotification = $this->shouldReceiveNotification($user, $event->type);
 
             if ($shouldReceiveNotification) {
+                $broadcastChannels = $this->getUserBroadcastChannels($user);
+
                 foreach ($broadcastChannels as $channel) {
                     $this->notificationBroadcastService->broadcast($notification->getId(), $channel);
                 }
@@ -152,6 +147,12 @@ class NotificationEventListener
                         'on_forum_post_reply'
                     ) ?? true;
                 break;
+            case Notification::TYPE_FORUM_POST_LIKED:
+                $shouldReceive = $this->userNotificationSettingsService->getUserNotificationSettings(
+                        $user->getId(),
+                        'on_forum_post_like'
+                    ) ?? true;
+                break;
             case Notification::TYPE_LESSON_COMMENT_REPLY:
                 $shouldReceive = $this->userNotificationSettingsService->getUserNotificationSettings(
                         $user->getId(),
@@ -164,6 +165,12 @@ class NotificationEventListener
                         'on_comment_like'
                     ) ?? true;
                 break;
+            case Notification::TYPE_NEW_CONTENT_RELEASES:
+                $shouldReceive = $this->userNotificationSettingsService->getUserNotificationSettings(
+                        $user->getId(),
+                        'on_new_content_releases'
+                    ) ?? true;
+                break;
             default:
                 $shouldReceive = true;
         }
@@ -171,5 +178,31 @@ class NotificationEventListener
         return $shouldReceive;
     }
 
+    /**
+     * @param $user
+     * @return array
+     * @throws \Doctrine\ORM\NonUniqueResultException
+     */
+    private function getUserBroadcastChannels($user)
+    {
+        $broadcastChannels = [];
+
+        if (empty($user->getNotificationsSummaryFrequencyMinutes()) &&
+            $this->userNotificationSettingsService->getUserNotificationSettings(
+                $user->getId(),
+                'send_email'
+            ) ?? true) {
+            $broadcastChannels[] = 'email';
+        }
+
+        if ($this->userNotificationSettingsService->getUserNotificationSettings(
+                $user->getId(),
+                'send_in_app_push_notification'
+            ) ?? true) {
+            $broadcastChannels[] = 'fcm';
+        }
+
+        return $broadcastChannels;
+    }
 }
 

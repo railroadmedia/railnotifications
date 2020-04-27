@@ -4,7 +4,6 @@ namespace Railroad\Railnotifications\Notifications\Email;
 
 use Illuminate\Contracts\Mail\Mailer;
 use Railroad\Railnotifications\Entities\Notification;
-use Railroad\Railnotifications\Notifications\Email\AggregatedNotificationsEmail;
 use Railroad\Railnotifications\Services\NotificationService;
 use Throwable;
 
@@ -20,6 +19,12 @@ class NotificationMailer
      */
     private $notificationService;
 
+    /**
+     * NotificationMailer constructor.
+     *
+     * @param Mailer $mailer
+     * @param NotificationService $notificationService
+     */
     public function __construct(
         Mailer $mailer,
         NotificationService $notificationService

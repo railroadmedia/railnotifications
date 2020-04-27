@@ -112,15 +112,18 @@ class NotificationEventListener
                 $event->data,
                 $receivingUserId
             );
+
             $user = $this->userProvider->getRailnotificationsUserById($receivingUserId);
 
-            $shouldReceiveNotification = $this->shouldReceiveNotification($user, $event->type);
+            if ($user) {
+                $shouldReceiveNotification = $this->shouldReceiveNotification($user, $event->type);
 
-            if ($shouldReceiveNotification) {
-                $broadcastChannels = $this->getUserBroadcastChannels($user);
+                if ($shouldReceiveNotification) {
+                    $broadcastChannels = $this->getUserBroadcastChannels($user);
 
-                foreach ($broadcastChannels as $channel) {
-                    $this->notificationBroadcastService->broadcast($notification->getId(), $channel);
+                    foreach ($broadcastChannels as $channel) {
+                        $this->notificationBroadcastService->broadcast($notification->getId(), $channel);
+                    }
                 }
             }
         }
@@ -188,10 +191,10 @@ class NotificationEventListener
         $broadcastChannels = [];
 
         if (empty($user->getNotificationsSummaryFrequencyMinutes()) &&
-            $this->userNotificationSettingsService->getUserNotificationSettings(
+            ($this->userNotificationSettingsService->getUserNotificationSettings(
                 $user->getId(),
                 'send_email'
-            ) ?? true) {
+            ) ?? true)) {
             $broadcastChannels[] = 'email';
         }
 

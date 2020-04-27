@@ -9,12 +9,9 @@ use LaravelFCM\Message\PayloadNotificationBuilder;
 use Railroad\Railnotifications\Contracts\ContentProviderInterface;
 use Railroad\Railnotifications\Contracts\UserProviderInterface;
 use Railroad\Railnotifications\Entities\Notification;
-use Railroad\Railnotifications\Entities\NotificationBroadcast;
-use Railroad\Railnotifications\Notifications\Mailers\LessonCommentReplyMailer;
-use Railroad\Railnotifications\Services\NotificationBroadcastService;
 use Railroad\Railnotifications\Services\NotificationService;
 
-class LessonCommentReplyFCM
+class NotificationFCM
 {
     /**
      * @var UserProviderInterface
@@ -27,15 +24,24 @@ class LessonCommentReplyFCM
     private $contentProvider;
 
     /**
+     * @var NotificationService
+     */
+    private $notificationService;
+
+    /**
      * LessonCommentReplyFCM constructor.
      *
      * @param UserProviderInterface $userProvider
      * @param ContentProviderInterface $contentProvider
      */
-    public function __construct(UserProviderInterface $userProvider, ContentProviderInterface $contentProvider)
-    {
+    public function __construct(
+        UserProviderInterface $userProvider,
+        ContentProviderInterface $contentProvider,
+        NotificationService $notificationService
+    ) {
         $this->userProvider = $userProvider;
         $this->contentProvider = $contentProvider;
+        $this->notificationService = $notificationService;
     }
 
     /**
@@ -47,14 +53,7 @@ class LessonCommentReplyFCM
     {
         try {
 
-            $comment = $this->contentProvider->getCommentById($notification->getData()['commentId']);
-
-            /**
-             * @var $author User
-             */
-            $author = $this->userProvider->getRailnotificationsUserById($comment['user_id']);
-
-            $lesson = $this->contentProvider->getContentById($comment['content_id']);
+            $linkedContent = $this->notificationService->getLinkedContent($notification->getId());
 
             $receivingUser = $notification->getRecipient();
 
@@ -64,11 +63,35 @@ class LessonCommentReplyFCM
                 $tokens[] = $firebaseToken->getToken();
             }
 
-            $fcmTitle = $author->getDisplayName() . ' replied to your comment.';
-            $fcmMessage = $lesson->fetch('fields.title');
-            $fcmMessage .= '
-' . mb_strimwidth(
-                    htmlspecialchars(strip_tags($comment['comment'])),
+            $fcmMessage = $linkedContent['content']['title'];
+
+            switch ($notification->getType()) {
+                case Notification::TYPE_FORUM_POST_IN_FOLLOWED_THREAD:
+                    $fcmTitle = $linkedContent['author']->getDisplayName() . ' posted in a thread you follow.';
+                    break;
+                case Notification::TYPE_FORUM_POST_REPLY:
+                    $fcmTitle = $linkedContent['author']->getDisplayName() . ' replied to your post.';
+                    break;
+                case Notification::TYPE_FORUM_POST_LIKED:
+                    $fcmTitle = 'People liked your post.';
+                    break;
+                case Notification::TYPE_LESSON_COMMENT_REPLY:
+                    $fcmTitle = $linkedContent['author']->getDisplayName() . ' replied to your comment.';
+                    break;
+                case Notification::TYPE_LESSON_COMMENT_LIKED:
+                    $fcmTitle = $linkedContent['author']->getDisplayName() . ' people liked to your comment.';
+                    break;
+                case Notification::TYPE_NEW_CONTENT_RELEASES:
+                    $fcmTitle = 'New content released.';
+                    break;
+                default:
+                    $fcmTitle = 'New notification';
+                    break;
+            }
+
+            $fcmMessage .= '                 
+            ' . mb_strimwidth(
+                    htmlspecialchars(strip_tags($linkedContent['content']['comment'])),
                     0,
                     120,
                     "..."
@@ -84,9 +107,9 @@ class LessonCommentReplyFCM
             $dataBuilder = new PayloadDataBuilder();
             $dataBuilder->addData(
                 [
-                    'image' => $author->getAvatar(),
-                    'uri' => $lesson['url'],
-                    'commentId' => $comment['id'],
+                    'image' => $linkedContent['author']->getAvatar(),
+                    'uri' => $linkedContent['content']['url'],
+                    'commentId' => $linkedContent['content']['commentId'],
                 ]
             );
 
@@ -96,7 +119,10 @@ class LessonCommentReplyFCM
 
             $downstreamResponse = FCM::sendTo($tokens, $option, $notification, $data);
 
-            $this->userProvider->deleteUserFirebaseTokens($receivingUser->getId(), $downstreamResponse->tokensToDelete());
+            $this->userProvider->deleteUserFirebaseTokens(
+                $receivingUser->getId(),
+                $downstreamResponse->tokensToDelete()
+            );
 
             foreach ($downstreamResponse->tokensToModify() as $oldToken => $newToken) {
                 $this->userProvider->updateUserFirebaseToken($receivingUser->getId(), $oldToken, $newToken);

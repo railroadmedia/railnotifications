@@ -12,6 +12,13 @@ class AggregatedNotificationsEmail extends Mailable
 
     public $subject;
 
+    /**
+     * AggregatedNotificationsEmail constructor.
+     *
+     * @param $recipientEmail
+     * @param $renderedNotificationRows
+     * @param $subject
+     */
     public function __construct(
         $recipientEmail,
         $renderedNotificationRows,

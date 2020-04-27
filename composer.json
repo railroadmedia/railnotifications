@@ -52,10 +52,10 @@
   "extra": {
     "laravel": {
       "providers": [
-        "LaravelFCM\\FCMServiceProvider::class,"
+        "LaravelFCM\\FCMServiceProvider"
       ],
       "aliases": {
-        "FCM": "LaravelFCM\\Facades\\FCM::class"
+        "FCM": "LaravelFCM\\Facades\\FCM"
       }
     }
   }

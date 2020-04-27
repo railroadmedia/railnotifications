@@ -114,7 +114,18 @@ class NotificationSettingsService
      */
     public function destroy(int $userId, string $settingName)
     {
-        $notificationSetting = $this->getUserNotificationSettings($userId, $settingName);
+        $qb = $this->notificationSettingRepository->createQueryBuilder('ns');
+
+        $qb->select('ns')
+            ->where('ns.user IN (:userIds)')
+            ->setParameter('userIds', $userId);
+
+        $qb->andWhere('ns.settingName = :settingName')
+            ->setParameter('settingName', $settingName);
+
+        $notificationSetting =
+            $qb->getQuery()
+                ->getOneOrNullResult();
 
         if (is_null($notificationSetting)) {
             return $notificationSetting;
@@ -155,7 +166,7 @@ class NotificationSettingsService
                 $qb->getQuery()
                     ->getOneOrNullResult();
 
-            return ($result)?$result->getSettingValue():$result;
+            return ($result) ? $result->getSettingValue() : $result;
         }
 
         $settings =

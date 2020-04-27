@@ -162,12 +162,6 @@ class UserNotificationSettingsServiceTest extends NotificationsTestCase
         $response =
             $this->classBeingTested->getUserNotificationSettings($user['id'], $userNotificationSetting['setting_name']);
 
-        $this->assertEquals($userNotificationSetting['setting_name'], $response->getSettingName());
-        $this->assertEquals($userNotificationSetting['setting_value'], $response->getSettingValue());
-        $this->assertEquals(
-            $user['id'],
-            $response->getUser()
-                ->getId()
-        );
+        $this->assertEquals($userNotificationSetting['setting_value'], $response);
     }
 }

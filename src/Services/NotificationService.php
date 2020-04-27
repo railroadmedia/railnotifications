@@ -413,7 +413,8 @@ class NotificationService
             $results['content'] = [
                 'title' => $lesson->fetch('fields.title'),
                 'url' => $lesson['url'] . '?goToComment=' . $comment['id'],
-                'comment' => $commentText
+                'comment' => $commentText,
+                'commentId' => $comment['id']
             ];
 
             $results['author'] = $author;
@@ -433,6 +434,8 @@ class NotificationService
             $results['content'] = [
                 'title' => $thread['title'],
                 'url' => $thread['url'],
+                'comment' => $post['content'],
+                'commentId' => $post['id']
             ];
 
             $results['author'] = $author;

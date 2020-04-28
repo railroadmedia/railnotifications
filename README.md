@@ -19,6 +19,11 @@
       - [Mark broadcast as succeeded](#mark-broadcast-as-succeeded)
       - [Mark broadcast as failed](#mark-broadcast-as-failed)
       - [Show broadcast](#show-broadcast)
+      - [Create user notification settings](#create-user-notification-settings)
+      - [Get user notifications settings](#get-user-notifications-settings)
+      - [Delete user notification setting](#delete-user-notification-setting)
+      - [Sync user notification setting](#sync-user-notification-setting)
+
 
 
 
@@ -220,9 +225,11 @@ class RailforumProvider implements RailforumProviderInterface
 }
 
 ```
-8. Create new provider for Forum that implements `UserProviderInterface` from Railnotifications package. The provider should contain the following methods: `getRailnotificationsUserById`, `getRailnotificationsUserId`, `getUserFirebaseTokens`, `deleteUserFirebaseTokens` and `updateUserFirebaseToken`, like bellow: 
+8. Create new provider for Forum that implements `UserProviderInterface` from Railnotifications package. The provider should contain the following methods: `getRailnotificationsUserById`, `getRailnotificationsUserId`, `getUserFirebaseTokens`, `deleteUserFirebaseTokens`, `updateUserFirebaseToken` and `getUserTransformer` like bellow: 
 
 ```php
+<?php
+
 <?php
 
 namespace App\Providers;
@@ -232,9 +239,11 @@ use Doctrine\ORM\ORMException;
 use Railroad\Ecommerce\Entities\User;
 use Railroad\Railnotifications\Contracts\UserProviderInterface;
 use Railroad\Railnotifications\Entities\User as RailnotificationUser;
+use Railroad\Railnotifications\Transformers\UserTransformer;
 use Railroad\Usora\Managers\UsoraEntityManager;
 use Railroad\Usora\Repositories\UserFirebaseTokensRepository;
 use Railroad\Usora\Repositories\UserRepository;
+
 
 class RailnotificationsUserProvider implements UserProviderInterface
 {
@@ -283,7 +292,8 @@ class RailnotificationsUserProvider implements UserProviderInterface
                 $usoraUser->getId(),
                 $usoraUser->getEmail(),
                 $usoraUser->getDisplayName(),
-                $usoraUser->getProfilePictureUrl()
+                $usoraUser->getProfilePictureUrl(),
+                 $usoraUser->getNotificationsSummaryFrequencyMinutes()
             );
         }
 
@@ -379,7 +389,16 @@ class RailnotificationsUserProvider implements UserProviderInterface
 
         return $userFirebaseToken;
     }
+
+    /**
+     * @return TransformerAbstract
+     */
+    public function getUserTransformer()
+    {
+        return new UserTransformer();
+    }
 }
+
 ```
 9. In AppServiceProvider boot method create instance for the providers: 
 ```php
@@ -440,6 +459,16 @@ E.g:
 | `notification_id` | INT(11) | Not null |  |  |
 | `aggregation_group_id` |  VARCHAR(255) | Null |  |  |
 | `broadcast_on` | DATETIME |  | NULL |  |
+| `created_at` | DATETIME | Not null |  |  |
+| `updated_at` | DATETIME |  | NULL |  |
+
+`notification_settings`
+| Column | Data Type | Attributes | Default | Description |
+| --- | --- | --- | --- | --- |
+| `id` | INT(10) UNSIGNED | Primary, Auto increment, Not null |  |  |
+| `user_id` | INT(11) | Not null |  |  |
+| `setting_name` | VARCHAR(255) | Not null |  |  |
+| `setting_value` | TINYINT(1) | Not null |  |  |
 | `created_at` | DATETIME | Not null |  |  |
 | `updated_at` | DATETIME |  | NULL |  |
 
@@ -1050,7 +1079,7 @@ $.ajax({
       "read_on":null,
       "created_at":"2020-04-14 09:34:27",
       "updated_at":null,
-      "recipient":{
+      "recipient":{setting_value
          "id":1
       }
    }
@@ -1075,7 +1104,7 @@ $.ajax({
  ##### Request Example:
  
  ```js
- $.ajax({
+ $.ajax({setting_value
      url: 'https://www.domain.com' +
               '/railnotifications/broadcast/mark-succeeded/1',
      success: function(response) {},
@@ -1098,7 +1127,7 @@ $.ajax({
  ```json
  {
    "id":1,
-   "channel":"email",
+   "channel":"email",setting_value
    "type":"single",
    "status":"sent",
    "report":null,
@@ -1255,9 +1284,267 @@ $.ajax({
 }
  ```
  
+#### Create user notification settings
+
+##### HTTP Request
+    `PUT railnotifications/user-notification-settings`
+
+##### Mobile Request
+    `PUT api/railnotifications/user-notification-settings`
+
+##### Request Parameters
+|Type|Key|Required|Notes|
+|----|---|--------|-----|
+|body|setting_name|  Yes  |Setting name.|
+|body|setting_value|  Yes  |Setting value.|
+|body|user_id|No   |If the user_id not exists on the request, the notifcation setting for the authenticated user is created.|
+
+##### Validation Rules
+```php
+        return [
+            'setting_name' => 'required',
+            'setting_value' => 'required',
+        ];
+```
+
+##### Request Example:
+
+```js
+$.ajax({
+    url: 'https://www.domain.com' +
+             '/railnotifications/user-notification-settings',
+{
+    "setting_name": "send_email",
+    "setting_value": "1"
+}
+   ,
+    success: function(response) {},
+    error: function(response) {}
+});
+```
+
+##### Response Example (200):
+
+```json
+{
+   "id":1,
+   "setting_name":"send_email",
+   "setting_value":true,
+   "user":{
+      "id":1
+   }
+}
+```
+##### Response Example (422):
+
+```json
+{
+   "errors":[
+      {
+         "source":"setting_name",
+         "detail":"The setting name field is required."
+      },
+      {
+         "source":"setting_value",
+         "detail":"The setting value field is required."
+      }
+   ]
+}
+```
+#### Get user notifications settings
+ 
+ ##### HTTP Request
+     `GET railnotifications/user-notification-settings`
+ ##### Mobile Request
+      `GET api/railnotifications/user-notification-settings`
+ 
+ ##### Request Parameters
+ 
+ 
+ |Type|Key|Required|Notes|
+ |----|---|--------|-----|
+|body|user_id|No   |If the user_id not exists on the request, the notifcation settings for the authentiuser-notification-settingscated user will be pulled.|
+ 
+ 
+ ##### Request Example:
+ ##### Request Parameters
+|Type|Key|Required|Notes|
+|----|---|--------|-----|
+|body|setting_name|  Yes  |Setting name.|
+|body|setting_value|  Yes  |Setting value.|
+|body|user_id|No   |If the user_id not exists on the request, the notifcation setting for the authenticated user is created.|
+
+##### Validation Rules
+```php
+        return [
+            'setting_name' => 'required',
+            'setting_value' => 'required',
+        ];
+```
+
+##### Request Example:
+
+```js
+$.ajax({
+    url: 'https://www.domain.com' +
+             '/railnotifications/user-notification-settings',
+{
+    "setting_name": "send_email",
+    "setting_value": "1"
+}
+   ,
+    success: function(response) {},
+    error: function(response) {}
+});
+```
+
+##### Response Example (200):
+
+```json
+{
+   "id":1,
+   "setting_name":"send_email",
+   "setting_value":true,
+   "user":{
+      "id":1
+   }
+}
+```
+##### Response Example (422):
+
+```json
+{
+   "errors":[
+      {
+         "source":"setting_name",
+         "detail":"The setting name field is required."
+      },
+      {
+         "source":"setting_value",
+         "detail":"The setting value field is required."
+      }
+   ]
+}
+```
+ ```js
+ $.ajax({
+     url: 'https://www.domain.com' +
+              '/railnotifications/user-notification-settings',
+     success: function(response) {},
+     error: function(response) {}
+ });
+ ```
+ 
+ ##### Response Example (200):
+ ```json
+{
+   "data":{
+      "on_comment_reply":false,
+      "on_new_content_releases":true
+   }
+}
+ ```
+#### Delete user notification setting
+
+##### HTTP Request
+    `DELETE railnotifications/user-notification-settings`
+##### Mobile Request
+    `DELETE api/railnotifications/user-notification-settings`
+
+##### Request Parameters
+
+user-notification-settings
+|Type|Key|Required|Notes|
+|----|---|--------|-----|
+|body|setting_name|yes|Name of the setting you want to delete|
+|body|user_id|No   |If the user_id not exists on the request, the notifcation settings for the authenticated user will be deleted.|
 
 
+##### Request Example:
 
+```js
+$.ajax({
+    url: 'https://www.domain.com' +
+             '/railnotifications/user-notification-settings',
+             {
+    "setting_name": "send_email",
+}
+    success: function(response) {},
+    error: function(response) {}
+});
+```
 
+##### Response Example (204):
+
+```json
+null
+```
+
+#### Sync user notification setting
+If not exists it will be created, if exists will be updated.
+##### HTTP Request
+    `PATCH railnotifications/user-notification-settings`
+##### Mobile Request
+    `PATCH api/railnotifications/user-notification-settings`
+
+##### Request Parameters
+|Type|Key|Required|Notes|
+|----|---|--------|-----|
+|body|setting_name|  Yes  |Setting name.|
+|body|setting_value|  Yes  |Setting value.|
+|body|user_id|No   |If the user_id not exists on the request, the notifcation setting for the authenticated user is created.|
+
+##### Validation Rules
+```php
+        return [
+            'setting_name' => 'required',
+            'setting_value' => 'required',
+        ];
+```
+
+##### Request Example:
+
+```js
+$.ajax({
+    url: 'https://www.domain.com' +
+             '/railnotifications/user-notification-settings',
+{
+    "setting_name": "send_email",
+    "setting_value": "1"
+}
+   ,
+    success: function(response) {},
+    error: function(response) {}
+});
+```
+
+##### Response Example (200):
+
+```json
+{
+   "id":1,
+   "setting_name":"send_email",
+   "setting_value":true,
+   "user":{
+      "id":1
+   }
+}
+```
+##### Response Example (422):
+
+```json
+{
+   "errors":[
+      {
+         "source":"setting_name",
+         "detail":"The setting name field is required."
+      },
+      {
+         "source":"setting_value",
+         "detail":"The setting value field is required."
+      }
+   ]
+}
+```
 
  

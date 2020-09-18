@@ -412,8 +412,8 @@ class RailnotificationsUserProvider implements UserProviderInterface
 The package provide an event to create notifications and broadcast them over the channels specified in config file (railnotifications.php - channels). 
 
 In order to create a new NotificationBroadcast event you must to specify:
--  notification type - available options: `lesson comment reply`, `lesson comment liked`,  `forum post reply`, `forum post in followed thread`,  `forum post liked`
--  data - an array with the commentId or postId, depends on notification type
+-  notification type - available options: `lesson comment reply`, `lesson comment liked`,  `forum post reply`, `forum post in followed thread`,  `forum post liked` and `new content releases`
+-  data - an array with: the commentId, postId or contentId; depends on notification type
 
 E.g:
 ```php
@@ -514,9 +514,18 @@ $.ajax({
          "read_on":null,
          "created_at":"2020-04-10 14:31:27",
          "updated_at":null,
-         "recipient":{
-            "id":1
-         }
+           "recipient": {
+                "id": 149628,
+                "email": "roxana.riza@artsoft-consult.ro",
+                "display_name": "roxana",
+                "profile_image_url": "https://dzryyo1we6bm3.cloudfront.net/avatars/3c7fe601-6ef4-4fe0-b242-4ff6b1eef623.jpg"
+            },
+            "sender": {
+                "id": 150259,
+                "email": "bogdan.damian@artsoft-consult.ro",
+                "display_name": "bogdan.d",
+                "profile_image_url": "https://d2vyvo0tyx8ig5.cloudfront.net/avatars/150259_1557736362228.jpg"
+            }
       },
       {
          "id":4,
@@ -527,9 +536,18 @@ $.ajax({
          "read_on":null,
          "created_at":"2020-04-10 14:31:27",
          "updated_at":null,
-         "recipient":{
-            "id":1
-         }
+         "recipient": {
+                "id": 149628,
+                "email": "roxana.riza@artsoft-consult.ro",
+                "display_name": "roxana",
+                "profile_image_url": "https://dzryyo1we6bm3.cloudfront.net/avatars/3c7fe601-6ef4-4fe0-b242-4ff6b1eef623.jpg"
+            },
+            "sender": {
+                "id": 150259,
+                "email": "bogdan.damian@artsoft-consult.ro",
+                "display_name": "bogdan.d",
+                "profile_image_url": "https://d2vyvo0tyx8ig5.cloudfront.net/avatars/150259_1557736362228.jpg"
+            }
       },
       {
          "id":5,
@@ -540,10 +558,40 @@ $.ajax({
          "read_on":null,
          "created_at":"2020-04-10 14:31:27",
          "updated_at":null,
-         "recipient":{
-            "id":1
-         }
-      }
+         "recipient": {
+                "id": 149628,
+                "email": "roxana.riza@artsoft-consult.ro",
+                "display_name": "roxana",
+                "profile_image_url": "https://dzryyo1we6bm3.cloudfront.net/avatars/3c7fe601-6ef4-4fe0-b242-4ff6b1eef623.jpg"
+            },
+            "sender": {
+                "id": 150259,
+                "email": "bogdan.damian@artsoft-consult.ro",
+                "display_name": "bogdan.d",
+                "profile_image_url": "https://d2vyvo0tyx8ig5.cloudfront.net/avatars/150259_1557736362228.jpg"
+            }
+      },
+       {
+            "id": 6,
+            "type": "new content releases",
+            "data": {
+                "contentId": 196991
+            },
+            "read_on": null,
+            "created_at": "2020-09-17 13:13:25",
+            "updated_at": "2020-09-17 13:13:25",
+            "recipient": {
+                "id": 149628,
+                "email": "roxana.riza@artsoft-consult.ro",
+                "display_name": "roxana",
+                "profile_image_url": "https://dzryyo1we6bm3.cloudfront.net/avatars/3c7fe601-6ef4-4fe0-b242-4ff6b1eef623.jpg"
+            },
+            "content": {
+                "id": 196991,
+                "title": "Key Concepts - Basic Composition",
+                "url": "https://app-staging.pianote.com/members/question-and-answer/key-concepts-basic-composition/196991"
+            }
+        },
    ]
 }
 ```

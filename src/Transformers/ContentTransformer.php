@@ -13,6 +13,7 @@ class ContentTransformer extends TransformerAbstract
             'id' => $content->getId(),
             'title' => $content->getTitle(),
             'url' => $content->fetch('url', ''),
+            'display_name' => $content->getTitle()
         ];
     }
 }

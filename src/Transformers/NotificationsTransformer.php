@@ -12,6 +12,10 @@ class NotificationsTransformer extends TransformerAbstract
 {
     protected $defaultIncludes = [];
 
+    /**
+     * @param Notification $notification
+     * @return array
+     */
     public function transform(Notification $notification)
     {
         $defaultIncludes = [];
@@ -55,6 +59,10 @@ class NotificationsTransformer extends TransformerAbstract
         ];
     }
 
+    /**
+     * @param Notification $notification
+     * @return \League\Fractal\Resource\Item
+     */
     public function includeRecipient(Notification $notification)
     {
         $userProvider = app()->make(UserProviderInterface::class);
@@ -68,6 +76,10 @@ class NotificationsTransformer extends TransformerAbstract
         );
     }
 
+    /**
+     * @param Notification $notification
+     * @return \League\Fractal\Resource\Item
+     */
     public function includeSender(Notification $notification)
     {
         $userProvider = app()->make(UserProviderInterface::class);
@@ -117,17 +129,23 @@ class NotificationsTransformer extends TransformerAbstract
         }
     }
 
+    /**
+     * @param Notification $notification
+     * @return \League\Fractal\Resource\Item
+     */
     public function includeContent(Notification $notification)
     {
         $contentProvider = app()->make(ContentProviderInterface::class);
-        $contentId = $notification->getData()['contentId'];
+        $contentId = $notification->getData()['contentId'] ?? null;
 
         $content = $contentProvider->getContentById($contentId);
 
-        return $this->item(
-            $content,
-            $contentProvider->getContentTransformer(),
-            'content'
-        );
+        if ($content) {
+            return $this->item(
+                $content,
+                $contentProvider->getContentTransformer(),
+                'content'
+            );
+        }
     }
 }

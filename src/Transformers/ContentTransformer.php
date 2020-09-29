@@ -18,6 +18,7 @@ class ContentTransformer extends TransformerAbstract
             'title' => $content->getTitle(),
             'url' => $content->fetch('url', ''),
             'display_name' => $content->getTitle(),
+            'thumbnail_url' => $content->fetch('data.thumbnail_url')
         ];
     }
 }

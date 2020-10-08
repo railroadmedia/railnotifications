@@ -2,6 +2,7 @@
 
 namespace Railroad\Railnotifications\Transformers;
 
+use League\Fractal\Resource\Item;
 use League\Fractal\TransformerAbstract;
 use Railroad\Railnotifications\Contracts\ContentProviderInterface;
 use Railroad\Railnotifications\Contracts\RailforumProviderInterface;
@@ -36,7 +37,14 @@ class NotificationsTransformer extends TransformerAbstract
             $defaultIncludes[] = 'sender';
         }
 
-        if ($notification->getType() == Notification::TYPE_NEW_CONTENT_RELEASES) {
+        if (in_array(
+            $notification->getType(),
+            [
+                Notification::TYPE_LESSON_COMMENT_LIKED,
+                Notification::TYPE_LESSON_COMMENT_REPLY,
+                Notification::TYPE_NEW_CONTENT_RELEASES,
+            ]
+        )) {
             $defaultIncludes[] = 'content';
 
         }
@@ -61,7 +69,7 @@ class NotificationsTransformer extends TransformerAbstract
 
     /**
      * @param Notification $notification
-     * @return \League\Fractal\Resource\Item
+     * @return Item
      */
     public function includeRecipient(Notification $notification)
     {
@@ -78,7 +86,7 @@ class NotificationsTransformer extends TransformerAbstract
 
     /**
      * @param Notification $notification
-     * @return \League\Fractal\Resource\Item
+     * @return Item
      */
     public function includeSender(Notification $notification)
     {
@@ -131,12 +139,20 @@ class NotificationsTransformer extends TransformerAbstract
 
     /**
      * @param Notification $notification
-     * @return \League\Fractal\Resource\Item
+     * @return Item
      */
     public function includeContent(Notification $notification)
     {
         $contentProvider = app()->make(ContentProviderInterface::class);
         $contentId = $notification->getData()['contentId'] ?? null;
+        $commentId = $notification->getData()['commentId'] ?? null;
+
+        if ($commentId) {
+            $comment = $contentProvider->getCommentById($commentId);
+            $contentId =
+                $comment->getContent()
+                    ->getId();
+        }
 
         $content = $contentProvider->getContentById($contentId);
 

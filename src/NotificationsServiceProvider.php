@@ -41,7 +41,10 @@ class NotificationsServiceProvider extends ServiceProvider
 
         parent::boot();
 
-        $this->loadMigrationsFrom(__DIR__ . '/../migrations');
+        // migrations: only run migrations if this is the master 'host' implementation
+        if (config('railnotifications.data_mode') == 'host') {
+            $this->loadMigrationsFrom(__DIR__ . '/../migrations');
+        }
 
         $this->publishes(
             [

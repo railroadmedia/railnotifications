@@ -103,14 +103,12 @@ class NotificationsTransformer extends TransformerAbstract
         )) {
             $contentProvider = app()->make(ContentProviderInterface::class);
             $commentId = $notification->getData()['commentId'];
-
             $comment = $contentProvider->getCommentById($commentId);
 
+            $author = $userProvider->getRailnotificationsUserById($comment['user_id']);
+
             return $this->item(
-                $userProvider->getRailnotificationsUserById(
-                    $comment->getUser()
-                        ->getId()
-                ),
+                $author,
                 $userTransformer,
                 'sender'
             );
@@ -125,11 +123,12 @@ class NotificationsTransformer extends TransformerAbstract
             )) {
                 $forumProvider = app()->make(RailforumProviderInterface::class);
                 $postId = $notification->getData()['postId'];
-
                 $post = $forumProvider->getPostById($postId);
 
+                $author = $userProvider->getRailnotificationsUserById($post['author_id']);
+
                 return $this->item(
-                    $userProvider->getRailnotificationsUserById($post['author_id']),
+                    $author,
                     $userTransformer,
                     'sender'
                 );
@@ -149,9 +148,7 @@ class NotificationsTransformer extends TransformerAbstract
 
         if ($commentId) {
             $comment = $contentProvider->getCommentById($commentId);
-            $contentId =
-                $comment->getContent()
-                    ->getId();
+            $contentId = $comment['content_id'];
         }
 
         $content = $contentProvider->getContentById($contentId);

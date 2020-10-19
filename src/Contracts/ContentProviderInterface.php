@@ -16,4 +16,6 @@ interface ContentProviderInterface
      * @return array|null
      */
     public function getCommentById($id);
+
+    public function getContentTransformer();
 }

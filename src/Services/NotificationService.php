@@ -401,20 +401,20 @@ class NotificationService
             $commentId = $notification->getData()['commentId'];
 
             $comment = $this->contentProvider->getCommentById($commentId);
-            $commentText = $comment->getComment();
+            $commentText = $comment['comment'];
 
-            $author = $this->userProvider->getRailnotificationsUserById($comment->getUser()->getId());
+            $author = $this->userProvider->getRailnotificationsUserById($comment['user_id']);
 
             if (($notification->getType() == Notification::TYPE_LESSON_COMMENT_REPLY)) {
-                $comment = $this->contentProvider->getCommentById($comment->getParent()->getId());
+                $comment = $this->contentProvider->getCommentById($comment['parent_id']);
             }
-            $lesson = $this->contentProvider->getContentById($comment->getContent()->getId());
+            $lesson = $this->contentProvider->getContentById($comment['content_id']);
 
             $results['content'] = [
-                'title' => $lesson->fetch('title'),
-                'url' => $lesson->fetch('url') . '?goToComment=' . $comment->getId(),
+                'title' => $lesson->fetch('fields.title'),
+                'url' => $lesson->fetch('url') . '?goToComment=' . $comment['id'],
                 'comment' => $commentText,
-                'commentId' => $comment->getId()
+                'commentId' => $comment['id']
             ];
 
             $results['author'] = $author;

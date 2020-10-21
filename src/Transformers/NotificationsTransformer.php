@@ -51,7 +51,7 @@ class NotificationsTransformer extends TransformerAbstract
 
         $this->setDefaultIncludes($defaultIncludes);
 
-        return [
+        $response = [
             'id' => $notification->getId(),
             'type' => $notification->getType(),
             'data' => $notification->getData(),
@@ -65,6 +65,12 @@ class NotificationsTransformer extends TransformerAbstract
                 $notification->getUpdatedAt()
                     ->toDateTimeString() : null,
         ];
+
+        if ($this->getComment($notification)) {
+            $response['comment'] = $this->getComment($notification);
+        }
+
+        return $response;
     }
 
     /**
@@ -160,5 +166,26 @@ class NotificationsTransformer extends TransformerAbstract
                 'content'
             );
         }
+    }
+
+    /**
+     * @param Notification $notification
+     * @return |null
+     */
+    public function getComment(Notification $notification)
+    {
+        $comment = null;
+
+        $contentProvider = app()->make(ContentProviderInterface::class);
+        $commentId = $notification->getData()['commentId'] ?? null;
+
+        if ($commentId) {
+            $comment = $contentProvider->getCommentById($commentId);
+            if ($comment['parent_id']) {
+                $comment = $contentProvider->getCommentById($comment['parent_id']);
+            }
+        }
+
+        return $comment;
     }
 }

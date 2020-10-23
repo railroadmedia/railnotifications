@@ -411,6 +411,7 @@ class NotificationService
             $lesson = $this->contentProvider->getContentById($comment['content_id']);
 
             $results['content'] = [
+                'lesson' => $lesson,
                 'title' => $lesson->fetch('fields.title'),
                 'url' => $lesson->fetch('url') . '?goToComment=' . $comment['id'],
                 'comment' => $commentText,

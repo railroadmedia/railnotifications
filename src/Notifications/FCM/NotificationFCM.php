@@ -105,13 +105,24 @@ class NotificationFCM
                 ->setSound('default');
 
             $dataBuilder = new PayloadDataBuilder();
-            $dataBuilder->addData(
-                [
-                    'image' => $linkedContent['author']->getAvatar(),
-                    'uri' => $linkedContent['content']['url'],
-                    'commentId' => $linkedContent['content']['commentId'],
-                ]
-            );
+            $dataArray = [
+                'image' => $linkedContent['author']->getAvatar(),
+                'uri' => $linkedContent['content']['url'],
+                'commentId' => $linkedContent['content']['commentId'],
+            ];
+
+            if (array_key_exists('lesson', $linkedContent['content'])) {
+                $dataArray['content'] = [
+                    'id' => $linkedContent['content']['lesson']['id'],
+                    'title' => $linkedContent['content']['lesson']->fetch('fields.title'),
+                    'url' => $linkedContent['content']['lesson']->fetch('url', ''),
+                    'mobile_app_url' => $linkedContent['content']['lesson']->fetch('mobile_app_url', ''),
+
+                    'thumbnail_url' => $linkedContent['content']['lesson']->fetch('data.thumbnail_url'),
+                ];
+            }
+
+            $dataBuilder->addData($dataArray);
 
             $option = $optionBuilder->build();
             $notification = $notificationBuilder->build();

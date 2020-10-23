@@ -22,6 +22,18 @@ class NotificationSetting
 {
     use TimestampableEntity;
 
+    const NOTIFICATION_SETTINGS_NAME_NOTIFICATION_TYPE = [
+        Notification::TYPE_LESSON_COMMENT_REPLY => 'notify_on_lesson_comment_reply',
+        Notification::TYPE_LESSON_COMMENT_LIKED => 'notify_on_lesson_comment_like',
+        Notification::TYPE_FORUM_POST_REPLY => 'notify_on_forum_followed_thread_reply',
+        Notification::TYPE_FORUM_POST_LIKED => 'notify_on_forum_post_like',
+        Notification::TYPE_FORUM_POST_IN_FOLLOWED_THREAD => 'notify_on_post_in_followed_forum_thread',
+        Notification::TYPE_NEW_CONTENT_RELEASES => 'notify_on_new_content_releases',
+    ];
+
+    const SEND_EMAIL_NOTIF = 'send_email';
+    const SEND_PUSH_NOTIF = 'send_in_app_push_notification';
+
     /**
      * @ORM\Id @ORM\GeneratedValue @ORM\Column(type="integer")
      * @var int
@@ -45,11 +57,11 @@ class NotificationSetting
      */
     protected $user;
 
-
     /**
      * @return int|null
      */
-    public function getId(): ?int
+    public function getId()
+    : ?int
     {
         return $this->id;
     }
@@ -57,7 +69,8 @@ class NotificationSetting
     /**
      * @return string
      */
-    public function getSettingName(): string
+    public function getSettingName()
+    : string
     {
         return $this->settingName;
     }
@@ -89,7 +102,8 @@ class NotificationSetting
     /**
      * @return User|null
      */
-    public function getUser(): ?User
+    public function getUser()
+    : ?User
     {
         return $this->user;
     }

@@ -118,6 +118,12 @@ Route::group(
             \Railroad\Railnotifications\Controllers\UserNotificationSettingsJsonController::class . '@delete'
         )
             ->name('user-notification-settings.delete');
+
+        Route::patch(
+            '/user-notification-settings/update',
+            \Railroad\Railnotifications\Controllers\UserNotificationSettingsJsonController::class . '@createOrUpdateUserNotificationsSettings'
+        )
+            ->name('user-notification-settings.update');
     }
 );
 

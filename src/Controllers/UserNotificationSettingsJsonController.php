@@ -7,6 +7,7 @@ use Doctrine\ORM\ORMException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Railroad\Railnotifications\Entities\NotificationSetting;
 use Railroad\Railnotifications\Requests\UserNotificationSettingsDeleteRequest;
 use Railroad\Railnotifications\Requests\UserNotificationSettingsRequest;
 use Railroad\Railnotifications\Services\NotificationSettingsService;
@@ -98,5 +99,30 @@ class UserNotificationSettingsJsonController extends Controller
         );
 
         return ResponseService::empty(204);
+    }
+
+    /**
+     * @param Request $request
+     * @return JsonResponse|\Symfony\Component\HttpFoundation\JsonResponse
+     * @throws ORMException
+     * @throws OptimisticLockException
+     * @throws \Doctrine\ORM\NonUniqueResultException
+     */
+    public function createOrUpdateUserNotificationsSettings(Request $request)
+    {
+        foreach ($request->all() as $settingName => $settingValue) {
+            if (in_array($settingName, NotificationSetting::NOTIFICATION_SETTINGS_NAME_NOTIFICATION_TYPE)) {
+                $this->notificationSettingsService->createOrUpdateWhereMatchingData(
+                    $settingName,
+                    $settingValue,
+                    $request->get('user_id', auth()->id())
+                );
+            }
+        }
+
+        $userNotificationsSettings = $this->notificationSettingsService->getUserNotificationSettings($request->get('user_id', auth()->id()));
+
+        return ResponseService::empty(200)
+            ->setData(['data' => $userNotificationsSettings]);
     }
 }

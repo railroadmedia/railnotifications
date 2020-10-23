@@ -119,6 +119,12 @@ Route::group(
         )
             ->name('user-notification-settings.delete');
 
+        Route::patch(
+            '/user-notification-settings/update',
+            \Railroad\Railnotifications\Controllers\UserNotificationSettingsController::class . '@createOrUpdateUserNotificationsSettings'
+        )
+            ->name('user-notification-settings.update');
+
     }
 );
 

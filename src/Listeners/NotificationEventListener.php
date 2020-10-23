@@ -9,6 +9,7 @@ use Railroad\Railnotifications\Contracts\ContentProviderInterface;
 use Railroad\Railnotifications\Contracts\RailforumProviderInterface;
 use Railroad\Railnotifications\Contracts\UserProviderInterface;
 use Railroad\Railnotifications\Entities\Notification;
+use Railroad\Railnotifications\Entities\NotificationSetting;
 use Railroad\Railnotifications\Exceptions\BroadcastNotificationFailure;
 use Railroad\Railnotifications\Services\NotificationBroadcastService;
 use Railroad\Railnotifications\Services\NotificationService;
@@ -95,11 +96,10 @@ class NotificationEventListener
             case Notification::TYPE_LESSON_COMMENT_REPLY:
                 $comment = $this->contentProvider->getCommentById($event->data['commentId']);
                 $originalComment = null;
-                if($comment['parent_id']) {
-                    $originalComment =
-                        $this->contentProvider->getCommentById(
-                            $comment['parent_id']
-                        );
+                if ($comment['parent_id']) {
+                    $originalComment = $this->contentProvider->getCommentById(
+                        $comment['parent_id']
+                    );
                 }
                 $receivingUserIds = ($originalComment) ? [$originalComment['user_id']] : [];
                 break;
@@ -143,48 +143,10 @@ class NotificationEventListener
      */
     private function shouldReceiveNotification($user, $type)
     {
-        switch ($type) {
-            case Notification::TYPE_FORUM_POST_IN_FOLLOWED_THREAD:
-                $shouldReceive = $this->userNotificationSettingsService->getUserNotificationSettings(
-                        $user->getId(),
-                        'on_post_in_followed_forum_thread'
-                    ) ?? true;
-                break;
-            case Notification::TYPE_FORUM_POST_REPLY:
-                $shouldReceive = $this->userNotificationSettingsService->getUserNotificationSettings(
-                        $user->getId(),
-                        'on_forum_post_reply'
-                    ) ?? true;
-                break;
-            case Notification::TYPE_FORUM_POST_LIKED:
-                $shouldReceive = $this->userNotificationSettingsService->getUserNotificationSettings(
-                        $user->getId(),
-                        'on_forum_post_like'
-                    ) ?? true;
-                break;
-            case Notification::TYPE_LESSON_COMMENT_REPLY:
-                $shouldReceive = $this->userNotificationSettingsService->getUserNotificationSettings(
-                        $user->getId(),
-                        'on_comment_reply'
-                    ) ?? true;
-                break;
-            case Notification::TYPE_LESSON_COMMENT_LIKED:
-                $shouldReceive = $this->userNotificationSettingsService->getUserNotificationSettings(
-                        $user->getId(),
-                        'on_comment_like'
-                    ) ?? true;
-                break;
-            case Notification::TYPE_NEW_CONTENT_RELEASES:
-                $shouldReceive = $this->userNotificationSettingsService->getUserNotificationSettings(
-                        $user->getId(),
-                        'on_new_content_releases'
-                    ) ?? true;
-                break;
-            default:
-                $shouldReceive = true;
-        }
-
-        return $shouldReceive;
+        return $this->userNotificationSettingsService->getUserNotificationSettings(
+                $user->getId(),
+                NotificationSetting::NOTIFICATION_SETTINGS_NAME_NOTIFICATION_TYPE[$type]
+            ) ?? true;
     }
 
     /**
@@ -198,15 +160,15 @@ class NotificationEventListener
 
         if (empty($user->getNotificationsSummaryFrequencyMinutes()) &&
             ($this->userNotificationSettingsService->getUserNotificationSettings(
-                $user->getId(),
-                'send_email'
-            ) ?? true)) {
+                    $user->getId(),
+                    NotificationSetting::SEND_EMAIL_NOTIF
+                ) ?? true)) {
             $broadcastChannels[] = 'email';
         }
 
         if ($this->userNotificationSettingsService->getUserNotificationSettings(
                 $user->getId(),
-                'send_in_app_push_notification'
+                NotificationSetting::SEND_PUSH_NOTIF
             ) ?? true) {
             $broadcastChannels[] = 'fcm';
         }

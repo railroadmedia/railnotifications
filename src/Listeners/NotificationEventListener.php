@@ -2,6 +2,7 @@
 
 namespace Railroad\Railnotifications\Listeners;
 
+use Doctrine\ORM\NonUniqueResultException;
 use Doctrine\ORM\OptimisticLockException;
 use Doctrine\ORM\ORMException;
 use Illuminate\Support\Facades\Event;
@@ -139,7 +140,7 @@ class NotificationEventListener
      * @param $user
      * @param $type
      * @return bool|mixed
-     * @throws \Doctrine\ORM\NonUniqueResultException
+     * @throws NonUniqueResultException
      */
     private function shouldReceiveNotification($user, $type)
     {
@@ -152,7 +153,7 @@ class NotificationEventListener
     /**
      * @param $user
      * @return array
-     * @throws \Doctrine\ORM\NonUniqueResultException
+     * @throws NonUniqueResultException
      */
     private function getUserBroadcastChannels($user)
     {
@@ -174,6 +175,47 @@ class NotificationEventListener
         }
 
         return $broadcastChannels;
+    }
+
+    /**
+     * @param $event
+     * @throws ORMException
+     * @throws OptimisticLockException
+     * @throws NonUniqueResultException
+     */
+    public function handleUserUpdated($event)
+    {
+        $user = $event->getNewUser();
+
+        $this->userNotificationSettingsService->createOrUpdateWhereMatchingData(
+            NotificationSetting::NOTIFICATION_SETTINGS_NAME_NOTIFICATION_TYPE[Notification::TYPE_LESSON_COMMENT_LIKED],
+            $user->getNotifyOnLessonCommentLike(),
+            $user->getId()
+        );
+
+        $this->userNotificationSettingsService->createOrUpdateWhereMatchingData(
+            NotificationSetting::NOTIFICATION_SETTINGS_NAME_NOTIFICATION_TYPE[Notification::TYPE_LESSON_COMMENT_REPLY],
+            $user->getNotifyOnLessonCommentReply(),
+            $user->getId()
+        );
+
+        $this->userNotificationSettingsService->createOrUpdateWhereMatchingData(
+            NotificationSetting::NOTIFICATION_SETTINGS_NAME_NOTIFICATION_TYPE[Notification::TYPE_FORUM_POST_LIKED],
+            $user->getNotifyOnForumPostLike(),
+            $user->getId()
+        );
+
+        $this->userNotificationSettingsService->createOrUpdateWhereMatchingData(
+            NotificationSetting::NOTIFICATION_SETTINGS_NAME_NOTIFICATION_TYPE[Notification::TYPE_FORUM_POST_REPLY],
+            $user->getNotifyOnForumPostReply(),
+            $user->getId()
+        );
+
+        $this->userNotificationSettingsService->createOrUpdateWhereMatchingData(
+            NotificationSetting::NOTIFICATION_SETTINGS_NAME_NOTIFICATION_TYPE[Notification::TYPE_FORUM_POST_IN_FOLLOWED_THREAD],
+            $user->getNotifyOnForumFollowedThreadReply(),
+            $user->getId()
+        );
     }
 }
 

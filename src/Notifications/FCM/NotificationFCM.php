@@ -112,14 +112,11 @@ class NotificationFCM
             ];
 
             if (array_key_exists('lesson', $linkedContent['content'])) {
-                $dataArray['content'] = [
-                    'id' => $linkedContent['content']['lesson']['id'],
-                    'title' => $linkedContent['content']['lesson']->fetch('fields.title'),
-                    'url' => $linkedContent['content']['lesson']->fetch('url', ''),
-                    'mobile_app_url' => $linkedContent['content']['lesson']->fetch('mobile_app_url', ''),
-
-                    'thumbnail_url' => $linkedContent['content']['lesson']->fetch('data.thumbnail_url'),
-                ];
+                $dataArray['content_id'] =  $linkedContent['content']['lesson']['id'];
+                $dataArray['title'] =  json_encode($linkedContent['content']['lesson']->fetch('fields.title'));
+                $dataArray['url'] =  $linkedContent['content']['lesson']->fetch('url', '');
+                $dataArray['mobile_app_url'] =  $linkedContent['content']['lesson']->fetch('mobile_app_url', '');
+                $dataArray['thumbnail_url'] =  $linkedContent['content']['lesson']->fetch('data.thumbnail_url');
             }
 
             $dataBuilder->addData($dataArray);
@@ -142,7 +139,7 @@ class NotificationFCM
             return $downstreamResponse;
 
         } catch (\Exception $messagingException) {
-
+              error_log('FCM notifications exception  ::::::::::::::::::::::::::::::::: '.$messagingException->getMessage());
         }
     }
 }

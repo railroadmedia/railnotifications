@@ -5,7 +5,7 @@
     <td style="max-width:99%;padding:30px 15px;">
         <h1></h1>
         <h2>{{ $title }}</h2>
-        <p>{{ mb_strimwidth(htmlspecialchars(strip_tags($content)), 0, 40, "...") }}</p>
+        <p>{{ mb_strimwidth(htmlspecialchars(strip_tags($content)), 0, 250, "...") }}</p>
         <a href="{{ $contentUrl }}">
             View
         </a>

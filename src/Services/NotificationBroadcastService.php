@@ -3,7 +3,6 @@
 namespace Railroad\Railnotifications\Services;
 
 use Carbon\Carbon;
-use Railroad\Railmap\Helpers\RailmapHelpers;
 use Railroad\Railnotifications\Channels\ChannelFactory;
 use Railroad\Railnotifications\Entities\NotificationBroadcast;
 use Railroad\Railnotifications\Exceptions\BroadcastNotificationFailure;

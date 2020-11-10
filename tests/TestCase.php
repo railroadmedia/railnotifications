@@ -4,6 +4,7 @@ namespace Railroad\Railnotifications\Tests;
 
 use Carbon\Carbon;
 use Doctrine\DBAL\Types\Type;
+use Doctrine\ORM\EntityManager;
 use Faker\Generator;
 use Illuminate\Database\DatabaseManager;
 use Illuminate\Database\Schema\Blueprint;
@@ -79,7 +80,8 @@ class TestCase extends BaseTestCase
         $railforumProvider = new ForumProvider();
         $this->app->instance(RailforumProviderInterface::class, $railforumProvider);
 
-        $this->artisan('migrate', []);
+        $this->artisan('migrate:fresh', []);
+        $this->artisan('cache:clear', []);
 
         $this->faker = Factory::create();
 
@@ -125,6 +127,7 @@ class TestCase extends BaseTestCase
         $app['config']->set('railnotifications.database_password', 'root');
         $app['config']->set('railnotifications.database_in_memory', true);
         $app['config']->set('railnotifications.development_mode', true);
+        $app['config']->set('railnotifications.data_mode', 'host');
 
         $app['config']->set('railnotifications.brand', $defaultConfig['brand']);
 
@@ -199,7 +202,8 @@ class TestCase extends BaseTestCase
         $app['config']->set('apidoc.requiredEntities', $apiDocConfig['requiredEntities']);
         $app['config']->set('apidoc.entityManager', $apiDocConfig['entityManager']);
         $app['config']->set('apidoc.postman', $apiDocConfig['postman']);
-        $app->register(ApiDocGeneratorServiceProvider::class);
+
+//        $app->register(ApiDocGeneratorServiceProvider::class);
     }
 
     /**

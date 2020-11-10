@@ -27,6 +27,19 @@ class ContentProvider implements ContentProviderInterface
      */
     public function getCommentById($id)
     {
-        // TODO: Implement getCommentById() method.
+        return [
+            'id' => rand(),
+            'user_id' => 1,
+            'parent_id' => rand(),
+            'content_id' => rand(),
+        ];
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getContentTransformer()
+    {
+        // TODO: Implement getContentTransformer() method.
     }
 }

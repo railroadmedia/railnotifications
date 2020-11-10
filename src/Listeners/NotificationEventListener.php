@@ -89,11 +89,18 @@ class NotificationEventListener
                 $receivingUserIds =
                     array_diff(($threadFollowers) ? $threadFollowers->toArray() : [], [$post['author_id']]);
                 break;
-            case Notification::TYPE_FORUM_POST_REPLY:
-                $post = $this->railforumProvider->getPostById($event->data['postId']);
-                $thread = $this->railforumProvider->getThreadById($post->thread_id);
-                $receivingUserIds = ($thread['author_id'] != $post['author_id']) ? [$thread['author_id']] : [];
-                break;
+
+                // Disabling this since if a user creates a new thread, we automatically set it to followed for them.
+                // This means they get 2 duplicate notifications if someone posts in the thread. It's better to only
+                // rely on the 'post in followed thread' notification for this use case since then users can still
+                // unfollow their own threads if they wish to stop receiving notifications. - Caleb Nov 2020
+
+//            case Notification::TYPE_FORUM_POST_REPLY:
+//                $post = $this->railforumProvider->getPostById($event->data['postId']);
+//                $thread = $this->railforumProvider->getThreadById($post->thread_id);
+//                $receivingUserIds = ($thread['author_id'] != $post['author_id']) ? [$thread['author_id']] : [];
+//                break;
+
             case Notification::TYPE_LESSON_COMMENT_REPLY:
                 $comment = $this->contentProvider->getCommentById($event->data['commentId']);
                 $originalComment = null;

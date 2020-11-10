@@ -17,6 +17,7 @@ return [
     'development_mode' => true,
 
     // database
+    'data_mode' => 'host',
     'database_name' => 'mydb',
     'database_user' => 'root',
     'database_password' => 'root',

@@ -78,11 +78,9 @@ return array(
             'namespace' => 'Railroad\Railnotifications\Entities',
         ],
     ],
-    'emailAddressFrom' => 'system@pianote.com',
-    'emailBrandFrom' => 'Pianote',
-    'replyAddress' => 'suport@pianote.com',
-    'newThreadPostSubject' => 'Pianote Forums - New Thread Post: ',
-    'newLessonCommentReplySubject' => 'Pianote - New Lesson Comment Reply: '
+    'email_address_from' => 'system@pianote.com',
+    'email_brand_from' => 'Pianote',
+    'email_reply_address' => 'suport@pianote.com',
 );
 ```
 5. In the .env file should add the server key and the secret key for the Firebase Cloud Messaging:

@@ -3,6 +3,7 @@
 namespace Railroad\Railnotifications\Notifications\Email;
 
 use Illuminate\Contracts\Mail\Mailer;
+use Illuminate\View\View;
 use Railroad\Railnotifications\Entities\Notification;
 use Railroad\Railnotifications\Services\NotificationService;
 use Throwable;
@@ -76,23 +77,59 @@ class NotificationMailer
                 [
                     'title' => $linkedContent['content']['title'],
                     'content' => $linkedContent['content']['comment'],
-                    'displayName' => $linkedContent['author']->getDisplayName(),
+                    'displayName' => explode('@', $linkedContent['author']->getDisplayName())[0],
                     'avatarUrl' => $linkedContent['author']->getAvatar(),
                     'contentUrl' => $linkedContent['content']['url'],
+                    'notificationType' => $notification->getType(),
                 ]
-            )->render();
+            );
         }
 
         foreach ($notificationsViews as $recipientEmail => $notificationViews) {
+            /**
+             * @var $notificationViews View[]
+             */
+
             if (count($notificationViews) > 1) {
-                $subject = 'You Have ' . count($notificationViews) . ' New Notifications ' . $recipientEmail;
+                $subject = 'You have ' . count($notificationViews) . ' new notifications';
             } else {
-                $subject = config('railnotifications.newLessonCommentReplySubject') . $recipientEmail;
+                $notificationType = $notificationViews[0]->getData()['notificationType'];
+                $displayName = $notificationViews[0]->getData()['displayName'];
+
+                switch ($notificationType) {
+                    case Notification::TYPE_FORUM_POST_IN_FOLLOWED_THREAD:
+                        $subject = $displayName . ' posted in a forum thread you follow';
+                        break;
+                    case Notification::TYPE_FORUM_POST_REPLY:
+                        $subject = $displayName . ' replied to your forum thread';
+                        break;
+                    case Notification::TYPE_FORUM_POST_LIKED:
+                        $subject = $displayName . ' liked your forum post';
+                        break;
+                    case Notification::TYPE_LESSON_COMMENT_REPLY:
+                        $subject = $displayName . ' replied to your lesson comment';
+                        break;
+                    case Notification::TYPE_LESSON_COMMENT_LIKED:
+                        $subject = $displayName . ' liked your lesson comment';
+                        break;
+                    case Notification::TYPE_NEW_CONTENT_RELEASES:
+                        $subject = 'New content released!';
+                        break;
+                    default:
+                        $subject = 'You have a new notification';
+                        break;
+                }
+            }
+
+            $notificationViewsRendered = [];
+
+            foreach ($notificationViews as $notificationView) {
+                $notificationViewsRendered[] = $notificationView->render();
             }
 
             $this->mailer->send(
                 new AggregatedNotificationsEmail(
-                    $recipientEmail, $notificationViews, $subject
+                    $recipientEmail, $notificationViewsRendered, $subject
                 )
             );
         }

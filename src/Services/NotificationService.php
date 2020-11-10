@@ -394,7 +394,7 @@ class NotificationService
     {
         $notification = $this->get($notificationId);
 
-        $results['notificationType'] = config('railnotifications.mappingTypes')[$notification->getType()];
+        $results['notificationType'] = config('railnotifications.mapping_types')[$notification->getType()];
 
         if ($notification->getType() == Notification::TYPE_LESSON_COMMENT_LIKED ||
             $notification->getType() == Notification::TYPE_LESSON_COMMENT_REPLY) {

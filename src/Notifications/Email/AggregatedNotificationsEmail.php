@@ -38,8 +38,8 @@ class AggregatedNotificationsEmail extends Mailable
     {
         return $this
             ->to($this->recipientEmail)
-            ->from(config('railnotifications.emailAddressFrom'), config('railnotifications.emailBrandFrom'))
-            ->replyTo(config('railnotifications.replyAddress'))
+            ->from(config('railnotifications.email_address_from'), config('railnotifications.email_brand_from'))
+            ->replyTo(config('railnotifications.email_reply_address'))
             ->subject($this->subject)
             ->view('railnotifications::all-notification-email')
             ->with(

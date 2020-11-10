@@ -17,7 +17,6 @@ return [
     'development_mode' => true,
 
     // database
-    'data_mode' => 'host',
     'database_name' => 'mydb',
     'database_user' => 'root',
     'database_password' => 'root',
@@ -27,6 +26,9 @@ return [
     'enable_query_log' => false,
     'database_connection_name' => 'mysql',
 
+    'data_mode' => 'host',
+
+
     // entities
     'entities' => [
         [
@@ -34,10 +36,20 @@ return [
             'namespace' => 'Railroad\Railnotifications\Entities',
         ],
     ],
-    'emailAddressFrom' => 'system@pianote.com',
-    'emailBrandFrom' => 'Pianote',
-    'replyAddress' => 'suport@pianote.com',
-    'newThreadPostSubject' => 'Pianote Forums - New Thread Post: ',
-    'newLessonCommentReplySubject' => 'Pianote - New Lesson Comment Reply: ',
-    'newLessonCommentLikedSubject' => 'Pianote - New Lesson Comment Like: ',
+
+    // email details
+    'email_address_from' => 'system@pianote.com',
+    'email_brand_from' => 'Pianote',
+    'email_reply_address' => 'suport@pianote.com',
+
+    'mapping_types' => [
+        'forum post in followed thread' => 'thread-reply',
+        'forum post reply' => 'forum-reply',
+        'lesson comment reply' => 'comment-reply',
+        'lesson comment liked' => 'comment-like',
+        'forum post liked' => 'forum-like',
+    ],
+
+    'api_middleware' => [
+    ],
 ];

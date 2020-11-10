@@ -58,9 +58,15 @@ class NotificationFCM
             $receivingUser = $notification->getRecipient();
 
             $firebaseTokens = $this->userProvider->getUserFirebaseTokens($receivingUser->getId());
+
             $tokens = [];
+
             foreach ($firebaseTokens as $firebaseToken) {
                 $tokens[] = $firebaseToken->getToken();
+            }
+
+            if (empty($tokens)) {
+                return null;
             }
 
             $fcmMessage = $linkedContent['content']['title'];
@@ -101,7 +107,7 @@ class NotificationFCM
             $optionBuilder->setTimeToLive(60 * 20);
 
             $notificationBuilder = new PayloadNotificationBuilder($fcmTitle);
-            $notificationBuilder->setBody($fcmMessage)
+            $notificationBuilder->setBody('test123')
                 ->setSound('default');
 
             $dataBuilder = new PayloadDataBuilder();
@@ -139,7 +145,11 @@ class NotificationFCM
             return $downstreamResponse;
 
         } catch (\Exception $messagingException) {
-              error_log('FCM notifications exception  ::::::::::::::::::::::::::::::::: '.$messagingException->getMessage());
+            dd($messagingException);
+            error_log($messagingException);
+            error_log(
+                'FCM notifications exception  ::::::::::::::::::::::::::::::::: ' . $messagingException->getMessage()
+            );
         }
     }
 }

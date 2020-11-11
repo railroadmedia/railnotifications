@@ -115,6 +115,7 @@ class NotificationFCM
                 'image' => $linkedContent['author']->getAvatar(),
                 'uri' => $linkedContent['content']['url'],
                 'commentId' => $linkedContent['content']['commentId'],
+                'type' => $notification->getType()
             ];
 
             if (array_key_exists('lesson', $linkedContent['content'])) {

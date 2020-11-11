@@ -8,6 +8,7 @@ use Railroad\Railnotifications\Contracts\ContentProviderInterface;
 use Railroad\Railnotifications\Contracts\RailforumProviderInterface;
 use Railroad\Railnotifications\Contracts\UserProviderInterface;
 use Railroad\Railnotifications\Entities\Notification;
+use Railroad\Railnotifications\Services\NotificationService;
 
 class NotificationsTransformer extends TransformerAbstract
 {
@@ -65,6 +66,19 @@ class NotificationsTransformer extends TransformerAbstract
                 $notification->getUpdatedAt()
                     ->toDateTimeString() : null,
         ];
+
+        if (in_array(
+            $notification->getType(),
+            [
+                Notification::TYPE_FORUM_POST_LIKED,
+                Notification::TYPE_FORUM_POST_REPLY,
+                Notification::TYPE_FORUM_POST_IN_FOLLOWED_THREAD
+            ]
+        )) {
+            $notificationService = app()->make(NotificationService::class);
+            $linkedContent = $notificationService->getLinkedContent($notification->getId());
+            $response['url'] =  $linkedContent['content']['url'];
+        }
 
         if ($this->getComment($notification)) {
             $response['comment'] = $this->getComment($notification);

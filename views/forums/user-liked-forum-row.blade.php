@@ -1,5 +1,5 @@
 <tr style="border-bottom:1px solid #d1d1d1">
-    <td style="width:80px;" valign="top">
+    <td style="max-width:80px;" valign="top">
         <img style="border-radius:0;" src="{{ cdn('icons/like.png') }}">
     </td>
     <td style="max-width:99%;padding:30px 15px;">

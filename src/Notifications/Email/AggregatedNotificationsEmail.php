@@ -45,6 +45,7 @@ class AggregatedNotificationsEmail extends Mailable
             ->with(
                 [
                     'notificationRows' => $this->renderedNotificationRows,
+                    'to' => $this->recipientEmail,
                 ]
             );
     }

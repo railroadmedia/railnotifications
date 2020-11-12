@@ -166,6 +166,7 @@ class NotificationService
                 'n.recipient IN (:recipientIdS)'
             )
             ->andWhere('n.brand = :brand')
+            ->orderBy('n.createdAt', 'desc')
             ->setParameter('brand', config('railnotifications.brand'))
             ->setParameter('recipientIdS', $ids)
             ->orderBy('n.createdAt', 'desc')
@@ -188,6 +189,7 @@ class NotificationService
                 'n.recipient = :recipientId'
             )
             ->andWhere('n.brand = :brand')
+            ->orderBy('n.createdAt', 'desc')
             ->setParameter('brand', config('railnotifications.brand'))
             ->setParameter('recipientId', $recipientId)
             ->setMaxResults($amount)
@@ -264,6 +266,7 @@ class NotificationService
                     $qb->expr()
                         ->isNull('n.readOn')
                 )
+                ->orderBy('n.createdAt', 'desc')
                 ->setParameter('recipientId', $recipientId)
                 ->andWhere('n.brand = :brand')
                 ->setParameter('brand', config('railnotifications.brand'));
@@ -404,7 +407,13 @@ class NotificationService
             $comment = $this->contentProvider->getCommentById($commentId);
             $commentText = $comment['comment'];
 
-            $author = $this->userProvider->getRailnotificationsUserById($comment['user_id']);
+            if ($notification->getType() == Notification::TYPE_LESSON_COMMENT_LIKED) {
+                $userIdToUse = $notification->getData()['likerId'] ?? $comment['user_id'];
+            } else {
+                $userIdToUse = $comment['user_id'];
+            }
+
+            $author = $this->userProvider->getRailnotificationsUserById($userIdToUse);
 
             if (($notification->getType() == Notification::TYPE_LESSON_COMMENT_REPLY)) {
                 $comment = $this->contentProvider->getCommentById($comment['parent_id']);

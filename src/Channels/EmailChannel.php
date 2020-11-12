@@ -47,21 +47,15 @@ class EmailChannel implements ChannelInterface
      */
     public function sendAggregated(array $notificationBroadcasts)
     {
-        $notificationsGroupedByType = [];
         $notifications = [];
 
         foreach ($notificationBroadcasts as $notificationBroadcast) {
             $notification = $notificationBroadcast->getNotification();
             $notifications[] = $notification;
-            $notificationsGroupedByType[$notification->getType()][] = $notification;
         }
 
-        foreach ($notificationsGroupedByType as $type => $notifications) {
-
-            $mailer = app()->make(NotificationMailer::class);
-
-            $mailer->send($notifications);
-        }
+        $mailer = app()->make(NotificationMailer::class);
+        $mailer->send($notifications);
 
         foreach ($notificationBroadcasts as $notificationBroadcast) {
             $this->notificationBroadcastService->markSucceeded($notificationBroadcast->getId());

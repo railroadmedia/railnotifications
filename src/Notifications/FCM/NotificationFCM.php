@@ -107,7 +107,7 @@ class NotificationFCM
             $optionBuilder->setTimeToLive(60 * 20);
 
             $notificationBuilder = new PayloadNotificationBuilder($fcmTitle);
-            $notificationBuilder->setBody('test123')
+            $notificationBuilder->setBody($fcmMessage)
                 ->setSound('default');
 
             $dataBuilder = new PayloadDataBuilder();

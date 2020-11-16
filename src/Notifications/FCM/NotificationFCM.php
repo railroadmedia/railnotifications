@@ -73,30 +73,29 @@ class NotificationFCM
 
             switch ($notification->getType()) {
                 case Notification::TYPE_FORUM_POST_IN_FOLLOWED_THREAD:
-                    $fcmTitle = $linkedContent['author']->getDisplayName() . ' posted in a thread you follow.';
+                    $fcmTitle = $linkedContent['author']->getDisplayName() . ' posted in a forum thread you follow';
                     break;
                 case Notification::TYPE_FORUM_POST_REPLY:
-                    $fcmTitle = $linkedContent['author']->getDisplayName() . ' replied to your post.';
+                    $fcmTitle = $linkedContent['author']->getDisplayName() . ' replied to your forum thread';
                     break;
                 case Notification::TYPE_FORUM_POST_LIKED:
-                    $fcmTitle = 'People liked your post.';
+                    $fcmTitle = $linkedContent['author']->getDisplayName() . ' liked your forum post';
                     break;
                 case Notification::TYPE_LESSON_COMMENT_REPLY:
-                    $fcmTitle = $linkedContent['author']->getDisplayName() . ' replied to your comment.';
+                    $fcmTitle = $linkedContent['author']->getDisplayName() . ' replied to your lesson comment';
                     break;
                 case Notification::TYPE_LESSON_COMMENT_LIKED:
-                    $fcmTitle = $linkedContent['author']->getDisplayName() . ' people liked to your comment.';
+                    $fcmTitle = $linkedContent['author']->getDisplayName() . ' liked your lesson comment';
                     break;
                 case Notification::TYPE_NEW_CONTENT_RELEASES:
-                    $fcmTitle = 'New content released.';
+                    $fcmTitle = 'New content released';
                     break;
                 default:
                     $fcmTitle = 'New notification';
                     break;
             }
 
-            $fcmMessage .= '                 
-            ' . mb_strimwidth(
+            $fcmMessage .= "\n" . mb_strimwidth(
                     htmlspecialchars(strip_tags($linkedContent['content']['comment'])),
                     0,
                     120,

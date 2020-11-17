@@ -120,7 +120,17 @@ class NotificationEventListener
         }
 
         foreach ($receivingUserIds as $receivingUserId) {
-            // create the notification
+            // create the notification if one doesnt already exist for the underlying action
+            $existingNotification = $this->notificationService->getWhereMatchingData(
+                $event->type,
+                $event->data,
+                $receivingUserId
+            );
+
+            if (!empty($existingNotification)) {
+                continue;
+            }
+
             $notification = $this->notificationService->create(
                 $event->type,
                 $event->data,

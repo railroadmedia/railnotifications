@@ -100,13 +100,13 @@ class NotificationService
 
         $existingNotification =
             $qb->select('n')
-                ->where('n.recipient IN (:recipientIdS)')
+                ->where('n.recipient = :recipientId')
                 ->andWhere('n.type = :type')
                 ->andWhere('n.data = :data')
                 ->andWhere('n.brand = :brand')
-                ->setParameter('recipientIdS', $recipientId)
+                ->setParameter('recipientId', $recipientId)
                 ->setParameter('type', $type)
-                ->setParameter('data', $data)
+                ->setParameter('data', json_encode($data))
                 ->setParameter('brand', config('railnotifications.brand'))
                 ->getQuery()
                 ->getOneOrNullResult();
@@ -125,6 +125,32 @@ class NotificationService
         } else {
             return $this->create($type, $data, $recipientId);
         }
+    }
+
+    /**
+     * @param string $type
+     * @param array $data
+     * @param int $recipientId
+     * @return mixed|Notification
+     * @throws \Doctrine\ORM\NonUniqueResultException
+     * @throws \Doctrine\ORM\ORMException
+     * @throws \Doctrine\ORM\OptimisticLockException
+     */
+    public function getWhereMatchingData(string $type, array $data, int $recipientId)
+    {
+        $qb = $this->notificationRepository->createQueryBuilder('n');
+
+        return $qb->select('n')
+            ->where('n.recipient = :recipientId')
+            ->andWhere('n.type = :type')
+            ->andWhere('n.data = :data')
+            ->andWhere('n.brand = :brand')
+            ->setParameter('recipientId', $recipientId)
+            ->setParameter('type', $type)
+            ->setParameter('data', json_encode($data))
+            ->setParameter('brand', config('railnotifications.brand'))
+            ->getQuery()
+            ->getOneOrNullResult();
     }
 
     /**

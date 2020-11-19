@@ -217,8 +217,6 @@ class NotificationFCM
                     $this->userProvider->updateUserFirebaseToken($receivingUser->getId(), $oldToken, $newToken);
                 }
 
-                dd($downstreamResponse);
-
                 return $downstreamResponse;
             }
 

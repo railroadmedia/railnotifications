@@ -3,6 +3,8 @@
 namespace Railroad\Railnotifications\Services;
 
 use Carbon\Carbon;
+use DOMDocument;
+use DOMXPath;
 use FCM;
 use Railroad\Railnotifications\Contracts\ContentProviderInterface;
 use Railroad\Railnotifications\Contracts\RailforumProviderInterface;
@@ -479,5 +481,64 @@ class NotificationService
         }
 
         return $results;
+    }
+
+    /**
+     * Removes blockquote html entities, other bad html, excessive new lines, html special chars, etc. Also limits
+     * string to a specific size.
+     * This should used for all notification content sent out.
+     *
+     * @param $string
+     * @param int $maxLength
+     * @return string|string[]|null
+     */
+    public static function cleanStringForWebNotification($string, $maxLength = 200)
+    {
+        // remove any block quotes
+        $doc = new DOMDocument();
+        $doc->loadHTML($string);
+
+        $xpath = new DOMXPath($doc);
+
+        foreach ($xpath->query('//blockquote') as $node) {
+            $node->parentNode->removeChild($node);
+        }
+
+        preg_match("/<body[^>]*>(.*?)<\/body>/is", $doc->saveHTML(), $matches);
+
+        $string = $matches[1];
+
+        // remove bad html tags and other html special characters
+        $string = htmlentities($string, null, 'utf-8');
+        $string = html_entity_decode($string);
+        $string = str_replace("&nbsp;", "", $string);
+        $string = strip_tags($string, '<p><br>');
+        $string = mb_strimwidth($string, 0, $maxLength, "...");
+        $string = trim($string);
+        $string = str_replace(array("\n", "\r"), ' ', $string);;
+
+        // remove empty tags
+        $pattern = "/<p[^>]*><\\/p[^>]*>/";
+        $string = preg_replace($pattern, '', $string);
+
+        return $string;
+    }
+
+    /**
+     * Removes everything that cleanStringForWebNotification does but removes some extra stuff as well such as all html
+     * tags since they are not supported on mobile push notifications.
+     *
+     * @param $string
+     * @param int $maxLength
+     * @return string|string[]|null
+     */
+    public static function cleanStringForMobileNotification($string, $maxLength = 200)
+    {
+        $string = self::cleanStringForWebNotification($string, $maxLength = 120);
+
+        $string = strip_tags($string);
+        $string = htmlspecialchars_decode($string);
+
+        return $string;
     }
 }

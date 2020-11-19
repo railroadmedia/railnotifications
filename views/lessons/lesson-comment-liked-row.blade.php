@@ -5,7 +5,7 @@
     <td style="max-width:99%;padding:30px 15px;">
         <h1>{{ explode('@', $displayName)[0] }} liked to your lesson comment.</h1>
         <h2>{{ $title }}</h2>
-        <p>{{ mb_strimwidth(htmlspecialchars(strip_tags($content)), 0, 250, "...") }}</p>
+        <p>{!! $content !!}</p>
         <a href="{{ $contentUrl }}">
             View Comment
         </a>

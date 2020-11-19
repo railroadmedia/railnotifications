@@ -2,6 +2,7 @@
 
 namespace Railroad\Railnotifications\Listeners;
 
+use App\Notifications\NotificationServiceProvider;
 use Doctrine\ORM\NonUniqueResultException;
 use Doctrine\ORM\OptimisticLockException;
 use Doctrine\ORM\ORMException;
@@ -15,6 +16,7 @@ use Railroad\Railnotifications\Exceptions\BroadcastNotificationFailure;
 use Railroad\Railnotifications\Services\NotificationBroadcastService;
 use Railroad\Railnotifications\Services\NotificationService;
 use Railroad\Railnotifications\Services\NotificationSettingsService;
+use Symfony\Component\DomCrawler\Crawler;
 
 class NotificationEventListener
 {
@@ -95,11 +97,33 @@ class NotificationEventListener
                 // rely on the 'post in followed thread' notification for this use case since then users can still
                 // unfollow their own threads if they wish to stop receiving notifications. - Caleb Nov 2020
 
-//            case Notification::TYPE_FORUM_POST_REPLY:
-//                $post = $this->railforumProvider->getPostById($event->data['postId']);
-//                $thread = $this->railforumProvider->getThreadById($post->thread_id);
-//                $receivingUserIds = ($thread['author_id'] != $post['author_id']) ? [$thread['author_id']] : [];
-//                break;
+            case Notification::TYPE_FORUM_POST_REPLY:
+                $post = $this->railforumProvider->getPostById($event->data['postId']);
+
+                $crawler = new Crawler($post['content']);
+                $postIdSpans = $crawler->filter('.post-id');
+
+                $postIds = [];
+
+                foreach ($postIdSpans as $postIdSpan) {
+                    $postIds[] = (integer)$postIdSpan->textContent;
+                }
+
+                $receivingUserIds = [];
+
+                // if this post is a reply create a notification for the original author
+                foreach ($postIds as $postId) {
+                    $originalPost = $this->railforumProvider->getPostById($postId);
+
+                    // make sure the user has these notifications turned on
+                    if (in_array($originalPost['author_id'], $receivingUserIds) ||
+                        $originalPost['author_id'] == $post['author_id']) {
+                        continue;
+                    }
+
+                    $receivingUserIds[] = $originalPost['author_id'];
+                }
+                break;
 
             case Notification::TYPE_LESSON_COMMENT_REPLY:
                 $comment = $this->contentProvider->getCommentById($event->data['commentId']);

@@ -6,7 +6,7 @@
 
         <h1>{{ $totalLikes == 1? $totalLikes : $totalLikes . ' people'  }} liked your forum post.</h1>
         <h2>{{ $title }}</h2>
-        <p>{{ mb_strimwidth(htmlspecialchars(strip_tags($content)), 0, 250, "...") }}</p>
+        <p>{!! $content !!}</p>
         <a href="{{ $contentUrl }}">
             View Post
         </a>

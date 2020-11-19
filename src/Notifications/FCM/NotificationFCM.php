@@ -76,7 +76,7 @@ class NotificationFCM
                     $fcmTitle = $linkedContent['author']->getDisplayName() . ' posted in a forum thread you follow';
                     break;
                 case Notification::TYPE_FORUM_POST_REPLY:
-                    $fcmTitle = $linkedContent['author']->getDisplayName() . ' replied to your forum thread';
+                    $fcmTitle = $linkedContent['author']->getDisplayName() . ' replied to your forum post';
                     break;
                 case Notification::TYPE_FORUM_POST_LIKED:
                     $fcmTitle = $linkedContent['author']->getDisplayName() . ' liked your forum post';
@@ -95,12 +95,10 @@ class NotificationFCM
                     break;
             }
 
-            $fcmMessage .= "\n" . mb_strimwidth(
-                    htmlspecialchars(strip_tags($linkedContent['content']['comment'])),
-                    0,
-                    120,
-                    "..."
-                );
+            $linkedContent['content']['comment'] =
+                NotificationService::cleanStringForMobileNotification($linkedContent['content']['comment'], 120);
+
+            $fcmMessage .= "\n" . $linkedContent['content']['comment'];
 
             $optionBuilder = new OptionsBuilder();
             $optionBuilder->setTimeToLive(60 * 20);
@@ -111,7 +109,6 @@ class NotificationFCM
 
             $dataBuilder = new PayloadDataBuilder();
             $dataArray = [
-                'image' => $linkedContent['author']->getAvatar(),
                 'uri' => $linkedContent['content']['url'],
                 'commentId' => $linkedContent['content']['commentId'],
                 'type' => $notification->getType()
@@ -145,7 +142,87 @@ class NotificationFCM
             return $downstreamResponse;
 
         } catch (\Exception $messagingException) {
-            dd($messagingException);
+            error_log($messagingException);
+            error_log(
+                'FCM notifications exception  ::::::::::::::::::::::::::::::::: ' . $messagingException->getMessage()
+            );
+        }
+    }
+
+    /**
+     * @param $token
+     * @param $notification
+     * @return mixed
+     */
+    public function sendAggregated(array $notifications)
+    {
+        try {
+
+            $notificationsData = [];
+
+            foreach ($notifications as $notification) {
+                $receivingUser = $notification->getRecipient();
+
+                if (!isset($notificationsData[$receivingUser->getId()]['count'])) {
+                    $notificationsData[$receivingUser->getId()]['count'] = 0;
+                }
+
+                $notificationsData[$receivingUser->getId()]['count'] += 1;
+            }
+
+            foreach ($notificationsData as $userId => $notificationData) {
+                $firebaseTokens = $this->userProvider->getUserFirebaseTokens($userId);
+
+                $tokens = [];
+
+                foreach ($firebaseTokens as $firebaseToken) {
+                    $tokens[] = $firebaseToken->getToken();
+                }
+
+                if (empty($tokens)) {
+                    return null;
+                }
+
+                $fcmMessage = 'Tap here to view them.';
+
+                $optionBuilder = new OptionsBuilder();
+                $optionBuilder->setTimeToLive(60 * 20);
+
+                $notificationBuilder = new PayloadNotificationBuilder('Pianote - You have ' . $notificationData['count'] . ' new notifications.');
+                $notificationBuilder->setBody($fcmMessage)
+                    ->setSound('default');
+
+                $dataBuilder = new PayloadDataBuilder();
+                $dataArray = [
+                    'type' => 'aggregated',
+                    'mobile_app_url'=>  config('railnotifications.app_notifications_deep_link_url'),
+                    'uri'=>  config('railnotifications.app_notifications_deep_link_url'),
+                    'url'=>  config('railnotifications.app_notifications_deep_link_url'),
+                ];
+
+                $dataBuilder->addData($dataArray);
+
+                $option = $optionBuilder->build();
+                $notification = $notificationBuilder->build();
+                $data = $dataBuilder->build();
+
+                $downstreamResponse = FCM::sendTo($tokens, $option, $notification, $data);
+
+                $this->userProvider->deleteUserFirebaseTokens(
+                    $receivingUser->getId(),
+                    $downstreamResponse->tokensToDelete()
+                );
+
+                foreach ($downstreamResponse->tokensToModify() as $oldToken => $newToken) {
+                    $this->userProvider->updateUserFirebaseToken($receivingUser->getId(), $oldToken, $newToken);
+                }
+
+                dd($downstreamResponse);
+
+                return $downstreamResponse;
+            }
+
+        } catch (\Exception $messagingException) {
             error_log($messagingException);
             error_log(
                 'FCM notifications exception  ::::::::::::::::::::::::::::::::: ' . $messagingException->getMessage()

@@ -72,6 +72,12 @@ class NotificationMailer
                     break;
             }
 
+            // we need to remove any blockquotes from the html if there are any
+            if (!empty($linkedContent['content']['comment'])) {
+                $linkedContent['content']['comment'] =
+                    NotificationService::cleanStringForWebNotification($linkedContent['content']['comment']);
+            }
+
             $notificationsViews[$receivingUser->getEmail()][] = view(
                 $view,
                 [
@@ -101,7 +107,7 @@ class NotificationMailer
                         $subject = $displayName . ' posted in a forum thread you follow';
                         break;
                     case Notification::TYPE_FORUM_POST_REPLY:
-                        $subject = $displayName . ' replied to your forum thread';
+                        $subject = $displayName . ' replied to your forum post';
                         break;
                     case Notification::TYPE_FORUM_POST_LIKED:
                         $subject = $displayName . ' liked your forum post';

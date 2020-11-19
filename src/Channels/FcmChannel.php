@@ -49,6 +49,19 @@ class FcmChannel implements ChannelInterface
      */
     public function sendAggregated(array $notificationBroadcasts)
     {
+        $notifications = [];
 
+        foreach ($notificationBroadcasts as $notificationBroadcast) {
+            $notification = $notificationBroadcast->getNotification();
+            $notifications[] = $notification;
+        }
+
+        $fcm = app()->make(NotificationFCM::class);
+
+        $fcm->sendAggregated($notifications);
+
+        foreach ($notificationBroadcasts as $notificationBroadcast) {
+            $this->notificationBroadcastService->markSucceeded($notificationBroadcast->getId());
+        }
     }
 }

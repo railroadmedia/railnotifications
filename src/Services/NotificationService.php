@@ -452,6 +452,7 @@ class NotificationService
                 'lesson' => $lesson,
                 'title' => $lesson->fetch('fields.title'),
                 'url' => $lesson->fetch('url') . '?goToComment=' . $comment['id'],
+                'mobile_app_url' => $lesson->fetch('mobile_app_url') . '?goToComment=' . $comment['id'],
                 'comment' => $commentText,
                 'commentId' => $comment['id']
             ];

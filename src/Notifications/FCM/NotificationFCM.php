@@ -111,15 +111,15 @@ class NotificationFCM
             $dataArray = [
                 'uri' => $linkedContent['content']['url'],
                 'commentId' => $linkedContent['content']['commentId'],
-                'type' => $notification->getType()
+                'type' => $notification->getType(),
+                'mobile_app_url' => $linkedContent['content']['mobile_app_url'] ?? '',
             ];
 
             if (array_key_exists('lesson', $linkedContent['content'])) {
-                $dataArray['content_id'] =  $linkedContent['content']['lesson']['id'];
-                $dataArray['title'] =  json_encode($linkedContent['content']['lesson']->fetch('fields.title'));
-                $dataArray['url'] =  $linkedContent['content']['lesson']->fetch('url', '');
-                $dataArray['mobile_app_url'] =  $linkedContent['content']['lesson']->fetch('mobile_app_url', '');
-                $dataArray['thumbnail_url'] =  $linkedContent['content']['lesson']->fetch('data.thumbnail_url');
+                $dataArray['content_id'] = $linkedContent['content']['lesson']['id'];
+                $dataArray['title'] = json_encode($linkedContent['content']['lesson']->fetch('fields.title'));
+                $dataArray['url'] = $linkedContent['content']['lesson']->fetch('url', '');
+                $dataArray['thumbnail_url'] = $linkedContent['content']['lesson']->fetch('data.thumbnail_url');
             }
 
             $dataBuilder->addData($dataArray);
@@ -188,16 +188,19 @@ class NotificationFCM
                 $optionBuilder = new OptionsBuilder();
                 $optionBuilder->setTimeToLive(60 * 20);
 
-                $notificationBuilder = new PayloadNotificationBuilder('Pianote - You have ' . $notificationData['count'] . ' new notifications.');
+                $notificationBuilder =
+                    new PayloadNotificationBuilder(
+                        'Pianote - You have ' . $notificationData['count'] . ' new notifications.'
+                    );
                 $notificationBuilder->setBody($fcmMessage)
                     ->setSound('default');
 
                 $dataBuilder = new PayloadDataBuilder();
                 $dataArray = [
                     'type' => 'aggregated',
-                    'mobile_app_url'=>  config('railnotifications.app_notifications_deep_link_url'),
-                    'uri'=>  config('railnotifications.app_notifications_deep_link_url'),
-                    'url'=>  config('railnotifications.app_notifications_deep_link_url'),
+                    'mobile_app_url' => config('railnotifications.app_notifications_deep_link_url'),
+                    'uri' => config('railnotifications.app_notifications_deep_link_url'),
+                    'url' => config('railnotifications.app_notifications_deep_link_url'),
                 ];
 
                 $dataBuilder->addData($dataArray);

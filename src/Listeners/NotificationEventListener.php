@@ -188,7 +188,7 @@ class NotificationEventListener
         return $this->userNotificationSettingsService->getUserNotificationSettings(
                 $user->getId(),
                 NotificationSetting::NOTIFICATION_SETTINGS_NAME_NOTIFICATION_TYPE[$type]
-            ) ?? true;
+            ) ?? false;
     }
 
     /**

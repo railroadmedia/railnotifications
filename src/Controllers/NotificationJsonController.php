@@ -71,7 +71,7 @@ class NotificationJsonController extends Controller
                 ->setParameter('brand', config('railnotifications.brand'))
                 ->setParameter('recipientId', $userId)
                 ->setMaxResults($request->get('limit', 10))
-                ->setFirstResult($request->get('page', 0))
+                ->setFirstResult($request->get('page', 1) - 1)
                 ->orderBy('n.createdAt', 'desc');
 
         return ResponseService::notification(

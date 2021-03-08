@@ -92,10 +92,10 @@ class NotificationEventListener
                     array_diff(($threadFollowers) ? $threadFollowers->toArray() : [], [$post['author_id']]);
                 break;
 
-                // Disabling this since if a user creates a new thread, we automatically set it to followed for them.
-                // This means they get 2 duplicate notifications if someone posts in the thread. It's better to only
-                // rely on the 'post in followed thread' notification for this use case since then users can still
-                // unfollow their own threads if they wish to stop receiving notifications. - Caleb Nov 2020
+            // Disabling this since if a user creates a new thread, we automatically set it to followed for them.
+            // This means they get 2 duplicate notifications if someone posts in the thread. It's better to only
+            // rely on the 'post in followed thread' notification for this use case since then users can still
+            // unfollow their own threads if they wish to stop receiving notifications. - Caleb Nov 2020
 
             case Notification::TYPE_FORUM_POST_REPLY:
                 $post = $this->railforumProvider->getPostById($event->data['postId']);
@@ -200,19 +200,25 @@ class NotificationEventListener
     {
         $broadcastChannels = [];
 
-        if (empty($user->getNotificationsSummaryFrequencyMinutes()) &&
-            ($this->userNotificationSettingsService->getUserNotificationSettings(
-                    $user->getId(),
-                    NotificationSetting::SEND_EMAIL_NOTIF
-                ) ?? true)) {
-            $broadcastChannels[] = 'email';
-        }
-
         if ($this->userNotificationSettingsService->getUserNotificationSettings(
                 $user->getId(),
                 NotificationSetting::SEND_PUSH_NOTIF
             ) ?? true) {
             $broadcastChannels[] = 'fcm';
+        }
+
+        /**
+         * Users receive email notifications if SEND_EMAIL_NOTIF is true
+         * and have not received already push notification for same event
+         */
+        if (empty($user->getNotificationsSummaryFrequencyMinutes()) &&
+            (!in_array('fcm', $broadcastChannels) ||
+                (empty($this->userProvider->getUserFirebaseTokens($user->getId())))) &&
+            ($this->userNotificationSettingsService->getUserNotificationSettings(
+                    $user->getId(),
+                    NotificationSetting::SEND_EMAIL_NOTIF
+                ) ?? true)) {
+            $broadcastChannels[] = 'email';
         }
 
         return $broadcastChannels;

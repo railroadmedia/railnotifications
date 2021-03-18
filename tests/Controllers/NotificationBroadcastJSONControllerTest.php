@@ -49,6 +49,38 @@ class NotificationBroadcastJSONControllerTest extends TestCase
         );
     }
 
+    public function test_broadcast_disabled_in_global_config()
+    {
+        $recipient = $this->fakeUser();
+
+        config()->set('railnotifications.channel_notification_type_broadcast_toggles.fcm.forum post in followed thread', false);
+
+        $notification = $this->fakeNotification(['recipient_id' => $recipient['id'], 'type' => 'forum post in followed thread']);
+
+        $response = $this->call(
+            'PUT',
+            'railnotifications/broadcast',
+            [
+                'notification_id' => $notification['id'],
+                'channel' => 'fcm',
+            ]
+        );
+
+        $this->assertEquals(200, $response->getStatusCode());
+
+        $this->assertEquals(
+            [],
+            $response->decodeResponseJson()
+        );
+
+        $this->assertDatabaseMissing(
+            'notification_broadcasts',
+            [
+                'id' => 1,
+            ]
+        );
+    }
+
     public function test_show_existing_notification_broadcast()
     {
         $recipientInitial = $this->fakeUser();

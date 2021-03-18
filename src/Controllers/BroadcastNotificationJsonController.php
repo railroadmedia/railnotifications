@@ -40,7 +40,7 @@ class BroadcastNotificationJsonController extends Controller
 
     /**
      * @param Request $request
-     * @return Fractal
+     * @return \Illuminate\Http\JsonResponse|Fractal
      * @throws ORMException
      * @throws OptimisticLockException
      * @throws \Railroad\Railnotifications\Exceptions\BroadcastNotificationFailure
@@ -51,6 +51,10 @@ class BroadcastNotificationJsonController extends Controller
             $request->get('notification_id'),
             $request->get('channel')
         );
+
+        if (empty($notificationBroadcast)) {
+            return response()->json([]);
+        }
 
         return ResponseService::notificationBroadcast($notificationBroadcast);
     }

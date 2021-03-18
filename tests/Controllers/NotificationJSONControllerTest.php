@@ -3,7 +3,11 @@
 namespace Railroad\Railnotifications\Tests\Controllers;
 
 use Carbon\Carbon;
+use Railroad\Railnotifications\Contracts\ContentProviderInterface;
+use Railroad\Railnotifications\Contracts\RailforumProviderInterface;
 use Railroad\Railnotifications\Entities\Notification;
+use Railroad\Railnotifications\Tests\Fixtures\ContentClass;
+use Railroad\Railnotifications\Tests\Fixtures\ContentTransformer;
 use Railroad\Railnotifications\Tests\TestCase;
 
 class NotificationJSONControllerTest extends TestCase
@@ -42,6 +46,27 @@ class NotificationJSONControllerTest extends TestCase
 
             $notifications[] = $notification;
         }
+
+        $contentProviderMock = $this->createMock(ContentProviderInterface::class);
+
+        $contentProviderMock->method('getCommentById')->will($this->returnValue(
+                [
+                    'id' => 1,
+                    'content_id' => 2,
+                    'user_id' => $recipient['id'],
+                    'parent_id' => 4,
+                    'comment' => $this->faker->text,
+                ]));
+
+        $contentClassMock = $this->getMockBuilder(ContentClass::class)->setMethods(['fetch', 'offsetGet'])->getMock();
+        $contentClassMock->expects($this->any())
+            ->method('offsetGet')
+            ->will($this->returnValue(['mobile_app_url' => $this->faker->url]));
+
+        $contentProviderMock->method('getContentById')->will($this->returnValue($contentClassMock));
+        $contentProviderMock->method('getContentTransformer')->will($this->returnValue(new ContentTransformer()));
+
+        $this->app->instance(ContentProviderInterface::class, $contentProviderMock);
 
         $response = $this->call(
             'GET',

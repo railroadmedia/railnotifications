@@ -61,6 +61,26 @@ class NotificationBroadcastServiceTest extends TestCase
         );
     }
 
+    public function test_broadcast_type_disabled_in_global_config()
+    {
+        $recipient = $this->fakeUser();
+
+        $notification = $this->fakeNotification(['recipient_id' => $recipient['id'], 'type' => 'forum post in followed thread']);
+
+        config()->set('railnotifications.channel_notification_type_broadcast_toggles.example.forum post in followed thread', false);
+
+        $this->classBeingTested->broadcast($notification['id'], 'example');
+
+        $this->assertDatabaseMissing(
+            'notification_broadcasts',
+            [
+                'notification_id' => $notification['id'],
+                'status' => NotificationBroadcast::STATUS_SENT,
+                'broadcast_on' => Carbon::now(),
+            ]
+        );
+    }
+
     public function test_broadcast_exception_after_queue()
     {
         $this->expectException(BroadcastNotificationFailure::class);
@@ -111,6 +131,31 @@ class NotificationBroadcastServiceTest extends TestCase
 
         foreach ($notifications as $notification) {
             $this->assertDatabaseHas(
+                'notification_broadcasts',
+                [
+                    'notification_id' => $notification['id'],
+                    'status' => NotificationBroadcast::STATUS_SENT,
+                    'broadcast_on' => Carbon::now(),
+                ]
+            );
+        }
+    }
+
+    public function test_broadcast_aggregated_type_disabled_in_global_config()
+    {
+        $recipientId = rand();
+        $notifications = [];
+
+        for ($i = 0; $i < 3; $i++) {
+            $notifications[] = $this->fakeNotification(['recipient_id' => $recipientId, 'type' => 'forum post in followed thread']);
+        }
+
+        config()->set('railnotifications.channel_notification_type_broadcast_toggles.example.forum post in followed thread', false);
+
+        $this->classBeingTested->broadcastUnreadAggregated($recipientId, 'example');
+
+        foreach ($notifications as $notification) {
+            $this->assertDatabaseMissing(
                 'notification_broadcasts',
                 [
                     'notification_id' => $notification['id'],

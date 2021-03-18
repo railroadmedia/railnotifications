@@ -4,6 +4,7 @@ namespace Railroad\Railnotifications\Services;
 
 use Carbon\Carbon;
 use Railroad\Railnotifications\Channels\ChannelFactory;
+use Railroad\Railnotifications\Entities\Notification;
 use Railroad\Railnotifications\Entities\NotificationBroadcast;
 use Railroad\Railnotifications\Exceptions\BroadcastNotificationFailure;
 use Railroad\Railnotifications\Exceptions\RecipientNotificationBroadcastFailure;
@@ -61,10 +62,18 @@ class NotificationBroadcastService
      */
     public function broadcast(int $notificationId, string $channelName = '')
     {
+        /**
+         * @var $notification Notification
+         */
         $notification = $this->notificationService->get($notificationId);
 
         if (empty($notification)) {
             throw new BroadcastNotificationFailure($notificationId, 'Notification not found.');
+        }
+
+        // ensure this channel and notification type is enabled in the global config
+        if ((config('railnotifications.channel_notification_type_broadcast_toggles', [])[$channelName][$notification->getType()] ?? true) === false) {
+            return false;
         }
 
         $notificationBroadcast = new NotificationBroadcast();
@@ -109,7 +118,10 @@ class NotificationBroadcastService
         $groupId = bin2hex(openssl_random_pseudo_bytes(32));
 
         foreach ($notifications as $notification) {
-            if ($notification->getReadOn()) {
+            // ensure this channel and notification type is enabled in the global config
+            // and that is not read already
+            if ($notification->getReadOn() ||
+                (config('railnotifications.channel_notification_type_broadcast_toggles', [])[$channelName][$notification->getType()] ?? true) === false) {
                 continue;
             }
 

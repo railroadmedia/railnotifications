@@ -7,6 +7,35 @@ return [
         'fcm' => \Railroad\Railnotifications\Channels\FcmChannel::class,
     ],
 
+    // channel notification type settings, you can toggle notification broadcasts per type here
+    // for example if you want to turn off only 'forum-reply' notification broadcasts to the fcm channel it can be done
+    // here
+    // if a channel or notification type is not set here, it will default to ON
+    // current types are:
+    /*
+     * lesson comment liked
+     *  lesson comment reply
+     *  forum post reply
+     *  forum post in followed thread
+     *  forum post liked
+     */
+    'channel_notification_type_broadcast_toggles' => [
+        'fcm' => [
+            'lesson comment liked' => true,
+            'lesson comment reply' => true,
+            'forum post reply' => true,
+            'forum post in followed thread' => true,
+            'forum post liked' => true,
+        ],
+        'email' => [
+            'lesson comment liked' => true,
+            'lesson comment reply' => true,
+            'forum post reply' => true,
+            'forum post in followed thread' => true,
+            'forum post liked' => true,
+        ],
+    ],
+
     // brand
     'brand' => 'brand',
 

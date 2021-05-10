@@ -53,6 +53,12 @@ class NotificationSetting
     protected $settingValue;
 
     /**
+     * @ORM\Column(type="string", name="brand")
+     * @var string
+     */
+    protected $brand;
+
+    /**
      * @ORM\Column(type="railnotification_user", name="user_id")
      */
     protected $user;
@@ -99,6 +105,22 @@ class NotificationSetting
         $this->settingValue = $settingValue;
     }
 
+    /**
+     * @return string
+     */
+    public function getBrand()
+    : string
+    {
+        return $this->brand;
+    }
+
+    /**
+     * @param string $brand
+     */
+    public function setBrand(string $brand)
+    {
+        $this->brand = $brand;
+    }
     /**
      * @return User|null
      */

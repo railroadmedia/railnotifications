@@ -29,6 +29,7 @@ class ContentProvider implements ContentProviderInterface
     {
         return [
             'id' => rand(),
+            'comment' => 'aaaaa',
             'user_id' => 1,
             'parent_id' => rand(),
             'content_id' => rand(),

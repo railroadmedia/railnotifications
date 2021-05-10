@@ -57,6 +57,7 @@ class NotificationSettingsService
     {
         $notificationSetting = new NotificationSetting();
 
+        $notificationSetting->setBrand(config('railnotifications.brand'));
         $notificationSetting->setSettingName($settingName);
         $notificationSetting->setSettingValue($settingValue);
 
@@ -87,7 +88,9 @@ class NotificationSettingsService
             $qb->select('ns')
                 ->where('ns.user IN (:userIds)')
                 ->andWhere('ns.settingName = :settingName')
+                ->andWhere('ns.brand = :brand')
                 ->setParameter('userIds', $userId)
+                ->setParameter('brand', config('railnotifications.brand'))
                 ->setParameter('settingName', $settingName)
                 ->getQuery()
                 ->getOneOrNullResult();
@@ -95,6 +98,7 @@ class NotificationSettingsService
         if (!empty($existingNotificationSetting)) {
 
             $existingNotificationSetting->setSettingValue($settingValue);
+            $existingNotificationSetting->setBrand(config('railnotifications.brand'));
 
             $this->entityManager->persist($existingNotificationSetting);
             $this->entityManager->flush();

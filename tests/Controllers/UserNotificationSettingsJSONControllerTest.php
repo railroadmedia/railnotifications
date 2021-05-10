@@ -166,6 +166,7 @@ class UserNotificationSettingsJSONControllerTest extends TestCase
                 'setting_name' => $userNotificationSetting['setting_name'],
                 'setting_value' => $userNotificationSetting['setting_value'],
                 'user_id' => $user['id'],
+                'brand' => config('railnotifications.brand')
             ]
         );
 

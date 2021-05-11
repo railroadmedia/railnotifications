@@ -125,7 +125,13 @@ class NotificationsTransformer extends TransformerAbstract
             $commentId = $notification->getData()['commentId'];
             $comment = $contentProvider->getCommentById($commentId);
 
-            $author = $userProvider->getRailnotificationsUserById($comment['user_id']);
+            if ($notification->getType() == Notification::TYPE_LESSON_COMMENT_LIKED) {
+                $userIdToUse = $notification->getData()['likerId'] ?? $comment['user_id'];
+            } else {
+                $userIdToUse = $comment['user_id'];
+            }
+
+            $author = $userProvider->getRailnotificationsUserById($userIdToUse);
 
             return $this->item(
                 $author,

@@ -453,6 +453,7 @@ class NotificationService
                 'title' => $lesson->fetch('fields.title'),
                 'url' => $lesson->fetch('url') . '?goToComment=' . $comment['id'],
                 'mobile_app_url' => $lesson->fetch('mobile_app_url') . '?goToComment=' . $comment['id'],
+                'musora_api_mobile_app_url' => $lesson->fetch('musora_api_mobile_app_url') . '?goToComment=' . $comment['id'],
                 'comment' => $commentText,
                 'commentId' => $comment['id']
             ];

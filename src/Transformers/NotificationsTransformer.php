@@ -175,7 +175,7 @@ class NotificationsTransformer extends TransformerAbstract
 
         $notificationService = app()->make(NotificationService::class);
         $linkedContent = $notificationService->getLinkedContent($notification->getId());
-        $content['mobile_app_url'] = $linkedContent['content']['mobile_app_url'];
+        $content['new_mobile_app_url'] = $linkedContent['content']['mobile_app_url'];
 
         if ($content) {
             return $this->item(

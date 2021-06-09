@@ -467,6 +467,12 @@ class NotificationService
             $post = $this->railforumProvider->getPostById($notification->getData()['postId']);
 
             $thread = $this->railforumProvider->getThreadById($post['thread_id']);
+            $allPostIdsInThread = collect(
+                $this->railforumProvider->getAllPostIdsInThread($post['thread_id'])
+            )
+                ->pluck('id')
+                ->all();
+            $postPositionInThread = array_search($notification->getData()['postId'], $allPostIdsInThread);
 
             $thread['url'] = url()->route('forums.post.jump-to', $post['id']);
 
@@ -476,7 +482,9 @@ class NotificationService
                 'title' => $thread['title'],
                 'url' => $thread['url'],
                 'comment' => $post['content'],
-                'commentId' => $post['id']
+                'commentId' => $post['id'],
+                'threadId' => $thread['id'],
+                'page' => ceil(($postPositionInThread + 1) / 10),
             ];
 
             $results['author'] = $author;

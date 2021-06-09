@@ -78,6 +78,10 @@ class NotificationsTransformer extends TransformerAbstract
             $notificationService = app()->make(NotificationService::class);
             $linkedContent = $notificationService->getLinkedContent($notification->getId());
             $response['url'] =  $linkedContent['content']['url'];
+            $response['thread'] = [
+                'id' => $linkedContent['content']['threadId'],
+                'page'=> $linkedContent['content']['page'],
+            ];
         }
 
         if ($this->getComment($notification)) {

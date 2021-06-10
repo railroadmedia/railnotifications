@@ -160,7 +160,9 @@ class NotificationSettingsService
 
         $qb->select('ns')
             ->where('ns.user IN (:userIds)')
-            ->setParameter('userIds', $userId);
+            ->andWhere('ns.brand = :brand')
+            ->setParameter('userIds', $userId)
+        ->setParameter('brand', config('railnotifications.brand'));
 
         if ($settingName) {
             $qb->andWhere('ns.settingName = :settingName')

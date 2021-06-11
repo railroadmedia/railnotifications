@@ -485,6 +485,7 @@ class NotificationService
                 'commentId' => $post['id'],
                 'threadId' => $thread['id'],
                 'page' => ceil(($postPositionInThread + 1) / 10),
+                'mobile_app_url' => url()->route('forums.api.post.jump-to', $post['id'])
             ];
 
             $results['author'] = $author;

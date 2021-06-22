@@ -495,6 +495,10 @@ class NotificationService
      */
     public static function cleanStringForWebNotification($string, $maxLength = 200)
     {
+        if (empty($string)) {
+            return $string;
+        }
+
         // remove any block quotes
         $doc = new DOMDocument();
         $doc->loadHTML($string);

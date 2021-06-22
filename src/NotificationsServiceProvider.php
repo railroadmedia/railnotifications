@@ -3,6 +3,7 @@
 use Doctrine\Common\Annotations\AnnotationReader;
 use Doctrine\Common\Annotations\AnnotationRegistry;
 use Doctrine\Common\Annotations\CachedReader;
+use Doctrine\Common\Cache\PhpFileCache;
 use Doctrine\Common\Cache\RedisCache;
 use Doctrine\Common\EventManager;
 use Doctrine\Common\Persistence\Mapping\Driver\MappingDriverChain;
@@ -87,8 +88,12 @@ class NotificationsServiceProvider extends ServiceProvider
             config('railnotifications.redis_host'),
             config('railnotifications.redis_port')
         );
+
         $redisCache = new RedisCache();
         $redisCache->setRedis($redis);
+
+        // file cache
+        $phpFileCache = new PhpFileCache($proxyDir);
 
         // redis cache instance is referenced in laravel container to be reused when needed
         AnnotationRegistry::registerLoader('class_exists');
@@ -96,7 +101,7 @@ class NotificationsServiceProvider extends ServiceProvider
         $annotationReader = new AnnotationReader();
 
         $cachedAnnotationReader = new CachedReader(
-            $annotationReader, $redisCache
+            $annotationReader, $phpFileCache
         );
 
         $driverChain = new MappingDriverChain();
@@ -130,8 +135,8 @@ class NotificationsServiceProvider extends ServiceProvider
 
         $ormConfiguration = new Configuration();
 
-        $ormConfiguration->setMetadataCacheImpl($redisCache);
-        $ormConfiguration->setQueryCacheImpl($redisCache);
+        $ormConfiguration->setMetadataCacheImpl($phpFileCache);
+        $ormConfiguration->setQueryCacheImpl($phpFileCache);
         $ormConfiguration->setResultCacheImpl($redisCache);
         $ormConfiguration->setProxyDir($proxyDir);
         $ormConfiguration->setProxyNamespace('DoctrineProxies');

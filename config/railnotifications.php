@@ -43,7 +43,7 @@ return [
     'redis_host' => 'redis',
     'redis_port' => 6379,
 
-    'development_mode' => true,
+    'development_mode' => env('APP_DEBUG', false),
 
     // database
     'database_name' => 'mydb',
@@ -56,7 +56,6 @@ return [
     'database_connection_name' => 'mysql',
 
     'data_mode' => 'host',
-
 
     // entities
     'entities' => [

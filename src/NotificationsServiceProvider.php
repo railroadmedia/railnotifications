@@ -1,4 +1,5 @@
-<?php namespace Railroad\Railnotifications;
+<?php
+namespace Railroad\Railnotifications;
 
 use Doctrine\Common\Annotations\AnnotationReader;
 use Doctrine\Common\Annotations\AnnotationRegistry;
@@ -7,6 +8,8 @@ use Doctrine\Common\Cache\PhpFileCache;
 use Doctrine\Common\Cache\RedisCache;
 use Doctrine\Common\EventManager;
 use Doctrine\Common\Persistence\Mapping\Driver\MappingDriverChain;
+use Doctrine\Common\Proxy\AbstractProxyFactory;
+use Doctrine\DBAL\Types\Type;
 use Doctrine\ORM\Configuration;
 use Doctrine\ORM\Mapping\Driver\AnnotationDriver;
 use Doctrine\ORM\Mapping\UnderscoreNamingStrategy;
@@ -21,9 +24,8 @@ use Railroad\Doctrine\Types\Carbon\CarbonTimeType;
 use Railroad\Railnotifications\Events\NotificationBroadcast;
 use Railroad\Railnotifications\Listeners\NotificationEventListener;
 use Railroad\Railnotifications\Managers\RailnotificationsEntityManager;
-use Redis;
 use Railroad\Railnotifications\Types\UserType;
-use Doctrine\DBAL\Types\Type;
+use Redis;
 
 class NotificationsServiceProvider extends ServiceProvider
 {
@@ -37,28 +39,28 @@ class NotificationsServiceProvider extends ServiceProvider
     public function boot()
     {
         $this->listen = [
-            NotificationBroadcast::class => [NotificationEventListener::class . '@handle'],
+            NotificationBroadcast::class => [NotificationEventListener::class.'@handle'],
         ];
 
         parent::boot();
 
         // migrations: only run migrations if this is the master 'host' implementation
         if (config('railnotifications.data_mode') == 'host') {
-            $this->loadMigrationsFrom(__DIR__ . '/../migrations');
+            $this->loadMigrationsFrom(__DIR__.'/../migrations');
         }
 
         $this->publishes(
             [
-                __DIR__ . '/../config/railnotifications.php' => config_path('railnotifications.php'),
+                __DIR__.'/../config/railnotifications.php' => config_path('railnotifications.php'),
             ]
         );
 
         //load package routes file
-        $this->loadRoutesFrom(__DIR__ . '/../routes/routes.php');
-        $this->loadRoutesFrom(__DIR__ . '/../routes/api.php');
+        $this->loadRoutesFrom(__DIR__.'/../routes/routes.php');
+        $this->loadRoutesFrom(__DIR__.'/../routes/api.php');
 
         // views
-        $this->loadViewsFrom(__DIR__ . '/../views', 'railnotifications');
+        $this->loadViewsFrom(__DIR__.'/../views', 'railnotifications');
     }
 
     /**
@@ -75,11 +77,7 @@ class NotificationsServiceProvider extends ServiceProvider
         !Type::hasType(UserType::USER_TYPE) ? Type::addType(UserType::USER_TYPE, UserType::class) : null;
 
         // set proxy dir to temp folder on server
-        if (app()->runningUnitTests()) {
-            $proxyDir = sys_get_temp_dir();
-        } else {
-            $proxyDir = sys_get_temp_dir() . '/railroad/railnotifications/proxies';
-        }
+        $proxyDir = sys_get_temp_dir();
 
         // setup redis
         $redis = new Redis();
@@ -101,7 +99,7 @@ class NotificationsServiceProvider extends ServiceProvider
         $annotationReader = new AnnotationReader();
 
         $cachedAnnotationReader = new CachedReader(
-            $annotationReader, $phpFileCache
+            $annotationReader, $phpFileCache, config('railnotifications.development_mode', false)
         );
 
         $driverChain = new MappingDriverChain();
@@ -141,7 +139,8 @@ class NotificationsServiceProvider extends ServiceProvider
         $ormConfiguration->setProxyDir($proxyDir);
         $ormConfiguration->setProxyNamespace('DoctrineProxies');
         $ormConfiguration->setAutoGenerateProxyClasses(
-            config('railnotifications.development_mode')
+            config('railnotifications.development_mode') ? AbstractProxyFactory::AUTOGENERATE_ALWAYS :
+                AbstractProxyFactory::AUTOGENERATE_FILE_NOT_EXISTS
         );
         $ormConfiguration->setMetadataDriverImpl($driverChain);
         $ormConfiguration->setNamingStrategy(

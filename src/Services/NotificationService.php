@@ -453,6 +453,7 @@ class NotificationService
                 'title' => $lesson->fetch('fields.title'),
                 'url' => $lesson->fetch('url') . '?goToComment=' . $comment['id'],
                 'mobile_app_url' => $lesson->fetch('mobile_app_url') . '?goToComment=' . $comment['id'],
+                'musora_api_mobile_app_url' => $lesson->fetch('musora_api_mobile_app_url') . '?goToComment=' . $comment['id'],
                 'comment' => $commentText,
                 'commentId' => $comment['id']
             ];
@@ -466,6 +467,12 @@ class NotificationService
             $post = $this->railforumProvider->getPostById($notification->getData()['postId']);
 
             $thread = $this->railforumProvider->getThreadById($post['thread_id']);
+            $allPostIdsInThread = collect(
+                $this->railforumProvider->getAllPostIdsInThread($post['thread_id'])
+            )
+                ->pluck('id')
+                ->all();
+            $postPositionInThread = array_search($notification->getData()['postId'], $allPostIdsInThread);
 
             $thread['url'] = url()->route('forums.post.jump-to', $post['id']);
 
@@ -475,7 +482,10 @@ class NotificationService
                 'title' => $thread['title'],
                 'url' => $thread['url'],
                 'comment' => $post['content'],
-                'commentId' => $post['id']
+                'commentId' => $post['id'],
+                'threadId' => $thread['id'],
+                'page' => ceil(($postPositionInThread + 1) / 10),
+                'mobile_app_url' => url()->route('forums.api.post.jump-to', $post['id'])
             ];
 
             $results['author'] = $author;

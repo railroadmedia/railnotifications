@@ -78,6 +78,10 @@ class NotificationsTransformer extends TransformerAbstract
             $notificationService = app()->make(NotificationService::class);
             $linkedContent = $notificationService->getLinkedContent($notification->getId());
             $response['url'] =  $linkedContent['content']['url'];
+            $response['thread'] = [
+                'id' => $linkedContent['content']['threadId'],
+                'page'=> $linkedContent['content']['page'],
+            ];
         }
 
         if ($this->getComment($notification)) {
@@ -125,7 +129,13 @@ class NotificationsTransformer extends TransformerAbstract
             $commentId = $notification->getData()['commentId'];
             $comment = $contentProvider->getCommentById($commentId);
 
-            $author = $userProvider->getRailnotificationsUserById($comment['user_id']);
+            if ($notification->getType() == Notification::TYPE_LESSON_COMMENT_LIKED) {
+                $userIdToUse = $notification->getData()['likerId'] ?? $comment['user_id'];
+            } else {
+                $userIdToUse = $comment['user_id'];
+            }
+
+            $author = $userProvider->getRailnotificationsUserById($userIdToUse);
 
             return $this->item(
                 $author,
@@ -175,7 +185,8 @@ class NotificationsTransformer extends TransformerAbstract
 
         $notificationService = app()->make(NotificationService::class);
         $linkedContent = $notificationService->getLinkedContent($notification->getId());
-        $content['mobile_app_url'] = $linkedContent['content']['mobile_app_url'];
+        $content['new_mobile_app_url'] = $linkedContent['content']['mobile_app_url'];
+        $content['new_musora_api_mobile_app_url'] = $linkedContent['content']['musora_api_mobile_app_url'];
 
         if ($content) {
             return $this->item(

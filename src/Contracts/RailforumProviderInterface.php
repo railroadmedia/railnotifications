@@ -18,4 +18,6 @@ interface RailforumProviderInterface
     public function getThreadById($id);
 
     public function getThreadFollowerIds($id);
+
+    public function getAllPostIdsInThread($id);
 }

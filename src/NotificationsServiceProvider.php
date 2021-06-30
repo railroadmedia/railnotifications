@@ -21,6 +21,7 @@ use Railroad\Doctrine\Types\Carbon\CarbonDateTimeTimezoneType;
 use Railroad\Doctrine\Types\Carbon\CarbonDateTimeType;
 use Railroad\Doctrine\Types\Carbon\CarbonDateType;
 use Railroad\Doctrine\Types\Carbon\CarbonTimeType;
+use Railroad\Railnotifications\Commands\SetUserNotificationSettings;
 use Railroad\Railnotifications\Events\NotificationBroadcast;
 use Railroad\Railnotifications\Listeners\NotificationEventListener;
 use Railroad\Railnotifications\Managers\RailnotificationsEntityManager;
@@ -61,6 +62,11 @@ class NotificationsServiceProvider extends ServiceProvider
 
         // views
         $this->loadViewsFrom(__DIR__.'/../views', 'railnotifications');
+
+        //artisan commands
+        $this->commands([
+            SetUserNotificationSettings::class
+        ]);
     }
 
     /**

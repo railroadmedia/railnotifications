@@ -70,6 +70,10 @@ class SetUserNotificationSettings extends Command
      */
     private function syncSettings(string $settingName)
     {
+        $this->databaseManager->connection('musora_mysql')
+            ->table('forum_categories')
+            ->truncate();
+
         $brands = ['pianote', 'drumeo', 'guitareo', 'singeo'];
         $sql = <<<'EOT'
 INSERT INTO %s (

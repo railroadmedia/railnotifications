@@ -113,6 +113,7 @@ class NotificationFCM
                 'uri' => $linkedContent['content']['url'],
                 'commentId' => $linkedContent['content']['commentId'],
                 'threadId' => $linkedContent['content']['threadId'] ?? '',
+                'threadTitle' => $linkedContent['content']['title'] ?? '',
                 'type' => $notification->getType(),
                 'mobile_app_url' => $linkedContent['content']['mobile_app_url'] ?? '',
             ];

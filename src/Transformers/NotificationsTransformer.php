@@ -84,8 +84,14 @@ class NotificationsTransformer extends TransformerAbstract
             ];
         }
 
-        if ($this->getComment($notification)) {
-            $response['comment'] = $this->getComment($notification);
+        if ($comment = $this->getComment($notification)) {
+            $comment['comment'] = strip_tags($this->getComment($notification)['comment']);
+            $replies = $comment['replies'] ?? [];
+            foreach ($replies as $index => $reply) {
+                $comment['replies'][$index]['comment'] =
+                    strip_tags(html_entity_decode($reply['comment']));
+            }
+            $response['comment'] = $comment;
         }
 
         return $response;

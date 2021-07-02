@@ -38,7 +38,8 @@ class NotificationFCM
         UserProviderInterface $userProvider,
         ContentProviderInterface $contentProvider,
         NotificationService $notificationService
-    ) {
+    )
+    {
         $this->userProvider = $userProvider;
         $this->contentProvider = $contentProvider;
         $this->notificationService = $notificationService;
@@ -111,6 +112,7 @@ class NotificationFCM
             $dataArray = [
                 'uri' => $linkedContent['content']['url'],
                 'commentId' => $linkedContent['content']['commentId'],
+                'threadId' => $linkedContent['content']['threadId'] ?? '',
                 'type' => $notification->getType(),
                 'mobile_app_url' => $linkedContent['content']['mobile_app_url'] ?? '',
             ];

@@ -50,7 +50,8 @@ class NotificationService
         UserProviderInterface $userProvider,
         ContentProviderInterface $contentProvider,
         RailforumProviderInterface $railforumProvider
-    ) {
+    )
+    {
         $this->entityManager = $entityManager;
         $this->userProvider = $userProvider;
         $this->contentProvider = $contentProvider;
@@ -476,7 +477,11 @@ class NotificationService
 
             $thread['url'] = url()->route('forums.post.jump-to', $post['id']);
 
-            $author = $this->userProvider->getRailnotificationsUserById($post['author_id']);
+            if ($notification->getType() == Notification::TYPE_FORUM_POST_LIKED) {
+                $author = $this->userProvider->getRailnotificationsUserById($post['latest_post_like']['liker_id']);
+            } else {
+                $author = $this->userProvider->getRailnotificationsUserById($post['author_id']);
+            }
 
             $results['content'] = [
                 'title' => $thread['title'],

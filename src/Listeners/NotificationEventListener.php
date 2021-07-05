@@ -2,7 +2,6 @@
 
 namespace Railroad\Railnotifications\Listeners;
 
-use App\Notifications\NotificationServiceProvider;
 use Doctrine\ORM\NonUniqueResultException;
 use Doctrine\ORM\OptimisticLockException;
 use Doctrine\ORM\ORMException;
@@ -67,7 +66,8 @@ class NotificationEventListener
         RailforumProviderInterface $railforumProvider,
         UserProviderInterface $userProvider,
         NotificationSettingsService $notificationSettingsService
-    ) {
+    )
+    {
         $this->notificationService = $notificationService;
         $this->notificationBroadcastService = $notificationBroadcastService;
         $this->contentProvider = $contentProvider;
@@ -124,7 +124,10 @@ class NotificationEventListener
                     $receivingUserIds[] = $originalPost['author_id'];
                 }
                 break;
-
+            case Notification::TYPE_FORUM_POST_LIKED:
+                $post = $this->railforumProvider->getPostById($event->data['postId']);
+                $receivingUserIds = [$post['author_id']];
+                break;
             case Notification::TYPE_LESSON_COMMENT_REPLY:
                 $comment = $this->contentProvider->getCommentById($event->data['commentId']);
                 $originalComment = null;

@@ -29,7 +29,8 @@ class NotificationMailer
     public function __construct(
         Mailer $mailer,
         NotificationService $notificationService
-    ) {
+    )
+    {
         $this->mailer = $mailer;
         $this->notificationService = $notificationService;
     }
@@ -87,6 +88,7 @@ class NotificationMailer
                     'avatarUrl' => $linkedContent['author']->getAvatar(),
                     'contentUrl' => $linkedContent['content']['url'],
                     'notificationType' => $notification->getType(),
+                    'totalLikes' => $linkedContent['content']['likeCount'] ?? 0
                 ]
             );
         }

@@ -468,13 +468,6 @@ class NotificationService
             $post = $this->railforumProvider->getPostById($notification->getData()['postId']);
 
             $thread = $this->railforumProvider->getThreadById($post['thread_id']);
-            $allPostIdsInThread = collect(
-                $this->railforumProvider->getAllPostIdsInThread($post['thread_id'])
-            )
-                ->pluck('id')
-                ->all();
-            $postPositionInThread = array_search($notification->getData()['postId'], $allPostIdsInThread);
-
             $thread['url'] = url()->route('forums.post.jump-to', $post['id']);
 
             if ($notification->getType() == Notification::TYPE_FORUM_POST_LIKED) {
@@ -488,9 +481,8 @@ class NotificationService
                 'url' => $thread['url'],
                 'comment' => $post['content'],
                 'commentId' => $post['id'],
-                'likeCount' => $post['like_count'],
+                'likeCount' => $post['like_count'] ?? 0,
                 'threadId' => $thread['id'],
-                'page' => ceil(($postPositionInThread + 1) / 10),
                 'mobile_app_url' => url()->route('forums.api.post.jump-to', $post['id'])
             ];
 

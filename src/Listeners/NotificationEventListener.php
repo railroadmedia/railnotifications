@@ -87,7 +87,8 @@ class NotificationEventListener
         switch ($event->type) {
             case Notification::TYPE_FORUM_POST_IN_FOLLOWED_THREAD:
                 $post = $this->railforumProvider->getPostById($event->data['postId']);
-                $threadFollowers = $this->railforumProvider->getThreadFollowerIds($post->thread_id);
+
+                $threadFollowers = $this->railforumProvider->getThreadFollowerIds($post['thread_id']);
                 $receivingUserIds =
                     array_diff(($threadFollowers) ? $threadFollowers->toArray() : [], [$post['author_id']]);
                 break;
@@ -169,7 +170,7 @@ class NotificationEventListener
             if ($user) {
                 $shouldReceiveNotification = $this->shouldReceiveNotification($user, $event->type);
 
-                if ($shouldReceiveNotification) {
+            if ($shouldReceiveNotification) {
                     $broadcastChannels = $this->getUserBroadcastChannels($user);
 
                     foreach ($broadcastChannels as $channel) {

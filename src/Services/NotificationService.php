@@ -3,14 +3,12 @@
 namespace Railroad\Railnotifications\Services;
 
 use Carbon\Carbon;
-use DOMDocument;
-use DOMXPath;
-use FCM;
 use Railroad\Railnotifications\Contracts\ContentProviderInterface;
 use Railroad\Railnotifications\Contracts\RailforumProviderInterface;
 use Railroad\Railnotifications\Contracts\UserProviderInterface;
 use Railroad\Railnotifications\Entities\Notification;
 use Railroad\Railnotifications\Managers\RailnotificationsEntityManager;
+use Throwable;
 
 class NotificationService
 {
@@ -424,72 +422,77 @@ class NotificationService
      */
     public function getLinkedContent($notificationId)
     {
-        $notification = $this->get($notificationId);
+        try {
+            $notification = $this->get($notificationId);
 
-        $results['notificationType'] = config('railnotifications.mapping_types')[$notification->getType()];
+            $results = [];
+            $results['notificationType'] = config('railnotifications.mapping_types')[$notification->getType()];
 
-        if ($notification->getType() == Notification::TYPE_LESSON_COMMENT_LIKED ||
-            $notification->getType() == Notification::TYPE_LESSON_COMMENT_REPLY) {
+            if ($notification->getType() == Notification::TYPE_LESSON_COMMENT_LIKED ||
+                $notification->getType() == Notification::TYPE_LESSON_COMMENT_REPLY) {
 
-            $commentId = $notification->getData()['commentId'];
+                $commentId = $notification->getData()['commentId'];
 
-            $comment = $this->contentProvider->getCommentById($commentId);
-            $commentText = $comment['comment'];
+                $comment = $this->contentProvider->getCommentById($commentId);
+                $commentText = $comment['comment'];
 
-            if ($notification->getType() == Notification::TYPE_LESSON_COMMENT_LIKED) {
-                $userIdToUse = $notification->getData()['likerId'] ?? $comment['user_id'];
-            } else {
-                $userIdToUse = $comment['user_id'];
+                if ($notification->getType() == Notification::TYPE_LESSON_COMMENT_LIKED) {
+                    $userIdToUse = $notification->getData()['likerId'] ?? $comment['user_id'];
+                } else {
+                    $userIdToUse = $comment['user_id'];
+                }
+
+                $author = $this->userProvider->getRailnotificationsUserById($userIdToUse);
+
+                if (($notification->getType() == Notification::TYPE_LESSON_COMMENT_REPLY)) {
+                    $comment = $this->contentProvider->getCommentById($comment['parent_id']);
+                }
+                $lesson = $this->contentProvider->getContentById($comment['content_id']);
+
+                $results['content'] = [
+                    'lesson' => $lesson,
+                    'title' => $lesson->fetch('fields.title'),
+                    'url' => $lesson->fetch('url') . '?goToComment=' . $comment['id'],
+                    'mobile_app_url' => $lesson->fetch('mobile_app_url') . '?goToComment=' . $comment['id'],
+                    'musora_api_mobile_app_url' => $lesson->fetch('musora_api_mobile_app_url') . '?goToComment=' . $comment['id'],
+                    'comment' => $commentText,
+                    'commentId' => $comment['id']
+                ];
+
+                $results['author'] = $author;
+
+            } elseif ($notification->getType() == Notification::TYPE_FORUM_POST_IN_FOLLOWED_THREAD ||
+                $notification->getType() == Notification::TYPE_FORUM_POST_REPLY ||
+                $notification->getType() == Notification::TYPE_FORUM_POST_LIKED) {
+
+                $post = $this->railforumProvider->getPostById($notification->getData()['postId']);
+
+                $thread = $this->railforumProvider->getThreadById($post['thread_id']);
+                $thread['url'] = url()->route('forums.post.jump-to', $post['id']);
+
+                if ($notification->getType() == Notification::TYPE_FORUM_POST_LIKED) {
+                    $author = $this->userProvider->getRailnotificationsUserById($post['latest_post_like']['liker_id']);
+                } else {
+                    $author = $this->userProvider->getRailnotificationsUserById($post['author_id']);
+                }
+
+                $results['content'] = [
+                    'title' => $thread['title'],
+                    'url' => $thread['url'],
+                    'comment' => $post['content'],
+                    'commentId' => $post['id'],
+                    'likeCount' => $post['like_count'] ?? 0,
+                    'threadId' => $thread['id'],
+                    'mobile_app_url' => url()->route('forums.api.post.jump-to', $post['id'])
+                ];
+
+                $results['author'] = $author;
             }
 
-            $author = $this->userProvider->getRailnotificationsUserById($userIdToUse);
-
-            if (($notification->getType() == Notification::TYPE_LESSON_COMMENT_REPLY)) {
-                $comment = $this->contentProvider->getCommentById($comment['parent_id']);
-            }
-            $lesson = $this->contentProvider->getContentById($comment['content_id']);
-
-            $results['content'] = [
-                'lesson' => $lesson,
-                'title' => $lesson->fetch('fields.title'),
-                'url' => $lesson->fetch('url') . '?goToComment=' . $comment['id'],
-                'mobile_app_url' => $lesson->fetch('mobile_app_url') . '?goToComment=' . $comment['id'],
-                'musora_api_mobile_app_url' => $lesson->fetch('musora_api_mobile_app_url') . '?goToComment=' . $comment['id'],
-                'comment' => $commentText,
-                'commentId' => $comment['id']
-            ];
-
-            $results['author'] = $author;
-
-        } elseif ($notification->getType() == Notification::TYPE_FORUM_POST_IN_FOLLOWED_THREAD ||
-            $notification->getType() == Notification::TYPE_FORUM_POST_REPLY ||
-            $notification->getType() == Notification::TYPE_FORUM_POST_LIKED) {
-
-            $post = $this->railforumProvider->getPostById($notification->getData()['postId']);
-
-            $thread = $this->railforumProvider->getThreadById($post['thread_id']);
-            $thread['url'] = url()->route('forums.post.jump-to', $post['id']);
-
-            if ($notification->getType() == Notification::TYPE_FORUM_POST_LIKED) {
-                $author = $this->userProvider->getRailnotificationsUserById($post['latest_post_like']['liker_id']);
-            } else {
-                $author = $this->userProvider->getRailnotificationsUserById($post['author_id']);
-            }
-
-            $results['content'] = [
-                'title' => $thread['title'],
-                'url' => $thread['url'],
-                'comment' => $post['content'],
-                'commentId' => $post['id'],
-                'likeCount' => $post['like_count'] ?? 0,
-                'threadId' => $thread['id'],
-                'mobile_app_url' => url()->route('forums.api.post.jump-to', $post['id'])
-            ];
-
-            $results['author'] = $author;
+            return $results;
+        } catch (Throwable $exception) {
+            return [];
         }
-
-        return $results;
     }
 
     /**

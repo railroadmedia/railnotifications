@@ -3,6 +3,9 @@
 namespace Railroad\Railnotifications\Services;
 
 use Carbon\Carbon;
+use DOMDocument;
+use DOMXPath;
+use FCM;
 use Railroad\Railnotifications\Contracts\ContentProviderInterface;
 use Railroad\Railnotifications\Contracts\RailforumProviderInterface;
 use Railroad\Railnotifications\Contracts\UserProviderInterface;

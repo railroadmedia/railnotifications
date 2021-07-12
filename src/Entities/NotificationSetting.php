@@ -25,7 +25,7 @@ class NotificationSetting
     const NOTIFICATION_SETTINGS_NAME_NOTIFICATION_TYPE = [
         Notification::TYPE_LESSON_COMMENT_REPLY => 'notify_on_lesson_comment_reply',
         Notification::TYPE_LESSON_COMMENT_LIKED => 'notify_on_lesson_comment_like',
-        Notification::TYPE_FORUM_POST_REPLY => 'notify_on_forum_followed_thread_reply',
+        Notification::TYPE_FORUM_POST_REPLY => 'notify_on_post_in_followed_forum_thread',
         Notification::TYPE_FORUM_POST_LIKED => 'notify_on_forum_post_like',
         Notification::TYPE_FORUM_POST_IN_FOLLOWED_THREAD => 'notify_on_post_in_followed_forum_thread',
         Notification::TYPE_NEW_CONTENT_RELEASES => 'notify_on_new_content_releases',

@@ -268,5 +268,46 @@ class NotificationEventListener
             $user->getId()
         );
     }
+
+    /**
+     * @param $event
+     * @throws ORMException
+     * @throws OptimisticLockException
+     * @throws NonUniqueResultException
+     */
+    public function handleUserCreated($event)
+    {
+        $user = $event->getUser();
+
+        $this->userNotificationSettingsService->createOrUpdateWhereMatchingData(
+            NotificationSetting::NOTIFICATION_SETTINGS_NAME_NOTIFICATION_TYPE[Notification::TYPE_LESSON_COMMENT_LIKED],
+            $user->getNotifyOnLessonCommentLike(),
+            $user->getId()
+        );
+
+        $this->userNotificationSettingsService->createOrUpdateWhereMatchingData(
+            NotificationSetting::NOTIFICATION_SETTINGS_NAME_NOTIFICATION_TYPE[Notification::TYPE_LESSON_COMMENT_REPLY],
+            $user->getNotifyOnLessonCommentReply(),
+            $user->getId()
+        );
+
+        $this->userNotificationSettingsService->createOrUpdateWhereMatchingData(
+            NotificationSetting::NOTIFICATION_SETTINGS_NAME_NOTIFICATION_TYPE[Notification::TYPE_FORUM_POST_LIKED],
+            $user->getNotifyOnForumPostLike(),
+            $user->getId()
+        );
+
+        $this->userNotificationSettingsService->createOrUpdateWhereMatchingData(
+            NotificationSetting::NOTIFICATION_SETTINGS_NAME_NOTIFICATION_TYPE[Notification::TYPE_FORUM_POST_REPLY],
+            $user->getNotifyOnForumPostReply(),
+            $user->getId()
+        );
+
+        $this->userNotificationSettingsService->createOrUpdateWhereMatchingData(
+            NotificationSetting::NOTIFICATION_SETTINGS_NAME_NOTIFICATION_TYPE[Notification::TYPE_FORUM_POST_IN_FOLLOWED_THREAD],
+            $user->getNotifyOnForumFollowedThreadReply(),
+            $user->getId()
+        );
+    }
 }
 

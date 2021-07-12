@@ -80,7 +80,6 @@ class NotificationsTransformer extends TransformerAbstract
             $response['url'] =  $linkedContent['content']['url'];
             $response['thread'] = [
                 'id' => $linkedContent['content']['threadId'],
-                'page'=> $linkedContent['content']['page'],
                 'title' => $linkedContent['content']['title'],
             ];
         }

@@ -47,6 +47,10 @@ class NotificationMailer
 
             $linkedContent = $this->notificationService->getLinkedContent($notification->getId());
 
+            if(empty($linkedContent)){
+                continue;
+            }
+
             $receivingUser = $notification->getRecipient();
 
             switch ($notification->getType()) {

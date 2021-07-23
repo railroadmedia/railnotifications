@@ -514,18 +514,11 @@ class NotificationService
         }
 
         // remove any block quotes
-        $doc = new DOMDocument();
-        $doc->loadHTML($string);
-
-        $xpath = new DOMXPath($doc);
-
-        foreach ($xpath->query('//blockquote') as $node) {
-            $node->parentNode->removeChild($node);
-        }
-
-        preg_match("/<body[^>]*>(.*?)<\/body>/is", $doc->saveHTML(), $matches);
-
-        $string = $matches[1];
+        $string = preg_replace(
+            "~<blockquote(.*?)>(.*)</blockquote>~si",
+            "",
+            ' ' . $string . ' '
+        );
 
         // remove bad html tags and other html special characters
         $string = htmlentities($string, null, 'utf-8');
@@ -534,11 +527,16 @@ class NotificationService
         $string = strip_tags($string, '<p><br>');
         $string = mb_strimwidth($string, 0, $maxLength, "...");
         $string = trim($string);
-        $string = str_replace(array("\n", "\r"), ' ', $string);;
+        $string = str_replace(array("\n", "\r"), ' ', $string);
 
         // remove empty tags
         $pattern = "/<p[^>]*><\\/p[^>]*>/";
         $string = preg_replace($pattern, '', $string);
+        $string = preg_replace_callback("/<body[^>]*>(.*?)<\/body>/is",
+            function ($m) {
+                return $m;
+            },
+            $string);
 
         return $string;
     }

@@ -180,4 +180,12 @@ class Notification
         $this->brand = $brand;
     }
 
+    /**
+     * @return mixed|string
+     */
+    public function getNotificationType()
+    {
+        return config('railnotifications.mapping_types')[$this->getType()] ?? '';
+    }
+
 }

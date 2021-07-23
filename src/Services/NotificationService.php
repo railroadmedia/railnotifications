@@ -214,7 +214,7 @@ class NotificationService
     {
         $qb = $this->notificationRepository->createQueryBuilder('n');
 
-        return $qb->select('n')
+        $notifications = $qb->select('n')
             ->where(
                 'n.recipient = :recipientId'
             )
@@ -226,6 +226,28 @@ class NotificationService
             ->setFirstResult($skip)
             ->getQuery()
             ->getResult();
+
+        $results = [];
+
+        foreach ($notifications as $notification) {
+            $linkedContent = $this->getLinkedContent($notification->getId());
+            if (empty($linkedContent) || !($linkedContent['author'])) {
+                continue;
+            }
+
+            $notificationData = [
+                'id' => $notification->getId(),
+                'type' => $notification->getNotificationType(),
+                'createdOn' => $notification->getCreatedAt(),
+                'readOn' => $notification->getReadOn(),
+                'content' => $linkedContent['content'],
+                'author' => $linkedContent['author']
+            ];
+
+            $results[] = $notificationData;
+        }
+
+        return $results;
     }
 
     /**

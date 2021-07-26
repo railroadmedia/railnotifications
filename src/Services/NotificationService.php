@@ -69,7 +69,7 @@ class NotificationService
      * @throws \Doctrine\ORM\ORMException
      * @throws \Doctrine\ORM\OptimisticLockException
      */
-    public function create(string $type, array $data, int $recipientId)
+    public function create(string $type, array $data, int $recipientId, $subjectId = null)
     {
         $notification = new Notification();
 
@@ -82,6 +82,11 @@ class NotificationService
         $user = $this->userProvider->getRailnotificationsUserById($recipientId);
 
         $notification->setRecipient($user);
+
+        if($subjectId) {
+            $author = $this->userProvider->getRailnotificationsUserById($subjectId);
+            $notification->setSubject($author);
+        }
 
         $this->entityManager->persist($notification);
         $this->entityManager->flush();
@@ -241,7 +246,7 @@ class NotificationService
                 'createdOn' => $notification->getCreatedAt(),
                 'readOn' => $notification->getReadOn(),
                 'content' => $linkedContent['content'],
-                'author' => $linkedContent['author']
+                'author' => $notification->getSubject()
             ];
 
             $results[] = $notificationData;

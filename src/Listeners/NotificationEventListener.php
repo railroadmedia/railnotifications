@@ -84,10 +84,12 @@ class NotificationEventListener
      */
     public function handle(Event $event)
     {
+        $authorId = null;
+
         switch ($event->type) {
             case Notification::TYPE_FORUM_POST_IN_FOLLOWED_THREAD:
                 $post = $this->railforumProvider->getPostById($event->data['postId']);
-
+                $authorId = $post['author_id'];
                 $threadFollowers = $this->railforumProvider->getThreadFollowerIds($post['thread_id']);
                 $receivingUserIds =
                     array_diff(($threadFollowers) ? $threadFollowers->toArray() : [], [$post['author_id']]);
@@ -100,7 +102,7 @@ class NotificationEventListener
 
             case Notification::TYPE_FORUM_POST_REPLY:
                 $post = $this->railforumProvider->getPostById($event->data['postId']);
-
+                $authorId = $post['author_id'];
                 $crawler = new Crawler($post['content']);
                 $postIdSpans = $crawler->filter('.post-id');
 
@@ -127,10 +129,12 @@ class NotificationEventListener
                 break;
             case Notification::TYPE_FORUM_POST_LIKED:
                 $post = $this->railforumProvider->getPostById($event->data['postId']);
+                $authorId = $event->data['likerId'];
                 $receivingUserIds = [$post['author_id']];
                 break;
             case Notification::TYPE_LESSON_COMMENT_REPLY:
                 $comment = $this->contentProvider->getCommentById($event->data['commentId']);
+                $authorId = $comment['user_id'];
                 $originalComment = null;
                 if ($comment['parent_id']) {
                     $originalComment = $this->contentProvider->getCommentById(
@@ -141,6 +145,7 @@ class NotificationEventListener
                 break;
             case Notification::TYPE_LESSON_COMMENT_LIKED:
                 $comment = $this->contentProvider->getCommentById($event->data['commentId']);
+                $authorId = $event->data['likerId'];
                 $receivingUserIds = [$comment['user_id']];
                 break;
             default:
@@ -162,7 +167,8 @@ class NotificationEventListener
             $notification = $this->notificationService->create(
                 $event->type,
                 $event->data,
-                $receivingUserId
+                $receivingUserId,
+                $authorId
             );
 
             $user = $this->userProvider->getRailnotificationsUserById($receivingUserId);
@@ -170,7 +176,7 @@ class NotificationEventListener
             if ($user) {
                 $shouldReceiveNotification = $this->shouldReceiveNotification($user, $event->type);
 
-            if ($shouldReceiveNotification) {
+                if ($shouldReceiveNotification) {
                     $broadcastChannels = $this->getUserBroadcastChannels($user);
 
                     foreach ($broadcastChannels as $channel) {

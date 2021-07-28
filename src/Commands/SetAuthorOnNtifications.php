@@ -83,7 +83,7 @@ class SetAuthorOnNtifications extends Command
             ->table('notifications')
             ->where('type', '=', Notification::TYPE_FORUM_POST_REPLY)
             ->orderBy('id', 'desc')
-            ->chunk(
+            ->chunkById(
                 5000,
                 function (Collection $notifications) use ($databaseManager, $postRepo) {
 
@@ -113,16 +113,19 @@ class SetAuthorOnNtifications extends Command
                     }
 
                     $this->info('RAM usage: ' . round(memory_get_usage(true) / 1048576, 2));
-                    $this->info('Completed 1000 authors for '.Notification::TYPE_FORUM_POST_REPLY. ' current time' . Carbon::now()->toDateTimeString());
+                    $this->info('Completed 1000 authors for ' . Notification::TYPE_FORUM_POST_REPLY . ' current time' . Carbon::now()->toDateTimeString());
                 });
 
+        $i = 0;
         $this->databaseManager->connection('musora_mysql')
             ->table('notifications')
+            ->select(['id', 'data'])
             ->where('type', '=', Notification::TYPE_FORUM_POST_IN_FOLLOWED_THREAD)
+            ->whereNull('subject_id')
             ->orderBy('id', 'desc')
-            ->chunk(
-                5000,
-                function (Collection $notifications) use ($databaseManager, $postRepo) {
+            ->chunkById(
+                500,
+                function (Collection $notifications) use ($databaseManager, $postRepo, &$i) {
 
                     $notificationPosts = [];
 
@@ -131,9 +134,13 @@ class SetAuthorOnNtifications extends Command
 
                         $id = $data['postId'];
                         $notificationPosts[$notification->id] = $id;
+
+                        $i++;
+
                     }
 
                     $authorIds = $postRepo->getPostsAuthorIds((array_values($notificationPosts)));
+
 
                     try {
                         $q = "UPDATE notifications SET subject_id = CASE ";
@@ -144,15 +151,22 @@ class SetAuthorOnNtifications extends Command
                             }
                         }
                         $q .= "ELSE subject_id END ";
-                        $databaseManager->connection('musora_mysql')->statement($q);
-                    } catch (\Exception $e) {
 
+                        if ($databaseManager->connection('musora_mysql')->statement($q)) {
+
+                        } else {
+                            // dd($q);
+                        }
+                    } catch (\Exception $e) {
+//dd($e);
                     }
 
                     $this->info('RAM usage: ' . round(memory_get_usage(true) / 1048576, 2));
-                    $this->info('Completed 1000 authors for '.Notification::TYPE_FORUM_POST_IN_FOLLOWED_THREAD. ' current time ' . Carbon::now()->toDateTimeString());
-                });
+                    //$this->info('Completed 500 authors for '.Notification::TYPE_FORUM_POST_IN_FOLLOWED_THREAD. ' current time ' . Carbon::now()->toDateTimeString());
+                }
+            );
+        $this->info('Forum post in followed thread ->' . $i);
 
-        $this->info('Migration completed. ');
+        $this->info('Migration completed. ' . Carbon::now()->toDateTimeString());
     }
 }

@@ -246,7 +246,9 @@ class NotificationService
                 'createdOn' => $notification->getCreatedAt(),
                 'readOn' => $notification->getReadOn(),
                 'content' => $linkedContent['content'],
-                'author' => $notification->getSubject()
+                'authorId' => $notification->getAuthorId(),
+                'authorDisplayName' => $notification->getAuthorDisplayName(),
+                'authorAvatar' => $notification->getAuthorAvatar()
             ];
 
             $results[] = $notificationData;

@@ -72,6 +72,42 @@ class Notification
     protected $brand;
 
     /**
+     * @ORM\Column(type="integer")
+     * @var string
+     */
+    protected $authorId;
+
+    /**
+     * @ORM\Column(type="string")
+     * @var string
+     */
+    protected $authorDisplayName;
+
+    /**
+     * @ORM\Column(type="string")
+     * @var string
+     */
+    protected $authorAvatar;
+
+    /**
+     * @ORM\Column(type="string")
+     * @var string
+     */
+    protected $contentTitle;
+
+    /**
+     * @ORM\Column(type="string")
+     * @var string
+     */
+    protected $contentUrl;
+
+    /**
+     * @ORM\Column(type="string")
+     * @var string
+     */
+    protected $comment;
+
+    /**
      * @return int|null
      */
     public function getId()
@@ -178,6 +214,107 @@ class Notification
     public function setBrand(string $brand)
     {
         $this->brand = $brand;
+    }
+
+    /**
+     * @return integer
+     */
+    public function getAuthorId()
+    {
+        return $this->authorId;
+    }
+
+    /**
+     * @param int|null $authorId
+     */
+    public function setAuthorId(?int $authorId)
+    {
+        $this->authorId = $authorId;
+    }
+
+    /**
+     * @return string
+     */
+    public function getAuthorAvatar()
+    : string
+    {
+        return $this->authorAvatar;
+    }
+
+    /**
+     * @param string $authorAvatar
+     */
+    public function setAuthorAvatar(?string $authorAvatar)
+    {
+        $this->authorAvatar = $authorAvatar;
+    }
+
+    /**
+     * @return string
+     */
+    public function getAuthorDisplayName()
+    : string
+    {
+        return $this->authorDisplayName;
+    }
+
+    /**
+     * @param string $contentTitle
+     */
+    public function setContentTitle(?string $contentTitle)
+    {
+        $this->contentTitle = $contentTitle;
+    }
+
+    /**
+     * @return string
+     */
+    public function getContentUrl()
+    : string
+    {
+        return $this->contentUrl;
+    }
+
+    /**
+     * @param string $contentUrl
+     */
+    public function setContentUrl(?string $contentUrl)
+    {
+        $this->contentUrl = $contentUrl;
+    }
+
+    /**
+     * @return string
+     */
+    public function getComment()
+    : string
+    {
+        return $this->comment;
+    }
+
+    /**
+     * @param string $comment
+     */
+    public function setComment(?string $comment)
+    {
+        $this->comment = $comment;
+    }
+
+    /**
+     * @return string
+     */
+    public function getContentTitle()
+    : string
+    {
+        return $this->contentTitle;
+    }
+
+    /**
+     * @param string $authorDisplayName
+     */
+    public function setAuthorDisplayName(?string $authorDisplayName)
+    {
+        $this->authorDisplayName = $authorDisplayName;
     }
 
     /**

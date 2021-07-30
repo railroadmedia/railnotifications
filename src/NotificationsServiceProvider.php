@@ -66,8 +66,7 @@ class NotificationsServiceProvider extends ServiceProvider
 
         //artisan commands
         $this->commands([
-            SetUserNotificationSettings::class,
-            SetAuthorOnNtifications::class,
+            SetUserNotificationSettings::class
         ]);
     }
 

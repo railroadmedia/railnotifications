@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Database\DatabaseManager;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Railroad\Railforums\Repositories\PostRepository;
 use Railroad\Railnotifications\Entities\Notification;
 use Railroad\Railnotifications\Managers\RailnotificationsEntityManager;
@@ -79,49 +80,51 @@ class SetAuthorOnNtifications extends Command
         $databaseManager = $this->databaseManager;
         $postRepo = $this->postRepository;
 
-        $this->databaseManager->connection('musora_mysql')
-            ->table('notifications')
-            ->where('type', '=', Notification::TYPE_FORUM_POST_REPLY)
-            ->orderBy('id', 'desc')
-            ->chunkById(
-                5000,
-                function (Collection $notifications) use ($databaseManager, $postRepo) {
+        DB::disableQueryLog();
 
-                    $notificationPosts = [];
-
-                    foreach ($notifications as $notification) {
-                        $data = json_decode($notification->data, true);
-
-                        $id = $data['postId'];
-                        $notificationPosts[$notification->id] = $id;
-                    }
-
-                    $authorIds = $postRepo->getPostsAuthorIds((array_values($notificationPosts)));
-
-                    try {
-                        $q = "UPDATE notifications SET subject_id = CASE ";
-
-                        foreach ($notifications as $notification) {
-                            if (array_key_exists($notificationPosts[$notification->id], $authorIds)) {
-                                $q .= "WHEN id = " . $notification->id . " THEN '" . $authorIds[$notificationPosts[$notification->id]] . "' ";
-                            }
-                        }
-                        $q .= "ELSE subject_id END ";
-                        $databaseManager->connection('musora_mysql')->statement($q);
-                    } catch (\Exception $e) {
-
-                    }
-
-                    $this->info('RAM usage: ' . round(memory_get_usage(true) / 1048576, 2));
-                    $this->info('Completed 1000 authors for ' . Notification::TYPE_FORUM_POST_REPLY . ' current time' . Carbon::now()->toDateTimeString());
-                });
+//        $this->databaseManager->connection('musora_mysql')
+//            ->table('notifications')
+//            ->where('type', '=', Notification::TYPE_FORUM_POST_REPLY)
+//            ->orderBy('id', 'desc')
+//            ->chunkById(
+//                5000,
+//                function (Collection $notifications) use ($databaseManager, $postRepo) {
+//
+//                    $notificationPosts = [];
+//
+//                    foreach ($notifications as $notification) {
+//                        $data = json_decode($notification->data, true);
+//
+//                        $id = $data['postId'];
+//                        $notificationPosts[$notification->id] = $id;
+//                    }
+//
+//                    $authorIds = $postRepo->getPostsAuthorIds((array_values($notificationPosts)));
+//
+//                    try {
+//                        $q = "UPDATE notifications SET subject_id = CASE ";
+//
+//                        foreach ($notifications as $notification) {
+//                            if (array_key_exists($notificationPosts[$notification->id], $authorIds)) {
+//                                $q .= "WHEN id = " . $notification->id . " THEN '" . $authorIds[$notificationPosts[$notification->id]] . "' ";
+//                            }
+//                        }
+//                        $q .= "ELSE subject_id END ";
+//                        $databaseManager->connection('musora_mysql')->statement($q);
+//                    } catch (\Exception $e) {
+//
+//                    }
+//
+//                    $this->info('RAM usage: ' . round(memory_get_usage(true) / 1048576, 2));
+//                    $this->info('Completed 1000 authors for ' . Notification::TYPE_FORUM_POST_REPLY . ' current time' . Carbon::now()->toDateTimeString());
+//                });
 
         $i = 0;
         $this->databaseManager->connection('musora_mysql')
             ->table('notifications')
             ->select(['id', 'data'])
             ->where('type', '=', Notification::TYPE_FORUM_POST_IN_FOLLOWED_THREAD)
-            ->whereNull('subject_id')
+           // ->whereNull('subject_id')
             ->orderBy('id', 'desc')
             ->chunkById(
                 500,
@@ -138,9 +141,11 @@ class SetAuthorOnNtifications extends Command
                         $i++;
 
                     }
-
+                    /**
+                     * SELECT notifications.id, notifications.data, SUBSTR(notifications.data, 12, locate('"',notifications.data, 12)-12) FROM `notifications` WHERE notifications.type = 'forum post in followed thread';
+                     */
                     $authorIds = $postRepo->getPostsAuthorIds((array_values($notificationPosts)));
-
+$this->info(print_r($authorIds, true));
 
                     try {
                         $q = "UPDATE notifications SET subject_id = CASE ";
@@ -150,7 +155,7 @@ class SetAuthorOnNtifications extends Command
                                 $q .= "WHEN id = " . $notification->id . " THEN '" . $authorIds[$notificationPosts[$notification->id]] . "' ";
                             }
                         }
-                        $q .= "ELSE subject_id END ";
+                        $q .= "ELSE subject_id END  WHERE subject_id is null";
 
                         if ($databaseManager->connection('musora_mysql')->statement($q)) {
 
@@ -161,7 +166,7 @@ class SetAuthorOnNtifications extends Command
 //dd($e);
                     }
 
-                    $this->info('RAM usage: ' . round(memory_get_usage(true) / 1048576, 2));
+                    //$this->info('RAM usage: ' . round(memory_get_usage(true) / 1048576, 2));
                     //$this->info('Completed 500 authors for '.Notification::TYPE_FORUM_POST_IN_FOLLOWED_THREAD. ' current time ' . Carbon::now()->toDateTimeString());
                 }
             );

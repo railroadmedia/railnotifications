@@ -4,12 +4,10 @@ namespace Railroad\Railnotifications\Transformers;
 
 use League\Fractal\Resource\Item;
 use League\Fractal\TransformerAbstract;
-use Railroad\Railnotifications\Transformers\ArrayTransformer;
 use Railroad\Railnotifications\Contracts\ContentProviderInterface;
 use Railroad\Railnotifications\Contracts\RailforumProviderInterface;
 use Railroad\Railnotifications\Contracts\UserProviderInterface;
 use Railroad\Railnotifications\Entities\Notification;
-use Railroad\Railnotifications\Services\NotificationService;
 
 class NotificationsTransformer extends TransformerAbstract
 {
@@ -31,28 +29,12 @@ class NotificationsTransformer extends TransformerAbstract
             $defaultIncludes[] = 'sender';
         }
 
-//        if (in_array(
-//            $notification->getType(),
-//            [
-//                Notification::TYPE_LESSON_COMMENT_LIKED,
-//                Notification::TYPE_LESSON_COMMENT_REPLY,
-//                Notification::TYPE_FORUM_POST_LIKED,
-//                Notification::TYPE_FORUM_POST_REPLY,
-//            ]
-//        )) {
-//            $defaultIncludes[] = 'sender';
-//        }
-
-        if (in_array(
-            $notification->getType(),
-            [
+        if (in_array($notification->getType(), [
                 Notification::TYPE_LESSON_COMMENT_LIKED,
                 Notification::TYPE_LESSON_COMMENT_REPLY,
                 Notification::TYPE_NEW_CONTENT_RELEASES,
-            ]
-        )) {
+            ])) {
             $defaultIncludes[] = 'content';
-
         }
 
         $this->setDefaultIncludes($defaultIncludes);
@@ -72,20 +54,20 @@ class NotificationsTransformer extends TransformerAbstract
                     ->toDateTimeString() : null,
         ];
 
-        if (in_array(
-            $notification->getType(),
-            [
+        if (in_array($notification->getType(), [
                 Notification::TYPE_FORUM_POST_LIKED,
                 Notification::TYPE_FORUM_POST_REPLY,
-                Notification::TYPE_FORUM_POST_IN_FOLLOWED_THREAD
-            ]
-        )) {
-            $notificationService = app()->make(NotificationService::class);
-            $linkedContent = $notificationService->getLinkedContent($notification->getId());
-            $response['url'] =  $linkedContent['content']['url'];
+                Notification::TYPE_FORUM_POST_IN_FOLLOWED_THREAD,
+            ])) {
+
+            $forumProvider = app()->make(RailforumProviderInterface::class);
+            $post = $forumProvider->getPostById($notification->getData()['postId']);
+
+            $response['url'] = $notification->getContentUrl();
+
             $response['thread'] = [
-                'id' => $linkedContent['content']['threadId'],
-                'title' => $linkedContent['content']['title'],
+                'id' => $post['thread_id'],
+                'title' => $notification->getContentTitle(),
             ];
         }
 
@@ -93,8 +75,7 @@ class NotificationsTransformer extends TransformerAbstract
             $comment['comment'] = strip_tags($this->getComment($notification)['comment']);
             $replies = $comment['replies'] ?? [];
             foreach ($replies as $index => $reply) {
-                $comment['replies'][$index]['comment'] =
-                    strip_tags(html_entity_decode($reply['comment']));
+                $comment['replies'][$index]['comment'] = strip_tags(html_entity_decode($reply['comment']));
             }
             $response['comment'] = $comment;
         }
@@ -144,29 +125,18 @@ class NotificationsTransformer extends TransformerAbstract
      */
     public function includeContent(Notification $notification)
     {
-        $contentProvider = app()->make(ContentProviderInterface::class);
-        $contentId = $notification->getData()['contentId'] ?? null;
-        $commentId = $notification->getData()['commentId'] ?? null;
+        $content = [
+            'id' => $notification->getAuthorId(),
+            'url' => $notification->getContentUrl(),
+            'mobile_app_url' => $notification->getContentMobileAppUrl(),
+            'musora_api_mobile_app_url' => str_replace('api', 'musora-api', $notification->getContentMobileAppUrl()),
+        ];
 
-        if ($commentId) {
-            $comment = $contentProvider->getCommentById($commentId);
-            $contentId = $comment['content_id'];
-        }
-
-        $content = $contentProvider->getContentById($contentId);
-
-        $notificationService = app()->make(NotificationService::class);
-        $linkedContent = $notificationService->getLinkedContent($notification->getId());
-        $content['new_mobile_app_url'] = $linkedContent['content']['mobile_app_url'];
-        $content['new_musora_api_mobile_app_url'] = $linkedContent['content']['musora_api_mobile_app_url'];
-
-        if ($content) {
-            return $this->item(
-                $content,
-                $contentProvider->getContentTransformer(),
-                'content'
-            );
-        }
+        return $this->item(
+            $content,
+            new ArrayTransformer(),
+            'content'
+        );
     }
 
     /**

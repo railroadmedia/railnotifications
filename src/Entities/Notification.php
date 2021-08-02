@@ -108,6 +108,12 @@ class Notification
     protected $comment;
 
     /**
+     * @ORM\Column(type="string")
+     * @var string
+     */
+    protected $contentMobileAppUrl;
+
+    /**
      * @return int|null
      */
     public function getId()
@@ -236,7 +242,7 @@ class Notification
      * @return string
      */
     public function getAuthorAvatar()
-    : string
+    : ?string
     {
         return $this->authorAvatar;
     }
@@ -253,7 +259,7 @@ class Notification
      * @return string
      */
     public function getAuthorDisplayName()
-    : string
+    : ?string
     {
         return $this->authorDisplayName;
     }
@@ -270,7 +276,7 @@ class Notification
      * @return string
      */
     public function getContentUrl()
-    : string
+    : ?string
     {
         return $this->contentUrl;
     }
@@ -286,8 +292,25 @@ class Notification
     /**
      * @return string
      */
+    public function getContentMobileAppUrl()
+    : ?string
+    {
+        return $this->contentMobileAppUrl;
+    }
+
+    /**
+     * @param string $contentMobileAppUrl
+     */
+    public function setContentMobileAppUrl(?string $contentMobileAppUrl)
+    {
+        $this->contentMobileAppUrl = $contentMobileAppUrl;
+    }
+
+    /**
+     * @return string
+     */
     public function getComment()
-    : string
+    : ?string
     {
         return $this->comment;
     }
@@ -304,7 +327,7 @@ class Notification
      * @return string
      */
     public function getContentTitle()
-    : string
+    : ?string
     {
         return $this->contentTitle;
     }

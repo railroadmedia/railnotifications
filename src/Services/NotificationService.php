@@ -85,7 +85,11 @@ class NotificationService
 
         if($subjectId) {
             $author = $this->userProvider->getRailnotificationsUserById($subjectId);
+
             $notification->setSubject($author);
+            $notification->setAuthorAvatar($author->getAvatar());
+            $notification->setAuthorDisplayName($author->getDisplayName());
+            $notification->setAuthorId($author->getId());
         }
 
         $this->entityManager->persist($notification);

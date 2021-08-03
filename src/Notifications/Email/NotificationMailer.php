@@ -4,6 +4,7 @@ namespace Railroad\Railnotifications\Notifications\Email;
 
 use Illuminate\Contracts\Mail\Mailer;
 use Illuminate\View\View;
+use Railroad\Railnotifications\Contracts\RailforumProviderInterface;
 use Railroad\Railnotifications\Entities\Notification;
 use Railroad\Railnotifications\Services\NotificationService;
 use Throwable;
@@ -21,6 +22,11 @@ class NotificationMailer
     private $notificationService;
 
     /**
+     * @var RailforumProviderInterface
+     */
+    private $railforumProvider;
+
+    /**
      * NotificationMailer constructor.
      *
      * @param Mailer $mailer
@@ -28,11 +34,13 @@ class NotificationMailer
      */
     public function __construct(
         Mailer $mailer,
-        NotificationService $notificationService
+        NotificationService $notificationService,
+        RailforumProviderInterface $railforumProvider
     )
     {
         $this->mailer = $mailer;
         $this->notificationService = $notificationService;
+        $this->railforumProvider = $railforumProvider;
     }
 
     /**
@@ -45,11 +53,7 @@ class NotificationMailer
 
         foreach ($notifications as $notification) {
 
-            $linkedContent = $this->notificationService->getLinkedContent($notification->getId());
-
-            if(empty($linkedContent)){
-                continue;
-            }
+            $likeCount = 0;
 
             $receivingUser = $notification->getRecipient();
 
@@ -62,6 +66,9 @@ class NotificationMailer
                     break;
                 case Notification::TYPE_FORUM_POST_LIKED:
                     $view = 'railnotifications::forums.user-liked-forum-row';
+
+                    $post = $this->railforumProvider->getPostById($notification->getData()['postId']);
+                    $likeCount = $post['like_count'];
                     break;
                 case Notification::TYPE_LESSON_COMMENT_REPLY:
                     $view = 'railnotifications::lessons.lesson-comment-reply-posted-row';
@@ -77,22 +84,16 @@ class NotificationMailer
                     break;
             }
 
-            // we need to remove any blockquotes from the html if there are any
-            if (!empty($linkedContent['content']['comment'])) {
-                $linkedContent['content']['comment'] =
-                    NotificationService::cleanStringForWebNotification($linkedContent['content']['comment']);
-            }
-
             $notificationsViews[$receivingUser->getEmail()][] = view(
                 $view,
                 [
-                    'title' => $linkedContent['content']['title'],
-                    'content' => $linkedContent['content']['comment'],
-                    'displayName' => explode('@', $linkedContent['author']->getDisplayName())[0],
-                    'avatarUrl' => $linkedContent['author']->getAvatar(),
-                    'contentUrl' => $linkedContent['content']['url'],
+                    'title' => $notification->getContentTitle(),
+                    'content' => NotificationService::cleanStringForWebNotification($notification->getComment()),
+                    'displayName' => explode('@', $notification->getAuthorDisplayName())[0],
+                    'avatarUrl' => $notification->getAuthorAvatar(),
+                    'contentUrl' => $notification->getContentUrl(),
                     'notificationType' => $notification->getType(),
-                    'totalLikes' => $linkedContent['content']['likeCount'] ?? 0
+                    'totalLikes' => $likeCount
                 ]
             );
         }

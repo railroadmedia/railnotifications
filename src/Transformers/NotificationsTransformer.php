@@ -126,7 +126,6 @@ class NotificationsTransformer extends TransformerAbstract
     public function includeContent(Notification $notification)
     {
         $content = [
-            'id' => $notification->getAuthorId(),
             'url' => $notification->getContentUrl(),
             'mobile_app_url' => $notification->getContentMobileAppUrl(),
             'musora_api_mobile_app_url' => str_replace('api', 'musora-api', $notification->getContentMobileAppUrl()),

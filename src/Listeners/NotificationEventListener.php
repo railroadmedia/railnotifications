@@ -85,10 +85,22 @@ class NotificationEventListener
     public function handle(Event $event)
     {
         $authorId = null;
+        $contentTitle = null;
+        $contentUrl = null;
+        $contentMobileAppUrl = null;
+        $comment = null;
 
         switch ($event->type) {
             case Notification::TYPE_FORUM_POST_IN_FOLLOWED_THREAD:
                 $post = $this->railforumProvider->getPostById($event->data['postId']);
+                $thread = $this->railforumProvider->getThreadById($post['thread_id']);
+
+                $contentTitle = $thread['title'];
+                $contentUrl = url()->route('forums.post.jump-to',[$post['id']]);
+                $contentMobileAppUrl = url()->route('forums.api.post.jump-to',[$post['id']]);
+
+                $comment = $post['content'];
+
                 $authorId = $post['author_id'];
                 $threadFollowers = $this->railforumProvider->getThreadFollowerIds($post['thread_id']);
                 $receivingUserIds =
@@ -126,11 +138,28 @@ class NotificationEventListener
 
                     $receivingUserIds[] = $originalPost['author_id'];
                 }
+
+                $thread = $this->railforumProvider->getThreadById($post['thread_id']);
+
+                $contentTitle = $thread['title'];
+                $contentUrl = url()->route('forums.post.jump-to',[$post['id']]);
+                $contentMobileAppUrl = url()->route('forums.api.post.jump-to',[$post['id']]);
+
+                $comment = $post['content'];
+
                 break;
             case Notification::TYPE_FORUM_POST_LIKED:
                 $post = $this->railforumProvider->getPostById($event->data['postId']);
                 $authorId = $event->data['likerId'];
                 $receivingUserIds = [$post['author_id']];
+
+                $thread = $this->railforumProvider->getThreadById($post['thread_id']);
+
+                $contentTitle = $thread['title'];
+                $contentUrl = url()->route('forums.post.jump-to',[$post['id']]);
+                $contentMobileAppUrl = url()->route('forums.api.post.jump-to',[$post['id']]);
+
+                $comment = $post['content'];
                 break;
             case Notification::TYPE_LESSON_COMMENT_REPLY:
                 $comment = $this->contentProvider->getCommentById($event->data['commentId']);
@@ -142,11 +171,27 @@ class NotificationEventListener
                     );
                 }
                 $receivingUserIds = ($originalComment) ? [$originalComment['user_id']] : [];
+
+                $content = $this->contentProvider->getContentById($comment['content_id']);
+
+                $contentTitle = $content->fetch('fields.title');
+                $contentUrl = $content->fetch('url').'?goToComment='.$comment['id'];
+                $contentMobileAppUrl = $content->fetch('mobile_app_url').'?goToComment='.$comment['id'];
+
+                $comment = $comment['comment'];
                 break;
             case Notification::TYPE_LESSON_COMMENT_LIKED:
                 $comment = $this->contentProvider->getCommentById($event->data['commentId']);
                 $authorId = $event->data['likerId'];
                 $receivingUserIds = [$comment['user_id']];
+
+                $content = $this->contentProvider->getContentById($comment['content_id']);
+
+                $contentTitle = $content->fetch('fields.title');
+                $contentUrl = $content->fetch('url').'?goToComment='.$comment['id'];
+                $contentMobileAppUrl = $content->fetch('mobile_app_url').'?goToComment='.$comment['id'];
+
+                $comment = $comment['comment'];
                 break;
             default:
                 $receivingUserIds = [];
@@ -160,15 +205,15 @@ class NotificationEventListener
                 $receivingUserId
             );
 
-            if (!empty($existingNotification)) {
-                continue;
-            }
-
             $notification = $this->notificationService->create(
                 $event->type,
                 $event->data,
                 $receivingUserId,
-                $authorId
+                $authorId,
+                $contentTitle,
+                $contentUrl,
+                $contentMobileAppUrl,
+                $comment
             );
 
             $user = $this->userProvider->getRailnotificationsUserById($receivingUserId);

@@ -69,7 +69,8 @@ class NotificationService
      * @throws \Doctrine\ORM\ORMException
      * @throws \Doctrine\ORM\OptimisticLockException
      */
-    public function create(string $type, array $data, int $recipientId, $subjectId = null)
+    public function create(string $type, array $data, int $recipientId, $subjectId = null,   $contentTitle = null,
+        $contentUrl  = null,        $contentMobileAppUrl = null,      $comment = null)
     {
         $notification = new Notification();
 
@@ -78,6 +79,11 @@ class NotificationService
         $notification->setData($data);
 
         $notification->setBrand(config('railnotifications.brand'));
+
+        $notification->setContentTitle($contentTitle);
+        $notification->setContentUrl($contentUrl);
+        $notification->setContentMobileAppUrl($contentMobileAppUrl);
+        $notification->setComment($comment);
 
         $user = $this->userProvider->getRailnotificationsUserById($recipientId);
 
@@ -239,17 +245,18 @@ class NotificationService
         $results = [];
 
         foreach ($notifications as $notification) {
-            $linkedContent = $this->getLinkedContent($notification->getId());
-            if (empty($linkedContent) || !($linkedContent['author'])) {
-                continue;
-            }
 
             $notificationData = [
                 'id' => $notification->getId(),
                 'type' => $notification->getNotificationType(),
                 'createdOn' => $notification->getCreatedAt(),
                 'readOn' => $notification->getReadOn(),
-                'content' => $linkedContent['content'],
+                'content' => [
+                    'title' => $notification->getContentTitle(),
+                    'comment' => $notification->getComment(),
+                    'url' => $notification->getContentUrl(),
+                    'mobile_app_url' => $notification->getContentMobileAppUrl(),
+                    'musora_api_mobile_app_url' => str_replace('api', 'musora-api', $notification->getContentMobileAppUrl())],
                 'authorId' => $notification->getAuthorId(),
                 'authorDisplayName' => $notification->getAuthorDisplayName(),
                 'authorAvatar' => $notification->getAuthorAvatar()

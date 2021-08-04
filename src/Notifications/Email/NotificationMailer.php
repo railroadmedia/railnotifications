@@ -27,10 +27,9 @@ class NotificationMailer
     private $railforumProvider;
 
     /**
-     * NotificationMailer constructor.
-     *
      * @param Mailer $mailer
      * @param NotificationService $notificationService
+     * @param RailforumProviderInterface $railforumProvider
      */
     public function __construct(
         Mailer $mailer,
@@ -67,7 +66,7 @@ class NotificationMailer
                 case Notification::TYPE_FORUM_POST_LIKED:
                     $view = 'railnotifications::forums.user-liked-forum-row';
 
-                    $post = $this->railforumProvider->getPostById($notification->getData()['postId']);
+                    $post = $this->railforumProvider->getPostById($notification->getPostId());
                     $likeCount = $post['like_count'];
                     break;
                 case Notification::TYPE_LESSON_COMMENT_REPLY:

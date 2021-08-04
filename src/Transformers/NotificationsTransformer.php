@@ -61,7 +61,7 @@ class NotificationsTransformer extends TransformerAbstract
             ])) {
 
             $forumProvider = app()->make(RailforumProviderInterface::class);
-            $post = $forumProvider->getPostById($notification->getData()['postId']);
+            $post = $forumProvider->getPostById($notification->getPostId());
 
             $response['url'] = $notification->getContentUrl();
 
@@ -140,17 +140,17 @@ class NotificationsTransformer extends TransformerAbstract
 
     /**
      * @param Notification $notification
-     * @return |null
+     * @return null
      */
     public function getComment(Notification $notification)
     {
         $comment = null;
 
-        $contentProvider = app()->make(ContentProviderInterface::class);
-        $commentId = $notification->getData()['commentId'] ?? null;
+        if ($commentId = $notification->getCommentId()) {
 
-        if ($commentId) {
+            $contentProvider = app()->make(ContentProviderInterface::class);
             $comment = $contentProvider->getCommentById($commentId);
+
             if ($comment['parent_id']) {
                 $comment = $contentProvider->getCommentById($comment['parent_id']);
             }

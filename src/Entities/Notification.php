@@ -348,4 +348,20 @@ class Notification
         return config('railnotifications.mapping_types')[$this->getType()] ?? '';
     }
 
+    /**
+     * @return mixed|null
+     */
+    public function getCommentId()
+    {
+        return $this->getData()['commentId'] ?? null;
+    }
+
+    /**
+     * @return mixed|null
+     */
+    public function getPostId()
+    {
+        return $this->getData()['postId'] ?? null;
+    }
+
 }

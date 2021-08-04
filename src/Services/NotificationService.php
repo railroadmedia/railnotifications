@@ -474,7 +474,7 @@ class NotificationService
             if ($notification->getType() == Notification::TYPE_LESSON_COMMENT_LIKED ||
                 $notification->getType() == Notification::TYPE_LESSON_COMMENT_REPLY) {
 
-                $commentId = $notification->getData()['commentId'];
+                $commentId = $notification->getCommentId();
 
                 $comment = $this->contentProvider->getCommentById($commentId);
                 $commentText = $comment['comment'];
@@ -508,7 +508,7 @@ class NotificationService
                 $notification->getType() == Notification::TYPE_FORUM_POST_REPLY ||
                 $notification->getType() == Notification::TYPE_FORUM_POST_LIKED) {
 
-                $post = $this->railforumProvider->getPostById($notification->getData()['postId']);
+                $post = $this->railforumProvider->getPostById($notification->getPostId());
 
                 $thread = $this->railforumProvider->getThreadById($post['thread_id']);
                 $thread['url'] = url()->route('forums.post.jump-to', $post['id']);
@@ -597,5 +597,23 @@ class NotificationService
         $string = htmlspecialchars_decode($string);
 
         return $string;
+    }
+
+    /**
+     * @param $userId
+     * @return int|mixed|string
+     */
+    public function deleteUserNotifications($userId)
+    {
+      return $this->notificationRepository->createQueryBuilder('n')
+            ->where(
+                'n.recipient = :recipientId'
+            )
+            ->andWhere('n.brand = :brand')
+            ->setParameter('brand', config('railnotifications.brand'))
+            ->setParameter('recipientId', $userId)
+            ->delete()
+            ->getQuery()
+            ->execute();
     }
 }

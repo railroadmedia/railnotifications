@@ -240,4 +240,15 @@ class NotificationJsonController extends Controller
         return ResponseService::empty(201)
             ->setData(['data' => $count]);
     }
+
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function deleteUserNotifications(Request $request)
+    {
+        $this->notificationService->deleteUserNotifications($request->get('user_id', auth()->id()));
+
+        return ResponseService::empty(204);
+    }
 }

@@ -51,6 +51,12 @@ Route::group(
         )
             ->name('notification.delete');
 
+        Route::delete(
+            '/notifications',
+            \Railroad\Railnotifications\Controllers\NotificationJsonController::class . '@deleteUserNotifications'
+        )
+            ->name('notification.delete.all');
+
         Route::get(
             '/notification/{id}',
             \Railroad\Railnotifications\Controllers\NotificationJsonController::class . '@showNotification'

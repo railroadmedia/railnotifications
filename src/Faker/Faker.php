@@ -17,7 +17,11 @@ class Faker extends Generator
                 'type' => $this->text,
                 'data' => json_encode(['commentId'=>$this->randomNumber()]),
                 'subject_id' => null,
+                'author_id' => $this->randomNumber(),
+                'author_avatar' => $this->imageUrl(),
+                'author_display_name' => $this->name(),
                 'recipient_id' => $this->randomNumber(),
+                'content_title' => $this->text(),
                 'read_on' => null,
                 'brand' => config('railnotifications.brand'),
                 'created_at' => Carbon::now()
@@ -51,6 +55,7 @@ class Faker extends Generator
                 'setting_name' => $this->text,
                 'setting_value' => $this->boolean,
                 'user_id' => $this->randomNumber(),
+                'brand' => config('railnotifications.brand'),
                 'created_at' => Carbon::now()
                     ->toDateTimeString(),
             ],

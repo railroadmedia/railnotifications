@@ -89,6 +89,7 @@ class NotificationEventListener
         $contentUrl = null;
         $contentMobileAppUrl = null;
         $comment = null;
+        $subjectId = null;
 
         switch ($event->type) {
             case Notification::TYPE_FORUM_POST_IN_FOLLOWED_THREAD:
@@ -100,6 +101,7 @@ class NotificationEventListener
                 $contentMobileAppUrl = url()->route('forums.api.post.jump-to',[$post['id']]);
 
                 $comment = $post['content'];
+                $subjectId = $post['id'];
 
                 $authorId = $post['author_id'];
                 $threadFollowers = $this->railforumProvider->getThreadFollowerIds($post['thread_id']);
@@ -146,6 +148,7 @@ class NotificationEventListener
                 $contentMobileAppUrl = url()->route('forums.api.post.jump-to',[$post['id']]);
 
                 $comment = $post['content'];
+                $subjectId = $post['id'];
 
                 break;
             case Notification::TYPE_FORUM_POST_LIKED:
@@ -160,6 +163,7 @@ class NotificationEventListener
                 $contentMobileAppUrl = url()->route('forums.api.post.jump-to',[$post['id']]);
 
                 $comment = $post['content'];
+                $subjectId = $post['id'];
                 break;
             case Notification::TYPE_LESSON_COMMENT_REPLY:
                 $comment = $this->contentProvider->getCommentById($event->data['commentId']);
@@ -179,6 +183,7 @@ class NotificationEventListener
                 $contentMobileAppUrl = $content->fetch('mobile_app_url').'?goToComment='.$comment['id'];
 
                 $comment = $comment['comment'];
+                $subjectId = $comment['id'];
                 break;
             case Notification::TYPE_LESSON_COMMENT_LIKED:
                 $comment = $this->contentProvider->getCommentById($event->data['commentId']);
@@ -192,6 +197,7 @@ class NotificationEventListener
                 $contentMobileAppUrl = $content->fetch('mobile_app_url').'?goToComment='.$comment['id'];
 
                 $comment = $comment['comment'];
+                $subjectId = $comment['id'];
                 break;
             default:
                 $receivingUserIds = [];
@@ -210,6 +216,7 @@ class NotificationEventListener
                 $event->data,
                 $receivingUserId,
                 $authorId,
+                $subjectId,
                 $contentTitle,
                 $contentUrl,
                 $contentMobileAppUrl,
@@ -318,6 +325,12 @@ class NotificationEventListener
             $user->getNotifyOnForumFollowedThreadReply(),
             $user->getId()
         );
+
+        if(($user->getDisplayName() != $event->getOldUser()->getDisplayName())||
+            ($user->getProfilePictureUrl() != $event->getOldUser()->getProfilePictureUrl()))
+        {
+           $this->notificationService->updateAuthorData($user->getId(), $user->getProfilePictureUrl(), $user->getDisplayName());
+        }
     }
 
     /**
@@ -359,6 +372,18 @@ class NotificationEventListener
             $user->getNotifyOnForumFollowedThreadReply(),
             $user->getId()
         );
+    }
+
+    public function handleContentUpdated($event)
+    {
+        if($event->newField['key'] == 'title'){
+            $this->notificationService->updateLessonContentTitle($event->newField['value'], $event->newField['content_id']);
+        }
+    }
+
+    public function handleThreadUpdated($event)
+    {
+            $this->notificationService->updateThread($event->getThreadId());
     }
 }
 

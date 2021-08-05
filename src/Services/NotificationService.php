@@ -3,8 +3,6 @@
 namespace Railroad\Railnotifications\Services;
 
 use Carbon\Carbon;
-use DOMDocument;
-use DOMXPath;
 use FCM;
 use Railroad\Railnotifications\Contracts\ContentProviderInterface;
 use Railroad\Railnotifications\Contracts\RailforumProviderInterface;
@@ -51,8 +49,7 @@ class NotificationService
         UserProviderInterface $userProvider,
         ContentProviderInterface $contentProvider,
         RailforumProviderInterface $railforumProvider
-    )
-    {
+    ) {
         $this->entityManager = $entityManager;
         $this->userProvider = $userProvider;
         $this->contentProvider = $contentProvider;
@@ -69,9 +66,17 @@ class NotificationService
      * @throws \Doctrine\ORM\ORMException
      * @throws \Doctrine\ORM\OptimisticLockException
      */
-    public function create(string $type, array $data, int $recipientId, $subjectId = null,   $contentTitle = null,
-        $contentUrl  = null,        $contentMobileAppUrl = null,      $comment = null)
-    {
+    public function create(
+        string $type,
+        array $data,
+        int $recipientId,
+        $authorId = null,
+        $subjectId = null,
+        $contentTitle = null,
+        $contentUrl = null,
+        $contentMobileAppUrl = null,
+        $comment = null
+    ) {
         $notification = new Notification();
 
         $notification->setType($type);
@@ -89,14 +94,14 @@ class NotificationService
 
         $notification->setRecipient($user);
 
-        if($subjectId) {
-            $author = $this->userProvider->getRailnotificationsUserById($subjectId);
-
-            $notification->setSubject($author);
+        if ($authorId) {
+            $author = $this->userProvider->getRailnotificationsUserById($authorId);
             $notification->setAuthorAvatar($author->getAvatar());
             $notification->setAuthorDisplayName($author->getDisplayName());
             $notification->setAuthorId($author->getId());
         }
+
+        $notification->setSubject($subjectId);
 
         $this->entityManager->persist($notification);
         $this->entityManager->flush();
@@ -229,18 +234,19 @@ class NotificationService
     {
         $qb = $this->notificationRepository->createQueryBuilder('n');
 
-        $notifications = $qb->select('n')
-            ->where(
-                'n.recipient = :recipientId'
-            )
-            ->andWhere('n.brand = :brand')
-            ->orderBy('n.createdAt', 'desc')
-            ->setParameter('brand', config('railnotifications.brand'))
-            ->setParameter('recipientId', $recipientId)
-            ->setMaxResults($amount)
-            ->setFirstResult($skip)
-            ->getQuery()
-            ->getResult();
+        $notifications =
+            $qb->select('n')
+                ->where(
+                    'n.recipient = :recipientId'
+                )
+                ->andWhere('n.brand = :brand')
+                ->orderBy('n.createdAt', 'desc')
+                ->setParameter('brand', config('railnotifications.brand'))
+                ->setParameter('recipientId', $recipientId)
+                ->setMaxResults($amount)
+                ->setFirstResult($skip)
+                ->getQuery()
+                ->getResult();
 
         $results = [];
 
@@ -253,13 +259,18 @@ class NotificationService
                 'readOn' => $notification->getReadOn(),
                 'content' => [
                     'title' => $notification->getContentTitle(),
-                    'comment' => $notification->getComment(),
+                    'comment' => $this->cleanStringForWebNotification($notification->getComment()),
                     'url' => $notification->getContentUrl(),
                     'mobile_app_url' => $notification->getContentMobileAppUrl(),
-                    'musora_api_mobile_app_url' => str_replace('api', 'musora-api', $notification->getContentMobileAppUrl())],
+                    'musora_api_mobile_app_url' => str_replace(
+                        'api',
+                        'musora-api',
+                        $notification->getContentMobileAppUrl()
+                    ),
+                ],
                 'authorId' => $notification->getAuthorId(),
                 'authorDisplayName' => $notification->getAuthorDisplayName(),
-                'authorAvatar' => $notification->getAuthorAvatar()
+                'authorAvatar' => $notification->getAuthorAvatar(),
             ];
 
             $results[] = $notificationData;
@@ -463,7 +474,7 @@ class NotificationService
      * @param $notificationId
      * @return mixed
      */
-    public function getLinkedContent($notificationId)
+    public function getLinkedContent_obsolete($notificationId)
     {
         try {
             $notification = $this->get($notificationId);
@@ -497,9 +508,11 @@ class NotificationService
                     'title' => $lesson->fetch('fields.title'),
                     'url' => $lesson->fetch('url') . '?goToComment=' . $comment['id'],
                     'mobile_app_url' => $lesson->fetch('mobile_app_url') . '?goToComment=' . $comment['id'],
-                    'musora_api_mobile_app_url' => $lesson->fetch('musora_api_mobile_app_url') . '?goToComment=' . $comment['id'],
+                    'musora_api_mobile_app_url' => $lesson->fetch('musora_api_mobile_app_url') .
+                        '?goToComment=' .
+                        $comment['id'],
                     'comment' => $commentText,
-                    'commentId' => $comment['id']
+                    'commentId' => $comment['id'],
                 ];
 
                 $results['author'] = $author;
@@ -526,7 +539,7 @@ class NotificationService
                     'commentId' => $post['id'],
                     'likeCount' => $post['like_count'] ?? 0,
                     'threadId' => $thread['id'],
-                    'mobile_app_url' => url()->route('forums.api.post.jump-to', $post['id'])
+                    'mobile_app_url' => url()->route('forums.api.post.jump-to', $post['id']),
                 ];
 
                 $results['author'] = $author;
@@ -561,22 +574,24 @@ class NotificationService
         );
 
         // remove bad html tags and other html special characters
-        $string = htmlentities($string, null, 'utf-8');
+        //        $string = htmlentities($string, null, 'utf-8');
         $string = html_entity_decode($string);
         $string = str_replace("&nbsp;", "", $string);
         $string = strip_tags($string, '<p><br>');
         $string = mb_strimwidth($string, 0, $maxLength, "...");
         $string = trim($string);
-        $string = str_replace(array("\n", "\r"), ' ', $string);
+        $string = str_replace(["\n", "\r"], ' ', $string);
 
         // remove empty tags
         $pattern = "/<p[^>]*><\\/p[^>]*>/";
         $string = preg_replace($pattern, '', $string);
-        $string = preg_replace_callback("/<body[^>]*>(.*?)<\/body>/is",
+        $string = preg_replace_callback(
+            "/<body[^>]*>(.*?)<\/body>/is",
             function ($m) {
                 return $m;
             },
-            $string);
+            $string
+        );
 
         return $string;
     }
@@ -605,7 +620,7 @@ class NotificationService
      */
     public function deleteUserNotifications($userId)
     {
-      return $this->notificationRepository->createQueryBuilder('n')
+        return $this->notificationRepository->createQueryBuilder('n')
             ->where(
                 'n.recipient = :recipientId'
             )
@@ -614,6 +629,61 @@ class NotificationService
             ->setParameter('recipientId', $userId)
             ->delete()
             ->getQuery()
+            ->execute();
+    }
+
+    /**
+     * @param $authorId
+     * @param $avatar
+     * @param $displayName
+     * @return int|mixed|string
+     */
+    public function updateAuthorData($authorId, $avatar, $displayName)
+    {
+        return $this->entityManager->createQuery(
+            'update Railroad\Railnotifications\Entities\Notification n set n.authorAvatar = :avatar, n.authorDisplayName = :displayName where n.authorId = :authorId'
+        )
+            ->setParameter('avatar', $avatar)
+            ->setParameter('displayName', $displayName)
+            ->setParameter('authorId', $authorId)
+            ->execute();
+    }
+
+    /**
+     * @param $contentTitle
+     * @param $subject
+     * @return int|mixed|string
+     */
+    public function updateLessonContentTitle($contentTitle, $subject)
+    {
+        return $this->entityManager->createQuery(
+            'update Railroad\Railnotifications\Entities\Notification n set n.contentTitle = :title where n.subject = :subject and n.type in (:types)'
+        )
+            ->setParameter('title', $contentTitle)
+            ->setParameter('subject', $subject)
+            ->setParameter('types', [Notification::TYPE_LESSON_COMMENT_LIKED, Notification::TYPE_LESSON_COMMENT_REPLY])
+            ->execute();
+    }
+
+    /**
+     * @param $contentTitle
+     * @param $subject
+     * @return int|mixed|string
+     */
+    public function updateThread($threadId)
+    {
+        $thread = $this->railforumProvider->getThreadById($threadId);
+
+        return $this->entityManager->createQuery(
+            'update Railroad\Railnotifications\Entities\Notification n set n.contentTitle = :title where n.subject = :subject and n.type in (:types)'
+        )
+            ->setParameter('title', $thread['title'])
+            ->setParameter('subject', $threadId)
+            ->setParameter('types', [
+                    Notification::TYPE_FORUM_POST_IN_FOLLOWED_THREAD,
+                    Notification::TYPE_FORUM_POST_LIKED,
+                    Notification::TYPE_FORUM_POST_REPLY,
+                ])
             ->execute();
     }
 }

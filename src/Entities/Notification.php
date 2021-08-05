@@ -49,7 +49,7 @@ class Notification
     protected $data;
 
     /**
-     * @ORM\Column(type="railnotification_user", name="subject_id", nullable=true)
+     * @ORM\Column(type="integer", name="subject_id", nullable=true)
      */
     protected $subject;
 
@@ -156,20 +156,20 @@ class Notification
     }
 
     /**
-     * @return User|null
+     * @return int|null
      */
     public function getSubject()
-    : ?User
+    : ?int
     {
         return $this->subject;
     }
 
     /**
-     * @param User $user
+     * @param int|null $subject
      */
-    public function setSubject(?User $user)
+    public function setSubject(?int $subject)
     {
-        $this->subject = $user;
+        $this->subject = $subject;
     }
 
     /**

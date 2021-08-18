@@ -59,6 +59,7 @@ class NotificationJsonController extends Controller
     public function index(Request $request)
     {
         $userId = $request->get('user_id', auth()->id());
+        $onlyUnread = $request->get('unread');
 
         $qb = $this->notificationRepository->createQueryBuilder('n');
 
@@ -73,6 +74,10 @@ class NotificationJsonController extends Controller
                 ->setMaxResults($request->get('limit', 10))
                 ->setFirstResult($request->get('page', 1) - 1)
                 ->orderBy('n.createdAt', 'desc');
+
+        if($onlyUnread){
+            $notificationsQueryBuilder->andWhere('n.readOn is NULL');
+        }
 
         return ResponseService::notification(
             $notificationsQueryBuilder->getQuery()

@@ -12,6 +12,9 @@ use Railroad\Railnotifications\Contracts\UserProviderInterface;
 use Railroad\Railnotifications\Entities\Notification;
 use Railroad\Railnotifications\Entities\NotificationSetting;
 use Railroad\Railnotifications\Exceptions\BroadcastNotificationFailure;
+use Railroad\Railnotifications\Jobs\UpdateNotificationsAuthorData;
+use Railroad\Railnotifications\Jobs\UpdateNotificationsPostData;
+use Railroad\Railnotifications\Jobs\UpdateNotificationsThreadData;
 use Railroad\Railnotifications\Services\NotificationBroadcastService;
 use Railroad\Railnotifications\Services\NotificationService;
 use Railroad\Railnotifications\Services\NotificationSettingsService;
@@ -182,8 +185,9 @@ class NotificationEventListener
                 $contentUrl = $content->fetch('url').'?goToComment='.$comment['id'];
                 $contentMobileAppUrl = $content->fetch('mobile_app_url').'?goToComment='.$comment['id'];
 
-                $comment = $comment['comment'];
                 $subjectId = $comment['id'];
+                $comment = $comment['comment'];
+
                 break;
             case Notification::TYPE_LESSON_COMMENT_LIKED:
                 $comment = $this->contentProvider->getCommentById($event->data['commentId']);
@@ -196,20 +200,25 @@ class NotificationEventListener
                 $contentUrl = $content->fetch('url').'?goToComment='.$comment['id'];
                 $contentMobileAppUrl = $content->fetch('mobile_app_url').'?goToComment='.$comment['id'];
 
-                $comment = $comment['comment'];
                 $subjectId = $comment['id'];
+                $comment = $comment['comment'];
+
                 break;
             default:
                 $receivingUserIds = [];
         }
 
         foreach ($receivingUserIds as $receivingUserId) {
-            // create the notification if one doesnt already exist for the underlying action
+            // create the notification if one doesn't already exist for the underlying action
             $existingNotification = $this->notificationService->getWhereMatchingData(
                 $event->type,
                 $event->data,
                 $receivingUserId
             );
+
+            if (!empty($existingNotification)) {
+                continue;
+            }
 
             $notification = $this->notificationService->create(
                 $event->type,
@@ -329,7 +338,9 @@ class NotificationEventListener
         if(($user->getDisplayName() != $event->getOldUser()->getDisplayName())||
             ($user->getProfilePictureUrl() != $event->getOldUser()->getProfilePictureUrl()))
         {
-           $this->notificationService->updateAuthorData($user->getId(), $user->getProfilePictureUrl(), $user->getDisplayName());
+            $job = new UpdateNotificationsAuthorData($user->getId(), $user->getDisplayName(), $user->getProfilePictureUrl());
+
+            dispatch_now($job);
         }
     }
 
@@ -374,6 +385,9 @@ class NotificationEventListener
         );
     }
 
+    /**
+     * @param $event
+     */
     public function handleContentUpdated($event)
     {
         if($event->newField['key'] == 'title'){
@@ -381,9 +395,24 @@ class NotificationEventListener
         }
     }
 
+    /**
+     * @param $event
+     */
     public function handleThreadUpdated($event)
     {
-            $this->notificationService->updateThread($event->getThreadId());
+        $job = new UpdateNotificationsThreadData($event->getThreadId());
+
+        dispatch_now($job);
+    }
+
+    /**
+     * @param $event
+     */
+    public function handlePostUpdated($event)
+    {
+        $job = new UpdateNotificationsPostData($event->getPostId());
+
+        dispatch_now($job);
     }
 }
 

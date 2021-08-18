@@ -38,6 +38,8 @@ class NotificationService
      */
     private $railforumProvider;
 
+    public static $onlyUnread = false;
+
     /**
      * NotificationService constructor.
      *
@@ -232,18 +234,23 @@ class NotificationService
      */
     public function getManyPaginated(int $recipientId, int $amount, int $skip)
     {
-        $qb = $this->notificationRepository->createQueryBuilder('n');
-
-        $notifications =
-            $qb->select('n')
+        $qb =
+            $this->notificationRepository->createQueryBuilder('n')
+                ->select('n')
                 ->where(
                     'n.recipient = :recipientId'
                 )
                 ->andWhere('n.brand = :brand')
                 ->orderBy('n.createdAt', 'desc')
                 ->setParameter('brand', config('railnotifications.brand'))
-                ->setParameter('recipientId', $recipientId)
-                ->setMaxResults($amount)
+                ->setParameter('recipientId', $recipientId);
+
+        if ($this::$onlyUnread) {
+            $qb->andWhere('n.readOn is NULL');
+        }
+
+        $notifications =
+            $qb->setMaxResults($amount)
                 ->setFirstResult($skip)
                 ->getQuery()
                 ->getResult();
@@ -666,24 +673,50 @@ class NotificationService
     }
 
     /**
-     * @param $contentTitle
-     * @param $subject
-     * @return int|mixed|string
+     * @param $threadId
      */
-    public function updateThread($threadId)
+    public function updateThreadData($threadId)
     {
         $thread = $this->railforumProvider->getThreadById($threadId);
+        $posts = $this->railforumProvider->getAllPostIdsInThread($threadId);
 
-        return $this->entityManager->createQuery(
-            'update Railroad\Railnotifications\Entities\Notification n set n.contentTitle = :title where n.subject = :subject and n.type in (:types)'
+        $this->entityManager->createQuery(
+            'update Railroad\Railnotifications\Entities\Notification n set n.contentTitle = :title where n.subject in (:subject) and n.type in (:types)'
         )
             ->setParameter('title', $thread['title'])
-            ->setParameter('subject', $threadId)
+            ->setParameter(
+                'subject',
+                array_merge(
+                    [$threadId],
+                    $posts->pluck('id')
+                        ->toArray()
+                )
+            )
             ->setParameter('types', [
-                    Notification::TYPE_FORUM_POST_IN_FOLLOWED_THREAD,
-                    Notification::TYPE_FORUM_POST_LIKED,
-                    Notification::TYPE_FORUM_POST_REPLY,
-                ])
+                Notification::TYPE_FORUM_POST_IN_FOLLOWED_THREAD,
+                Notification::TYPE_FORUM_POST_LIKED,
+                Notification::TYPE_FORUM_POST_REPLY,
+            ])
+            ->execute();
+    }
+
+    /**
+     * @param $postId
+     */
+    public function updatePostData($postId)
+    {
+        $post = $this->railforumProvider->getPostById($postId);
+
+        $this->entityManager->createQuery(
+            'update Railroad\Railnotifications\Entities\Notification n set n.comment = :comment where n.subject in (:subject) and n.type in (:types)'
+        )
+            ->setParameter('comment', $post['content'])
+            ->setParameter('subject', $postId)
+            ->setParameter('types', [
+                Notification::TYPE_FORUM_POST_IN_FOLLOWED_THREAD,
+                Notification::TYPE_FORUM_POST_LIKED,
+                Notification::TYPE_FORUM_POST_REPLY,
+            ])
             ->execute();
     }
 }

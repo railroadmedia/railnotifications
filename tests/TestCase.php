@@ -148,6 +148,8 @@ class TestCase extends BaseTestCase
         $app['config']->set('doctrine.database_password', 'root');
         $app['config']->set('doctrine.database_in_memory', true);
         $app['config']->set('doctrine.development_mode', true);
+
+        $app['config']->set('railnotifications.mapping_types', $defaultConfig['mapping_types']);
         $app->register(DoctrineServiceProvider::class);
 
         // allows access to built in user auth

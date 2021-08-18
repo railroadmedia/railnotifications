@@ -14,7 +14,7 @@ class Faker extends Generator
     {
         return array_merge(
             [
-                'type' => $this->text,
+                'type' => $this->randomElement(array_keys(config('railnotifications.mapping_types'))),
                 'data' => json_encode(['commentId'=>$this->randomNumber()]),
                 'subject_id' => null,
                 'author_id' => $this->randomNumber(),

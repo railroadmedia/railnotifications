@@ -27,36 +27,30 @@ class NotificationServiceTest extends NotificationsTestCase
         $data = [
             'data-1' => $this->faker->word,
             'data-2' => $this->faker->word,
-            'data-3' => $this->faker->word
+            'data-3' => $this->faker->word,
         ];
         $recipient = $this->fakeUser();
 
         $responseNotification = $this->classBeingTested->create($type, $data, $recipient['id']);
 
-        $this->assertDatabaseHas(
-            'notifications',
-            [
+        $this->assertDatabaseHas('notifications', [
                 'type' => $type,
                 'data' => json_encode($data),
-                'recipient_id' => $recipient['id']
-            ]
-        );
+                'recipient_id' => $recipient['id'],
+            ]);
     }
 
     public function test_destroy()
     {
-        $notification= $this->fakeNotification();
+        $notification = $this->fakeNotification();
 
         $this->classBeingTested->destroy($notification['id']);
 
-        $this->assertDatabaseMissing(
-            'notifications',
-            [
+        $this->assertDatabaseMissing('notifications', [
                 'type' => $notification['type'],
                 'data' => json_encode($notification['data']),
-                'recipient_id' => $notification['recipient_id']
-            ]
-        );
+                'recipient_id' => $notification['recipient_id'],
+            ]);
     }
 
     public function test_get()
@@ -89,9 +83,12 @@ class NotificationServiceTest extends NotificationsTestCase
 
         $responseNotifications = $this->classBeingTested->getManyPaginated($recipientId, 3, 0);
 
-        foreach ($responseNotifications as $index=>$responseNotification) {
-            $this->assertEquals($notifications[$index]['type'],$responseNotification['type']);
-            $this->assertEquals($notifications[$index]['read_on'],$responseNotification['readOn']);
+        foreach ($responseNotifications as $index => $responseNotification) {
+            $this->assertEquals(
+                $responseNotification['type'],
+                config('railnotifications.mapping_types')[$notifications[$index]['type']] ?? ''
+            );
+            $this->assertEquals($notifications[$index]['read_on'], $responseNotification['readOn']);
         }
     }
 
@@ -107,22 +104,31 @@ class NotificationServiceTest extends NotificationsTestCase
         }
 
         $responseNotifications = $this->classBeingTested->getManyPaginated($recipientId, 3, 0);
-        foreach ($responseNotifications as $index=>$responseNotification) {
-            $this->assertEquals($notifications[$index]['type'], $responseNotification['type']);
-          //  $this->assertEquals(json_decode($notifications[$index]['data'], true), $responseNotification['data']);
+        foreach ($responseNotifications as $index => $responseNotification) {
+            $this->assertEquals(
+                $responseNotification['type'],
+                config('railnotifications.mapping_types')[$notifications[$index]['type']] ?? ''
+            );
+            //  $this->assertEquals(json_decode($notifications[$index]['data'], true), $responseNotification['data']);
             $this->assertEquals($notifications[$index]['read_on'], $responseNotification['readOn']);
         }
 
         $responseNotifications = $this->classBeingTested->getManyPaginated($recipientId, 3, 3);
-        foreach ($responseNotifications as $index=>$responseNotification) {
-            $this->assertEquals($notifications[$index+3]['type'], $responseNotification['type']);
-            $this->assertEquals($notifications[$index+3]['read_on'], $responseNotification['readOn']);
+        foreach ($responseNotifications as $index => $responseNotification) {
+            $this->assertEquals(
+                $responseNotification['type'],
+                config('railnotifications.mapping_types')[$notifications[$index + 3]['type']] ?? ''
+            );
+            $this->assertEquals($notifications[$index + 3]['read_on'], $responseNotification['readOn']);
         }
 
         $responseNotifications = $this->classBeingTested->getManyPaginated($recipientId, 3, 6);
-        foreach ($responseNotifications as $index=>$responseNotification) {
-            $this->assertEquals($notifications[$index+6]['type'], $responseNotification['type']);
-            $this->assertEquals($notifications[$index+6]['read_on'], $responseNotification['readOn']);
+        foreach ($responseNotifications as $index => $responseNotification) {
+            $this->assertEquals(
+                $responseNotification['type'],
+                config('railnotifications.mapping_types')[$notifications[$index + 6]['type']] ?? ''
+            );
+            $this->assertEquals($notifications[$index + 6]['read_on'], $responseNotification['readOn']);
         }
     }
 
@@ -133,18 +139,22 @@ class NotificationServiceTest extends NotificationsTestCase
         $recipientId = $this->fakeUser()['id'];
 
         for ($i = 0; $i < 3; $i++) {
-            $notification = $this->fakeNotification(['recipient_id' => $recipientId, 'read_on'=>null]);
+            $notification = $this->fakeNotification(['recipient_id' => $recipientId, 'read_on' => null]);
 
             $notifications[] = $notification;
         }
 
         $responseNotifications = $this->classBeingTested->getManyUnread($recipientId);
 
-        foreach ($responseNotifications as $index=>$responseNotification) {
+        foreach ($responseNotifications as $index => $responseNotification) {
             $this->assertEquals($notifications[$index]['type'], $responseNotification->getType());
             $this->assertEquals(json_decode($notifications[$index]['data'], true), $responseNotification->getData());
             $this->assertEquals($notifications[$index]['read_on'], $responseNotification->getReadOn());
-            $this->assertEquals($notifications[$index]['recipient_id'], $responseNotification->getRecipient()->getId());
+            $this->assertEquals(
+                $notifications[$index]['recipient_id'],
+                $responseNotification->getRecipient()
+                    ->getId()
+            );
         }
     }
 
@@ -154,7 +164,7 @@ class NotificationServiceTest extends NotificationsTestCase
         $recipientId = $this->fakeUser()['id'];
 
         for ($i = 0; $i < 5; $i++) {
-            $notification = $this->fakeNotification(['recipient_id' => $recipientId, 'read_on'=>null]);
+            $notification = $this->fakeNotification(['recipient_id' => $recipientId, 'read_on' => null]);
 
             $notifications[] = $notification;
         }
@@ -164,11 +174,15 @@ class NotificationServiceTest extends NotificationsTestCase
             $notifications[2]['created_at']
         );
 
-        foreach ($responseNotifications as $index=>$responseNotification) {
+        foreach ($responseNotifications as $index => $responseNotification) {
             $this->assertEquals($notifications[$index]['type'], $responseNotification->getType());
             $this->assertEquals(json_decode($notifications[$index]['data'], true), $responseNotification->getData());
             $this->assertEquals($notifications[$index]['read_on'], $responseNotification->getReadOn());
-            $this->assertEquals($notifications[$index]['recipient_id'], $responseNotification->getRecipient()->getId());
+            $this->assertEquals(
+                $notifications[$index]['recipient_id'],
+                $responseNotification->getRecipient()
+                    ->getId()
+            );
         }
     }
 
@@ -185,36 +199,34 @@ class NotificationServiceTest extends NotificationsTestCase
 
         $this->classBeingTested->markRead($notification['id']);
 
-        $this->assertDatabaseHas(
-            'notifications',
-            [
+        $this->assertDatabaseHas('notifications', [
                 'id' => $notification['id'],
-                'read_on' => Carbon::now()->toDateTimeString()
-            ]
-        );
+                'read_on' => Carbon::now()
+                    ->toDateTimeString(),
+            ]);
     }
 
     public function test_mark_read_specific_time()
     {
         $notification = $this->fakeNotification();
 
-        $this->assertDatabaseHas(
-            'notifications',
-            [
+        $this->assertDatabaseHas('notifications', [
                 'id' => $notification['id'],
-                'read_on' => null
-            ]
+                'read_on' => null,
+            ]);
+
+        $this->classBeingTested->markRead(
+            $notification['id'],
+            Carbon::now()
+                ->subMonth()
         );
 
-        $this->classBeingTested->markRead($notification['id'], Carbon::now()->subMonth());
-
-        $this->assertDatabaseHas(
-            'notifications',
-            [
+        $this->assertDatabaseHas('notifications', [
                 'id' => $notification['id'],
-                'read_on' => Carbon::now()->subMonth()->toDateTimeString()
-            ]
-        );
+                'read_on' => Carbon::now()
+                    ->subMonth()
+                    ->toDateTimeString(),
+            ]);
     }
 
     public function test_mark_read_not_exist()
@@ -224,25 +236,25 @@ class NotificationServiceTest extends NotificationsTestCase
 
     public function test_mark_un_read()
     {
-        $notification = $this->fakeNotification(['read_on' => Carbon::now()->subDays(2)]);
+        $notification =
+            $this->fakeNotification(
+                [
+                    'read_on' => Carbon::now()
+                        ->subDays(2),
+                ]
+            );
 
-        $this->assertDatabaseHas(
-            'notifications',
-            [
+        $this->assertDatabaseHas('notifications', [
                 'id' => $notification['id'],
-                'read_on' => $notification['read_on']
-            ]
-        );
+                'read_on' => $notification['read_on'],
+            ]);
 
         $this->classBeingTested->markUnRead($notification['id']);
 
-        $this->assertDatabaseHas(
-            'notifications',
-            [
+        $this->assertDatabaseHas('notifications', [
                 'id' => $notification['id'],
-                'read_on' => null
-            ]
-        );
+                'read_on' => null,
+            ]);
     }
 
     public function test_mark_un_read_not_exist()
@@ -256,19 +268,17 @@ class NotificationServiceTest extends NotificationsTestCase
         $notifications = [];
 
         for ($i = 0; $i < 3; $i++) {
-            $notifications[] =  $this->fakeNotification(['recipient_id' => $recipientId, 'read_on' => null]);
+            $notifications[] = $this->fakeNotification(['recipient_id' => $recipientId, 'read_on' => null]);
         }
 
         $this->classBeingTested->markAllRead($recipientId);
 
         foreach ($notifications as $notification) {
-            $this->assertDatabaseHas(
-                'notifications',
-                [
+            $this->assertDatabaseHas('notifications', [
                     'id' => $notification['id'],
-                    'read_on' => Carbon::now()->toDateTimeString()
-                ]
-            );
+                    'read_on' => Carbon::now()
+                        ->toDateTimeString(),
+                ]);
         }
     }
 
@@ -278,19 +288,21 @@ class NotificationServiceTest extends NotificationsTestCase
         $notifications = [];
 
         for ($i = 0; $i < 3; $i++) {
-            $notifications[] =  $this->fakeNotification(['recipient_id' => $recipientId, 'read_on' => null]);
+            $notifications[] = $this->fakeNotification(['recipient_id' => $recipientId, 'read_on' => null]);
         }
 
-        $this->classBeingTested->markAllRead($recipientId, Carbon::now()->subMonth());
+        $this->classBeingTested->markAllRead(
+            $recipientId,
+            Carbon::now()
+                ->subMonth()
+        );
 
         foreach ($notifications as $notification) {
-            $this->assertDatabaseHas(
-                'notifications',
-                [
+            $this->assertDatabaseHas('notifications', [
                     'id' => $notification['id'],
-                    'read_on' => Carbon::now()->subMonth()
-                ]
-            );
+                    'read_on' => Carbon::now()
+                        ->subMonth(),
+                ]);
         }
     }
 }

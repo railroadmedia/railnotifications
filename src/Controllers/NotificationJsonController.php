@@ -62,6 +62,11 @@ class NotificationJsonController extends Controller
 
         $qb = $this->notificationRepository->createQueryBuilder('n');
 
+        $page = $request->get('page', 1);
+        $limit = $request->get('limit', 10);
+
+        $first = ($page - 1) * $limit;
+
         $notificationsQueryBuilder =
             $qb->select('n')
                 ->where(
@@ -70,8 +75,8 @@ class NotificationJsonController extends Controller
                 ->andWhere('n.brand = :brand')
                 ->setParameter('brand', config('railnotifications.brand'))
                 ->setParameter('recipientId', $userId)
-                ->setMaxResults($request->get('limit', 10))
-                ->setFirstResult($request->get('page', 1) - 1)
+                ->setMaxResults($limit)
+                ->setFirstResult($first)
                 ->orderBy('n.createdAt', 'desc');
 
         return ResponseService::notification(

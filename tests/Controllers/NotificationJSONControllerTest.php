@@ -535,4 +535,93 @@ class NotificationJSONControllerTest extends TestCase
 
         $this->assertEquals(5, $response->decodeResponseJson('data'));
     }
+
+    public function test_index_only_unread_notifications()
+    {
+        $notifications = [];
+        $recipient = $this->fakeUser();
+        for ($i = 0; $i < 2; $i++) {
+            $notification = $this->fakeNotification(['recipient_id' => rand()]);
+        }
+
+        for ($i = 0; $i < 3; $i++) {
+            $notification = $this->fakeNotification(['recipient_id' => $recipient['id'],
+                'type' => Notification::TYPE_LESSON_COMMENT_REPLY,
+                'read_on' => Carbon::now()->toDateTimeString()
+            ]);
+        }
+
+        //unread notifications
+        for ($i = 0; $i < 3; $i++) {
+            $notification = $this->fakeNotification(['recipient_id' => $recipient['id'],
+                'type' => Notification::TYPE_LESSON_COMMENT_REPLY
+            ]);
+
+            $notifications[] = $notification;
+        }
+
+        $contentProviderMock = $this->createMock(ContentProviderInterface::class);
+
+        $contentProviderMock->method('getCommentById')->will($this->returnValue(
+            [
+                'id' => 1,
+                'content_id' => 2,
+                'user_id' => $recipient['id'],
+                'parent_id' => 4,
+                'comment' => $this->faker->text,
+            ]));
+
+        $contentClassMock = $this->getMockBuilder(ContentClass::class)->setMethods(['fetch', 'offsetGet'])->getMock();
+        $contentClassMock->expects($this->any())
+            ->method('offsetGet')
+            ->will($this->returnValue(['mobile_app_url' => $this->faker->url]));
+
+        $contentProviderMock->method('getContentById')->will($this->returnValue($contentClassMock));
+        $contentProviderMock->method('getContentTransformer')->will($this->returnValue(new ContentTransformer()));
+
+        $this->app->instance(ContentProviderInterface::class, $contentProviderMock);
+
+        $response = $this->call(
+            'GET',
+            'railnotifications/notifications',
+            [
+                'user_id' => $recipient['id'],
+                'unread' => true
+            ]
+        );
+
+        foreach ($response->decodeResponseJson('data') as $index => $resp) {
+            $this->assertEquals($notifications[$index]['type'], $resp['type']);
+            $this->assertEquals(json_decode($notifications[$index]['data'], true), $resp['data']);
+            $this->assertEquals($notifications[$index]['read_on'], $resp['read_on']);
+            $this->assertEquals($recipient['id'], $resp['recipient']['id']);
+        }
+    }
+
+    public function test_delete_user_notifications()
+    {
+        $notifications = [];
+        $recipient = $this->fakeUser();
+
+        for ($i = 0; $i < 3; $i++) {
+            $notification = $this->fakeNotification(['recipient_id' => $recipient['id'],
+                'type' => Notification::TYPE_LESSON_COMMENT_REPLY
+            ]);
+
+            $notifications[] = $notification;
+        }
+
+        $response = $this->call('DELETE', 'railnotifications/notifications');
+
+        $this->assertEquals(204, $response->status());
+        $this->assertEquals('', $response->content());
+
+        foreach ($notifications as $notification) {
+            $this->assertDatabaseMissing('notifications', [
+                    'id' => $notification['id'],
+                    'type' => $notification['type'],
+                    'data' => json_encode($notification['data']),
+                ]);
+        }
+    }
 }

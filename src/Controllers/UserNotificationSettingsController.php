@@ -8,11 +8,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Railroad\Railnotifications\Entities\NotificationSetting;
-use Railroad\Railnotifications\Requests\UserNotificationSettingsDeleteRequest;
-use Railroad\Railnotifications\Requests\UserNotificationSettingsRequest;
 use Railroad\Railnotifications\Services\NotificationSettingsService;
-use Railroad\Railnotifications\Services\ResponseService;
-use Spatie\Fractal\Fractal;
 
 /**
  * Class UserNotificationSettingsController
@@ -37,7 +33,7 @@ class UserNotificationSettingsController extends Controller
         $this->notificationSettingsService = $notificationSettingsService;
     }
 
-     /**
+    /**
      * @param Request $request
      * @return JsonResponse|\Symfony\Component\HttpFoundation\JsonResponse
      * @throws ORMException

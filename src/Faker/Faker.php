@@ -4,9 +4,6 @@ namespace Railroad\Railnotifications\Faker;
 
 use Carbon\Carbon;
 use Faker\Generator;
-use Railroad\Railnotifications\Entities\Notification;
-use Railroad\Railnotifications\Entities\NotificationBroadcast;
-
 
 class Faker extends Generator
 {
@@ -15,7 +12,7 @@ class Faker extends Generator
         return array_merge(
             [
                 'type' => $this->randomElement(array_keys(config('railnotifications.mapping_types'))),
-                'data' => json_encode(['commentId'=>$this->randomNumber()]),
+                'data' => json_encode(['commentId' => $this->randomNumber()]),
                 'subject_id' => null,
                 'author_id' => $this->randomNumber(),
                 'author_avatar' => $this->imageUrl(),

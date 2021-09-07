@@ -265,7 +265,7 @@ class NotificationService
                 'createdOn' => $notification->getCreatedAt(),
                 'readOn' => $notification->getReadOn(),
                 'content' => [
-                    'title' => $notification->getContentTitle(),
+                    'title' => utf8_encode($notification->getContentTitle()),
                     'comment' => $this->cleanStringForWebNotification($notification->getComment()),
                     'url' => $notification->getContentUrl(),
                     'mobile_app_url' => $notification->getContentMobileAppUrl(),

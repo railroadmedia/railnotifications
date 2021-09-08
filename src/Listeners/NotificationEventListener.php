@@ -152,8 +152,7 @@ class NotificationEventListener
                 $comment = $post['content'];
                 $subjectId = $post['id'];
 
-                $receivingUserIds =
-                    array_diff($receivingUserIds, [$authorId]);
+                $receivingUserIds = array_diff($receivingUserIds, [$authorId]);
 
                 break;
             case Notification::TYPE_FORUM_POST_LIKED:
@@ -170,8 +169,7 @@ class NotificationEventListener
                 $comment = $post['content'];
                 $subjectId = $post['id'];
 
-                $receivingUserIds =
-                    array_diff($receivingUserIds, [$authorId]);
+                $receivingUserIds = array_diff($receivingUserIds, [$authorId]);
 
                 break;
             case Notification::TYPE_LESSON_COMMENT_REPLY:
@@ -188,14 +186,14 @@ class NotificationEventListener
                 $content = $this->contentProvider->getContentById($comment['content_id']);
 
                 $contentTitle = $content->fetch('fields.title');
-                $contentUrl = $content->fetch('url') . '?goToComment=' . $comment['id'];
-                $contentMobileAppUrl = $content->fetch('mobile_app_url') . '?goToComment=' . $comment['id'];
+                $contentUrl = $content->fetch('url') . '?goToComment=' . $comment['parent_id'] ?? $comment['id'];
+                $contentMobileAppUrl =
+                    $content->fetch('mobile_app_url') . '?goToComment=' . $comment['parent_id'] ?? $comment['id'];
 
-                $subjectId = $comment['id'];
+                $subjectId = $comment['parent_id'] ?? $comment['id'];
                 $comment = $comment['comment'];
 
-                $receivingUserIds =
-                    array_diff($receivingUserIds, [$authorId]);
+                $receivingUserIds = array_diff($receivingUserIds, [$authorId]);
 
                 break;
             case Notification::TYPE_LESSON_COMMENT_LIKED:
@@ -212,8 +210,7 @@ class NotificationEventListener
                 $subjectId = $comment['id'];
                 $comment = $comment['comment'];
 
-                $receivingUserIds =
-                    array_diff($receivingUserIds, [$authorId]);
+                $receivingUserIds = array_diff($receivingUserIds, [$authorId]);
 
                 break;
             default:

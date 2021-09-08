@@ -161,11 +161,12 @@ class NotificationSettingsService
 
         if ($settingName) {
             $qb->andWhere('ns.settingName = :settingName')
-                ->setParameter('settingName', $settingName);
+                ->setParameter('settingName', $settingName)
+            ->orderBy('ns.id','desc');
 
             $result =
                 $qb->getQuery()
-                    ->getOneOrNullResult();
+                    ->getFirstResult();
 
             return ($result) ? $result->getSettingValue() : $result;
         }

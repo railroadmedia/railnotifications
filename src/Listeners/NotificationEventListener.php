@@ -181,8 +181,8 @@ class NotificationEventListener
                         $comment['parent_id']
                     );
                 }
-                $receivingUserIds = ($originalComment) ? [$originalComment['user_id']] : [];
-
+                $receivingUserIds = ($originalComment && $originalComment['user_id'] != $comment['user_id']) ? [$originalComment['user_id']] : [];
+              
                 $content = $this->contentProvider->getContentById($comment['content_id']);
 
                 $contentTitle = $content->fetch('fields.title');

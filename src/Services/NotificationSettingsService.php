@@ -87,6 +87,8 @@ class NotificationSettingsService
                 ->setParameter('userIds', $userId)
                 ->setParameter('brand', config('railnotifications.brand'))
                 ->setParameter('settingName', $settingName)
+                ->orderBy('ns.id','desc')
+                ->setMaxResults(1)
                 ->getQuery()
                 ->getOneOrNullResult();
 
@@ -120,7 +122,9 @@ class NotificationSettingsService
             ->setParameter('userIds', $userId);
 
         $qb->andWhere('ns.settingName = :settingName')
-            ->setParameter('settingName', $settingName);
+            ->setParameter('settingName', $settingName)
+            ->orderBy('ns.id','desc')
+            ->setMaxResults(1);
 
         $notificationSetting =
             $qb->getQuery()
@@ -162,11 +166,12 @@ class NotificationSettingsService
         if ($settingName) {
             $qb->andWhere('ns.settingName = :settingName')
                 ->setParameter('settingName', $settingName)
-            ->orderBy('ns.id','desc');
+                ->orderBy('ns.id','desc')
+                ->setMaxResults(1);
 
             $result =
                 $qb->getQuery()
-                    ->getFirstResult();
+                    ->getOneOrNullResult();
 
             return ($result) ? $result->getSettingValue() : $result;
         }

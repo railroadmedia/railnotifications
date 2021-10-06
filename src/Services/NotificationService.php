@@ -270,8 +270,8 @@ class NotificationService
                     'url' => $notification->getContentUrl(),
                     'mobile_app_url' => $notification->getContentMobileAppUrl(),
                     'musora_api_mobile_app_url' => str_replace(
-                        'api',
-                        'musora-api',
+                        '/api/',
+                        '/musora-api/',
                         $notification->getContentMobileAppUrl()
                     ),
                 ],

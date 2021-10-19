@@ -500,13 +500,14 @@ class NotificationService
         );
 
         // remove bad html tags and other html special characters
-        //        $string = htmlentities($string, null, 'utf-8');
-        $string = html_entity_decode($string);
+        $string = str_replace("&#160;", "", $string);
         $string = str_replace("&nbsp;", "", $string);
+        $string = html_entity_decode($string);
+        $string = str_replace(["\n", "\r"], ' ', $string);
+
         $string = strip_tags($string, '<p><br>');
         $string = mb_strimwidth($string, 0, $maxLength, "...");
         $string = trim($string);
-        $string = str_replace(["\n", "\r"], ' ', $string);
 
         // remove empty tags
         $pattern = "/<p[^>]*><\\/p[^>]*>/";

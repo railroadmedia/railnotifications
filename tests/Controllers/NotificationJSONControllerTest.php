@@ -291,7 +291,6 @@ class NotificationJSONControllerTest extends TestCase
 
         $notification = $this->fakeNotification(
             [
-                'type' => $this->faker->randomElement([Notification::TYPE_LESSON_COMMENT_REPLY, Notification::TYPE_LESSON_COMMENT_LIKED]),
                 'read_on' => null,
                 'data' => json_encode(['commentId' => rand(2,4)]),
                 'recipient_id' => $recipientInitial['id']]
@@ -334,7 +333,9 @@ class NotificationJSONControllerTest extends TestCase
 
     public function test_mark_as_read()
     {
-        $notification = $this->fakeNotification();
+        $userId = $this->createAndLogInNewUser();
+
+        $notification = $this->fakeNotification(['recipient_id' => $userId]);
 
         $response = $this->call(
             'PUT',
@@ -421,7 +422,6 @@ class NotificationJSONControllerTest extends TestCase
         for ($i = 0; $i < 5; $i++) {
             $notifications[] = $this->fakeNotification(
                 [
-                    'type' => $this->faker->randomElement([Notification::TYPE_LESSON_COMMENT_REPLY, Notification::TYPE_LESSON_COMMENT_LIKED]),
                     'read_on' => null,
                     'data' => json_encode(['commentId' => rand(2,4)]),
                     'recipient_id' => $recipient['id'],

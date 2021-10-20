@@ -144,7 +144,12 @@ class NotificationJsonController extends Controller
             new NotFoundException('Notification not found with id: ' . $id)
         );
 
-        return ResponseService::notification($notification);
+        $recipientId = $notification->getRecipient()->getId();
+
+        $unreadCount = $this->notificationService->getUnreadCount($recipientId);
+
+        return ResponseService::notification($notification)
+            ->addMeta(['unreadCount' => $unreadCount]);
     }
 
     /**

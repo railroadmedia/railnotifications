@@ -302,7 +302,7 @@ class TestCase extends BaseTestCase
                             ->toDateTimeString(),
                     ]
                 );
-dd(Auth::shouldReceive('id'));
+// dd(Auth::shouldReceive('id'));
 //        Auth::shouldReceive('check')
 //            ->andReturn(true);
 //

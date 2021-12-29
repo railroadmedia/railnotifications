@@ -12,6 +12,9 @@ use Railroad\Railnotifications\Contracts\UserProviderInterface;
 use Railroad\Railnotifications\Entities\Notification;
 use Railroad\Railnotifications\Entities\NotificationSetting;
 use Railroad\Railnotifications\Exceptions\BroadcastNotificationFailure;
+use Railroad\Railnotifications\Jobs\UpdateNotificationsAuthorData;
+use Railroad\Railnotifications\Jobs\UpdateNotificationsPostData;
+use Railroad\Railnotifications\Jobs\UpdateNotificationsThreadData;
 use Railroad\Railnotifications\Services\NotificationBroadcastService;
 use Railroad\Railnotifications\Services\NotificationService;
 use Railroad\Railnotifications\Services\NotificationSettingsService;
@@ -66,8 +69,7 @@ class NotificationEventListener
         RailforumProviderInterface $railforumProvider,
         UserProviderInterface $userProvider,
         NotificationSettingsService $notificationSettingsService
-    )
-    {
+    ) {
         $this->notificationService = $notificationService;
         $this->notificationBroadcastService = $notificationBroadcastService;
         $this->contentProvider = $contentProvider;
@@ -84,10 +86,26 @@ class NotificationEventListener
      */
     public function handle(Event $event)
     {
+        $authorId = null;
+        $contentTitle = null;
+        $contentUrl = null;
+        $contentMobileAppUrl = null;
+        $comment = null;
+        $subjectId = null;
+
         switch ($event->type) {
             case Notification::TYPE_FORUM_POST_IN_FOLLOWED_THREAD:
                 $post = $this->railforumProvider->getPostById($event->data['postId']);
+                $thread = $this->railforumProvider->getThreadById($post['thread_id']);
 
+                $contentTitle = $thread['title'];
+                $contentUrl = url()->route('forums.post.jump-to', [$post['id']]);
+                $contentMobileAppUrl = url()->route('forums.api.post.jump-to', [$post['id']]);
+
+                $comment = $post['content'];
+                $subjectId = $post['id'];
+
+                $authorId = $post['author_id'];
                 $threadFollowers = $this->railforumProvider->getThreadFollowerIds($post['thread_id']);
                 $receivingUserIds =
                     array_diff(($threadFollowers) ? $threadFollowers->toArray() : [], [$post['author_id']]);
@@ -100,7 +118,7 @@ class NotificationEventListener
 
             case Notification::TYPE_FORUM_POST_REPLY:
                 $post = $this->railforumProvider->getPostById($event->data['postId']);
-
+                $authorId = $post['author_id'];
                 $crawler = new Crawler($post['content']);
                 $postIdSpans = $crawler->filter('.post-id');
 
@@ -124,13 +142,39 @@ class NotificationEventListener
 
                     $receivingUserIds[] = $originalPost['author_id'];
                 }
+
+                $thread = $this->railforumProvider->getThreadById($post['thread_id']);
+
+                $contentTitle = $thread['title'];
+                $contentUrl = url()->route('forums.post.jump-to', [$post['id']]);
+                $contentMobileAppUrl = url()->route('forums.api.post.jump-to', [$post['id']]);
+
+                $comment = $post['content'];
+                $subjectId = $post['id'];
+
+                $receivingUserIds = array_diff($receivingUserIds, [$authorId]);
+
                 break;
             case Notification::TYPE_FORUM_POST_LIKED:
                 $post = $this->railforumProvider->getPostById($event->data['postId']);
+                $authorId = $event->data['likerId'];
                 $receivingUserIds = [$post['author_id']];
+
+                $thread = $this->railforumProvider->getThreadById($post['thread_id']);
+
+                $contentTitle = $thread['title'];
+                $contentUrl = url()->route('forums.post.jump-to', [$post['id']]);
+                $contentMobileAppUrl = url()->route('forums.api.post.jump-to', [$post['id']]);
+
+                $comment = $post['content'];
+                $subjectId = $post['id'];
+
+                $receivingUserIds = array_diff($receivingUserIds, [$authorId]);
+
                 break;
             case Notification::TYPE_LESSON_COMMENT_REPLY:
                 $comment = $this->contentProvider->getCommentById($event->data['commentId']);
+                $authorId = $comment['user_id'];
                 $originalComment = null;
                 if ($comment['parent_id']) {
                     $originalComment = $this->contentProvider->getCommentById(
@@ -138,17 +182,43 @@ class NotificationEventListener
                     );
                 }
                 $receivingUserIds = ($originalComment && $originalComment['user_id'] != $comment['user_id']) ? [$originalComment['user_id']] : [];
-                 break;
+              
+                $content = $this->contentProvider->getContentById($comment['content_id']);
+
+                $contentTitle = $content->fetch('fields.title');
+                $contentUrl = $content->fetch('url') . '?goToComment=' . $comment['parent_id'] ?? $comment['id'];
+                $contentMobileAppUrl =
+                    $content->fetch('mobile_app_url') . '?goToComment=' . $comment['parent_id'] ?? $comment['id'];
+
+                $subjectId = $comment['parent_id'] ?? $comment['id'];
+                $comment = $comment['comment'];
+
+                $receivingUserIds = array_diff($receivingUserIds, [$authorId]);
+
+                break;
             case Notification::TYPE_LESSON_COMMENT_LIKED:
                 $comment = $this->contentProvider->getCommentById($event->data['commentId']);
+                $authorId = $event->data['likerId'];
                 $receivingUserIds = [$comment['user_id']];
+
+                $content = $this->contentProvider->getContentById($comment['content_id']);
+
+                $contentTitle = $content->fetch('fields.title');
+                $contentUrl = $content->fetch('url') . '?goToComment=' . $comment['id'];
+                $contentMobileAppUrl = $content->fetch('mobile_app_url') . '?goToComment=' . $comment['id'];
+
+                $subjectId = $comment['id'];
+                $comment = $comment['comment'];
+
+                $receivingUserIds = array_diff($receivingUserIds, [$authorId]);
+
                 break;
             default:
                 $receivingUserIds = [];
         }
 
         foreach ($receivingUserIds as $receivingUserId) {
-            // create the notification if one doesnt already exist for the underlying action
+            // create the notification if one doesn't already exist for the underlying action
             $existingNotification = $this->notificationService->getWhereMatchingData(
                 $event->type,
                 $event->data,
@@ -162,7 +232,13 @@ class NotificationEventListener
             $notification = $this->notificationService->create(
                 $event->type,
                 $event->data,
-                $receivingUserId
+                $receivingUserId,
+                $authorId,
+                $subjectId,
+                $contentTitle,
+                $contentUrl,
+                $contentMobileAppUrl,
+                $comment
             );
 
             $user = $this->userProvider->getRailnotificationsUserById($receivingUserId);
@@ -170,7 +246,7 @@ class NotificationEventListener
             if ($user) {
                 $shouldReceiveNotification = $this->shouldReceiveNotification($user, $event->type);
 
-            if ($shouldReceiveNotification) {
+                if ($shouldReceiveNotification) {
                     $broadcastChannels = $this->getUserBroadcastChannels($user);
 
                     foreach ($broadcastChannels as $channel) {
@@ -267,6 +343,19 @@ class NotificationEventListener
             $user->getNotifyOnForumFollowedThreadReply(),
             $user->getId()
         );
+
+        if (($user->getDisplayName() !=
+                $event->getOldUser()
+                    ->getDisplayName()) ||
+            ($user->getProfilePictureUrl() !=
+                $event->getOldUser()
+                    ->getProfilePictureUrl())) {
+            $job = new UpdateNotificationsAuthorData(
+                $user->getId(), $user->getDisplayName(), $user->getProfilePictureUrl()
+            );
+
+            dispatch_now($job);
+        }
     }
 
     /**
@@ -308,6 +397,39 @@ class NotificationEventListener
             $user->getNotifyOnForumFollowedThreadReply(),
             $user->getId()
         );
+    }
+
+    /**
+     * @param $event
+     */
+    public function handleContentUpdated($event)
+    {
+        if ($event->newField['key'] == 'title') {
+            $this->notificationService->updateLessonContentTitle(
+                $event->newField['value'],
+                $event->newField['content_id']
+            );
+        }
+    }
+
+    /**
+     * @param $event
+     */
+    public function handleThreadUpdated($event)
+    {
+        $job = new UpdateNotificationsThreadData($event->getThreadId());
+
+        dispatch_now($job);
+    }
+
+    /**
+     * @param $event
+     */
+    public function handlePostUpdated($event)
+    {
+        $job = new UpdateNotificationsPostData($event->getPostId());
+
+        dispatch_now($job);
     }
 }
 

@@ -1,4 +1,5 @@
 <?php
+
 namespace Railroad\Railnotifications;
 
 use Doctrine\Common\Annotations\AnnotationReader;
@@ -21,6 +22,7 @@ use Railroad\Doctrine\Types\Carbon\CarbonDateTimeTimezoneType;
 use Railroad\Doctrine\Types\Carbon\CarbonDateTimeType;
 use Railroad\Doctrine\Types\Carbon\CarbonDateType;
 use Railroad\Doctrine\Types\Carbon\CarbonTimeType;
+use Railroad\Railnotifications\Commands\SetAuthorOnNtifications;
 use Railroad\Railnotifications\Commands\SetUserNotificationSettings;
 use Railroad\Railnotifications\Events\NotificationBroadcast;
 use Railroad\Railnotifications\Listeners\NotificationEventListener;
@@ -40,32 +42,30 @@ class NotificationsServiceProvider extends ServiceProvider
     public function boot()
     {
         $this->listen = [
-            NotificationBroadcast::class => [NotificationEventListener::class.'@handle'],
+            NotificationBroadcast::class => [NotificationEventListener::class . '@handle'],
         ];
 
         parent::boot();
 
         // migrations: only run migrations if this is the master 'host' implementation
         if (config('railnotifications.data_mode') == 'host') {
-            $this->loadMigrationsFrom(__DIR__.'/../migrations');
+            $this->loadMigrationsFrom(__DIR__ . '/../migrations');
         }
 
-        $this->publishes(
-            [
-                __DIR__.'/../config/railnotifications.php' => config_path('railnotifications.php'),
-            ]
-        );
+        $this->publishes([
+                __DIR__ . '/../config/railnotifications.php' => config_path('railnotifications.php'),
+            ]);
 
         //load package routes file
-        $this->loadRoutesFrom(__DIR__.'/../routes/routes.php');
-        $this->loadRoutesFrom(__DIR__.'/../routes/api.php');
+        $this->loadRoutesFrom(__DIR__ . '/../routes/routes.php');
+        $this->loadRoutesFrom(__DIR__ . '/../routes/api.php');
 
         // views
-        $this->loadViewsFrom(__DIR__.'/../views', 'railnotifications');
+        $this->loadViewsFrom(__DIR__ . '/../views', 'railnotifications');
 
         //artisan commands
         $this->commands([
-            SetUserNotificationSettings::class
+            SetUserNotificationSettings::class,
         ]);
     }
 

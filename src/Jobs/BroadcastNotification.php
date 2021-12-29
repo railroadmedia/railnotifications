@@ -31,6 +31,11 @@ class BroadcastNotification implements ShouldQueue
         $this->notificationBroadcastId = $notificationBroadcastId;
     }
 
+    /**
+     * @param NotificationBroadcastService $notificationBroadcastService
+     * @param ChannelFactory $channelFactory
+     * @throws BroadcastNotificationFailure
+     */
     public function handle(
         NotificationBroadcastService $notificationBroadcastService,
         ChannelFactory $channelFactory
@@ -60,6 +65,9 @@ class BroadcastNotification implements ShouldQueue
         }
     }
 
+    /**
+     * @param BroadcastNotificationFailure $exception
+     */
     public function failed(BroadcastNotificationFailure $exception)
     {
         app(NotificationBroadcastService::class)->markFailed(

@@ -37,6 +37,6 @@ class ForumProvider implements RailforumProviderInterface
 
     public function getAllPostIdsInThread($id)
     {
-        // TODO: Implement getThreadFollowerIds() method.
+        // TODO: Implement getAllPostIdsInThread() method.
     }
 }

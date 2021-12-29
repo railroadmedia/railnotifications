@@ -8,7 +8,6 @@ use Railroad\Railnotifications\Contracts\ContentProviderInterface;
 use Railroad\Railnotifications\Contracts\RailforumProviderInterface;
 use Railroad\Railnotifications\Contracts\UserProviderInterface;
 use Railroad\Railnotifications\Entities\Notification;
-use Railroad\Railnotifications\Services\NotificationService;
 
 class NotificationsTransformer extends TransformerAbstract
 {
@@ -26,22 +25,16 @@ class NotificationsTransformer extends TransformerAbstract
             $defaultIncludes[] = 'recipient';
         }
 
-        if (in_array($notification->getType(), [
-            Notification::TYPE_LESSON_COMMENT_LIKED,
-            Notification::TYPE_LESSON_COMMENT_REPLY,
-            Notification::TYPE_FORUM_POST_LIKED,
-            Notification::TYPE_FORUM_POST_REPLY,
-        ])) {
+        if ($notification->getAuthorId()) {
             $defaultIncludes[] = 'sender';
         }
 
         if (in_array($notification->getType(), [
-            Notification::TYPE_LESSON_COMMENT_LIKED,
-            Notification::TYPE_LESSON_COMMENT_REPLY,
-            Notification::TYPE_NEW_CONTENT_RELEASES,
-        ])) {
+                Notification::TYPE_LESSON_COMMENT_LIKED,
+                Notification::TYPE_LESSON_COMMENT_REPLY,
+                Notification::TYPE_NEW_CONTENT_RELEASES,
+            ])) {
             $defaultIncludes[] = 'content';
-
         }
 
         $this->setDefaultIncludes($defaultIncludes);
@@ -62,16 +55,19 @@ class NotificationsTransformer extends TransformerAbstract
         ];
 
         if (in_array($notification->getType(), [
-            Notification::TYPE_FORUM_POST_LIKED,
-            Notification::TYPE_FORUM_POST_REPLY,
-            Notification::TYPE_FORUM_POST_IN_FOLLOWED_THREAD,
-        ])) {
-            $notificationService = app()->make(NotificationService::class);
-            $linkedContent = $notificationService->getLinkedContent($notification->getId());
-            $response['url'] = $linkedContent['content']['url'];
+                Notification::TYPE_FORUM_POST_LIKED,
+                Notification::TYPE_FORUM_POST_REPLY,
+                Notification::TYPE_FORUM_POST_IN_FOLLOWED_THREAD,
+            ])) {
+
+            $forumProvider = app()->make(RailforumProviderInterface::class);
+            $post = $forumProvider->getPostById($notification->getPostId());
+
+            $response['url'] = $notification->getContentUrl();
+
             $response['thread'] = [
-                'id' => $linkedContent['content']['threadId'],
-                'title' => $linkedContent['content']['title'],
+                'id' => $post['thread_id'],
+                'title' => $notification->getContentTitle(),
             ];
         }
 
@@ -110,56 +106,17 @@ class NotificationsTransformer extends TransformerAbstract
      */
     public function includeSender(Notification $notification)
     {
-        $userProvider = app()->make(UserProviderInterface::class);
+        $author = [
+            'id' => $notification->getAuthorId(),
+            'display_name' => $notification->getAuthorDisplayName(),
+            'profile_image_url' => $notification->getAuthorAvatar(),
+        ];
 
-        $userTransformer = $userProvider->getUserTransformer();
-
-        if (in_array($notification->getType(), [
-            Notification::TYPE_LESSON_COMMENT_LIKED,
-            Notification::TYPE_LESSON_COMMENT_REPLY,
-        ])) {
-            $contentProvider = app()->make(ContentProviderInterface::class);
-            $commentId = $notification->getData()['commentId'];
-            $comment = $contentProvider->getCommentById($commentId);
-
-            if ($notification->getType() == Notification::TYPE_LESSON_COMMENT_LIKED) {
-                $userIdToUse = $notification->getData()['likerId'] ?? $comment['user_id'];
-            } else {
-                $userIdToUse = $comment['user_id'];
-            }
-
-            $author = $userProvider->getRailnotificationsUserById($userIdToUse);
-
-            return $this->item(
-                $author,
-                $userTransformer,
-                'sender'
-            );
-        } elseif ($notification->getType() == Notification::TYPE_FORUM_POST_LIKED) {
-            $notificationService = app()->make(NotificationService::class);
-            $linkedContent = $notificationService->getLinkedContent($notification->getId());
-            $author = $linkedContent['author'];
-            return $this->item(
-                $author,
-                $userTransformer,
-                'sender'
-            );
-        } elseif (in_array($notification->getType(), [
-            Notification::TYPE_FORUM_POST_REPLY,
-            Notification::TYPE_FORUM_POST_IN_FOLLOWED_THREAD,
-        ])) {
-
-            $forumProvider = app()->make(RailforumProviderInterface::class);
-            $postId = $notification->getData()['postId'];
-            $post = $forumProvider->getPostById($postId);
-            $author = $userProvider->getRailnotificationsUserById($post['author_id']);
-
-            return $this->item(
-                $author,
-                $userTransformer,
-                'sender'
-            );
-        }
+        return $this->item(
+            $author,
+            new ArrayTransformer(),
+            'sender'
+        );
     }
 
     /**
@@ -168,44 +125,32 @@ class NotificationsTransformer extends TransformerAbstract
      */
     public function includeContent(Notification $notification)
     {
-        $contentProvider = app()->make(ContentProviderInterface::class);
-        $contentId = $notification->getData()['contentId'] ?? null;
-        $commentId = $notification->getData()['commentId'] ?? null;
+        $content = [
+            'url' => $notification->getContentUrl(),
+            'mobile_app_url' => $notification->getContentMobileAppUrl(),
+            'musora_api_mobile_app_url' => str_replace(['/api/','members/'], ['/musora-api/',''], $notification->getContentMobileAppUrl()),
+        ];
 
-        if ($commentId) {
-            $comment = $contentProvider->getCommentById($commentId);
-            $contentId = $comment['content_id'];
-        }
-
-        $content = $contentProvider->getContentById($contentId);
-
-        $notificationService = app()->make(NotificationService::class);
-        $linkedContent = $notificationService->getLinkedContent($notification->getId());
-        $content['new_mobile_app_url'] = $linkedContent['content']['mobile_app_url'];
-        $content['new_musora_api_mobile_app_url'] = $linkedContent['content']['musora_api_mobile_app_url'];
-
-        if ($content) {
-            return $this->item(
-                $content,
-                $contentProvider->getContentTransformer(),
-                'content'
-            );
-        }
+        return $this->item(
+            $content,
+            new ArrayTransformer(),
+            'content'
+        );
     }
 
     /**
      * @param Notification $notification
-     * @return |null
+     * @return null
      */
     public function getComment(Notification $notification)
     {
         $comment = null;
 
-        $contentProvider = app()->make(ContentProviderInterface::class);
-        $commentId = $notification->getData()['commentId'] ?? null;
+        if ($commentId = $notification->getCommentId()) {
 
-        if ($commentId) {
+            $contentProvider = app()->make(ContentProviderInterface::class);
             $comment = $contentProvider->getCommentById($commentId);
+
             if ($comment['parent_id']) {
                 $comment = $contentProvider->getCommentById($comment['parent_id']);
             }

@@ -2,14 +2,9 @@
 
 namespace Railroad\Railnotifications\Services;
 
-use Carbon\Carbon;
 use FCM;
-use Railroad\Railnotifications\Contracts\ContentProviderInterface;
-use Railroad\Railnotifications\Contracts\RailforumProviderInterface;
 use Railroad\Railnotifications\Contracts\UserProviderInterface;
-use Railroad\Railnotifications\Entities\Notification;
 use Railroad\Railnotifications\Entities\NotificationSetting;
-use Railroad\Railnotifications\Entities\NotificationSettings;
 use Railroad\Railnotifications\Managers\RailnotificationsEntityManager;
 
 class NotificationSettingsService
@@ -166,7 +161,7 @@ class NotificationSettingsService
             ->where('ns.user IN (:userIds)')
             ->andWhere('ns.brand = :brand')
             ->setParameter('userIds', $userId)
-        ->setParameter('brand', config('railnotifications.brand'));
+            ->setParameter('brand', config('railnotifications.brand'));
 
         if ($settingName) {
             $qb->andWhere('ns.settingName = :settingName')

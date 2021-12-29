@@ -2,10 +2,8 @@
 
 namespace Railroad\Railnotifications\Transformers;
 
-use Doctrine\Common\Persistence\Proxy;
 use League\Fractal\TransformerAbstract;
 use Railroad\Railnotifications\Contracts\UserProviderInterface;
-use Railroad\Railnotifications\Entities\Notification;
 use Railroad\Railnotifications\Entities\NotificationSetting;
 
 class UserNotificationsSettingsTransformer extends TransformerAbstract

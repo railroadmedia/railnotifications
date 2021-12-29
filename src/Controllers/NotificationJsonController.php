@@ -59,6 +59,7 @@ class NotificationJsonController extends Controller
     public function index(Request $request)
     {
         $userId = $request->get('user_id', auth()->id());
+        $onlyUnread = $request->get('unread');
 
         $qb = $this->notificationRepository->createQueryBuilder('n');
 
@@ -78,6 +79,10 @@ class NotificationJsonController extends Controller
                 ->setMaxResults($limit)
                 ->setFirstResult($first)
                 ->orderBy('n.createdAt', 'desc');
+
+        if($onlyUnread){
+            $notificationsQueryBuilder->andWhere('n.readOn is NULL');
+        }
 
         return ResponseService::notification(
             $notificationsQueryBuilder->getQuery()
@@ -249,5 +254,16 @@ class NotificationJsonController extends Controller
 
         return ResponseService::empty(201)
             ->setData(['data' => $count]);
+    }
+
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function deleteUserNotifications(Request $request)
+    {
+        $this->notificationService->deleteUserNotifications($request->get('user_id', auth()->id()));
+
+        return ResponseService::empty(204);
     }
 }

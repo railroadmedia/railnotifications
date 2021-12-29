@@ -3,8 +3,6 @@
 namespace Railroad\Railnotifications\Services;
 
 use Carbon\Carbon;
-use DOMDocument;
-use DOMXPath;
 use FCM;
 use Railroad\Railnotifications\Contracts\ContentProviderInterface;
 use Railroad\Railnotifications\Contracts\RailforumProviderInterface;
@@ -40,19 +38,20 @@ class NotificationService
      */
     private $railforumProvider;
 
+    public static $onlyUnread = false;
+
     /**
-     * NotificationService constructor.
-     *
      * @param RailnotificationsEntityManager $entityManager
      * @param UserProviderInterface $userProvider
+     * @param ContentProviderInterface $contentProvider
+     * @param RailforumProviderInterface $railforumProvider
      */
     public function __construct(
         RailnotificationsEntityManager $entityManager,
         UserProviderInterface $userProvider,
         ContentProviderInterface $contentProvider,
         RailforumProviderInterface $railforumProvider
-    )
-    {
+    ) {
         $this->entityManager = $entityManager;
         $this->userProvider = $userProvider;
         $this->contentProvider = $contentProvider;
@@ -69,8 +68,17 @@ class NotificationService
      * @throws \Doctrine\ORM\ORMException
      * @throws \Doctrine\ORM\OptimisticLockException
      */
-    public function create(string $type, array $data, int $recipientId)
-    {
+    public function create(
+        string $type,
+        array $data,
+        int $recipientId,
+        $authorId = null,
+        $subjectId = null,
+        $contentTitle = null,
+        $contentUrl = null,
+        $contentMobileAppUrl = null,
+        $comment = null
+    ) {
         $notification = new Notification();
 
         $notification->setType($type);
@@ -79,9 +87,23 @@ class NotificationService
 
         $notification->setBrand(config('railnotifications.brand'));
 
+        $notification->setContentTitle($contentTitle);
+        $notification->setContentUrl($contentUrl);
+        $notification->setContentMobileAppUrl($contentMobileAppUrl);
+        $notification->setComment($comment);
+
         $user = $this->userProvider->getRailnotificationsUserById($recipientId);
 
         $notification->setRecipient($user);
+
+        if ($authorId) {
+            $author = $this->userProvider->getRailnotificationsUserById($authorId);
+            $notification->setAuthorAvatar($author->getAvatar());
+            $notification->setAuthorDisplayName($author->getDisplayName());
+            $notification->setAuthorId($author->getId());
+        }
+
+        $notification->setSubject($subjectId);
 
         $this->entityManager->persist($notification);
         $this->entityManager->flush();
@@ -212,20 +234,56 @@ class NotificationService
      */
     public function getManyPaginated(int $recipientId, int $amount, int $skip)
     {
-        $qb = $this->notificationRepository->createQueryBuilder('n');
+        $qb =
+            $this->notificationRepository->createQueryBuilder('n')
+                ->select('n')
+                ->where(
+                    'n.recipient = :recipientId'
+                )
+                ->andWhere('n.brand = :brand')
+                ->orderBy('n.createdAt', 'desc')
+                ->setParameter('brand', config('railnotifications.brand'))
+                ->setParameter('recipientId', $recipientId);
 
-        return $qb->select('n')
-            ->where(
-                'n.recipient = :recipientId'
-            )
-            ->andWhere('n.brand = :brand')
-            ->orderBy('n.createdAt', 'desc')
-            ->setParameter('brand', config('railnotifications.brand'))
-            ->setParameter('recipientId', $recipientId)
-            ->setMaxResults($amount)
-            ->setFirstResult($skip)
-            ->getQuery()
-            ->getResult();
+        if ($this::$onlyUnread) {
+            $qb->andWhere('n.readOn is NULL');
+        }
+
+        $notifications =
+            $qb->setMaxResults($amount)
+                ->setFirstResult($skip)
+                ->getQuery()
+                ->getResult();
+
+        $results = [];
+
+        foreach ($notifications as $notification) {
+
+            $notificationData = [
+                'id' => $notification->getId(),
+                'type' => $notification->getNotificationType(),
+                'createdOn' => $notification->getCreatedAt(),
+                'readOn' => $notification->getReadOn(),
+                'content' => [
+                    'title' => utf8_encode($notification->getContentTitle()),
+                    'comment' => $this->cleanStringForWebNotification($notification->getComment()),
+                    'url' => $notification->getContentUrl(),
+                    'mobile_app_url' => $notification->getContentMobileAppUrl(),
+                    'musora_api_mobile_app_url' => str_replace(
+                        '/api/',
+                        '/musora-api/',
+                        $notification->getContentMobileAppUrl()
+                    ),
+                ],
+                'authorId' => $notification->getAuthorId(),
+                'authorDisplayName' => $notification->getAuthorDisplayName(),
+                'authorAvatar' => $notification->getAuthorAvatar(),
+            ];
+
+            $results[] = $notificationData;
+        }
+
+        return $results;
     }
 
     /**
@@ -420,85 +478,6 @@ class NotificationService
     }
 
     /**
-     * @param $notificationId
-     * @return mixed
-     */
-    public function getLinkedContent($notificationId)
-    {
-        try {
-            $notification = $this->get($notificationId);
-
-            $results = [];
-            $results['notificationType'] = config('railnotifications.mapping_types')[$notification->getType()];
-
-            if ($notification->getType() == Notification::TYPE_LESSON_COMMENT_LIKED ||
-                $notification->getType() == Notification::TYPE_LESSON_COMMENT_REPLY) {
-
-                $commentId = $notification->getData()['commentId'];
-
-                $comment = $this->contentProvider->getCommentById($commentId);
-                $commentText = $comment['comment'];
-
-                if ($notification->getType() == Notification::TYPE_LESSON_COMMENT_LIKED) {
-                    $userIdToUse = $notification->getData()['likerId'] ?? $comment['user_id'];
-                } else {
-                    $userIdToUse = $comment['user_id'];
-                }
-
-                $author = $this->userProvider->getRailnotificationsUserById($userIdToUse);
-
-                if (($notification->getType() == Notification::TYPE_LESSON_COMMENT_REPLY)) {
-                    $comment = $this->contentProvider->getCommentById($comment['parent_id']);
-                }
-                $lesson = $this->contentProvider->getContentById($comment['content_id']);
-
-                $results['content'] = [
-                    'lesson' => $lesson,
-                    'title' => $lesson->fetch('fields.title'),
-                    'url' => $lesson->fetch('url') . '?goToComment=' . $comment['id'],
-                    'mobile_app_url' => $lesson->fetch('mobile_app_url') . '?goToComment=' . $comment['id'],
-                    'musora_api_mobile_app_url' => $lesson->fetch('musora_api_mobile_app_url') . '?goToComment=' . $comment['id'],
-                    'comment' => $commentText,
-                    'commentId' => $comment['id']
-                ];
-
-                $results['author'] = $author;
-
-            } elseif ($notification->getType() == Notification::TYPE_FORUM_POST_IN_FOLLOWED_THREAD ||
-                $notification->getType() == Notification::TYPE_FORUM_POST_REPLY ||
-                $notification->getType() == Notification::TYPE_FORUM_POST_LIKED) {
-
-                $post = $this->railforumProvider->getPostById($notification->getData()['postId']);
-
-                $thread = $this->railforumProvider->getThreadById($post['thread_id']);
-                $thread['url'] = url()->route('forums.post.jump-to', $post['id']);
-
-                if ($notification->getType() == Notification::TYPE_FORUM_POST_LIKED) {
-                    $author = $this->userProvider->getRailnotificationsUserById($post['latest_post_like']['liker_id']);
-                } else {
-                    $author = $this->userProvider->getRailnotificationsUserById($post['author_id']);
-                }
-
-                $results['content'] = [
-                    'title' => $thread['title'],
-                    'url' => $thread['url'],
-                    'comment' => $post['content'],
-                    'commentId' => $post['id'],
-                    'likeCount' => $post['like_count'] ?? 0,
-                    'threadId' => $thread['id'],
-                    'mobile_app_url' => url()->route('forums.api.post.jump-to', $post['id'])
-                ];
-
-                $results['author'] = $author;
-            }
-
-            return $results;
-        } catch (Throwable $exception) {
-            return [];
-        }
-    }
-
-    /**
      * Removes blockquote html entities, other bad html, excessive new lines, html special chars, etc. Also limits
      * string to a specific size.
      * This should used for all notification content sent out.
@@ -521,22 +500,25 @@ class NotificationService
         );
 
         // remove bad html tags and other html special characters
-        $string = htmlentities($string, null, 'utf-8');
-        $string = html_entity_decode($string);
+        $string = str_replace("&#160;", "", $string);
         $string = str_replace("&nbsp;", "", $string);
+        $string = html_entity_decode($string);
+        $string = str_replace(["\n", "\r"], ' ', $string);
+
         $string = strip_tags($string, '<p><br>');
         $string = mb_strimwidth($string, 0, $maxLength, "...");
         $string = trim($string);
-        $string = str_replace(array("\n", "\r"), ' ', $string);
 
         // remove empty tags
         $pattern = "/<p[^>]*><\\/p[^>]*>/";
         $string = preg_replace($pattern, '', $string);
-        $string = preg_replace_callback("/<body[^>]*>(.*?)<\/body>/is",
+        $string = preg_replace_callback(
+            "/<body[^>]*>(.*?)<\/body>/is",
             function ($m) {
                 return $m;
             },
-            $string);
+            $string
+        );
 
         return $string;
     }
@@ -557,5 +539,104 @@ class NotificationService
         $string = htmlspecialchars_decode($string);
 
         return $string;
+    }
+
+    /**
+     * @param $userId
+     * @return int|mixed|string
+     */
+    public function deleteUserNotifications($userId)
+    {
+        return $this->notificationRepository->createQueryBuilder('n')
+            ->where(
+                'n.recipient = :recipientId'
+            )
+            ->andWhere('n.brand = :brand')
+            ->setParameter('brand', config('railnotifications.brand'))
+            ->setParameter('recipientId', $userId)
+            ->delete()
+            ->getQuery()
+            ->execute();
+    }
+
+    /**
+     * @param $authorId
+     * @param $avatar
+     * @param $displayName
+     * @return int|mixed|string
+     */
+    public function updateAuthorData($authorId, $avatar, $displayName)
+    {
+        return $this->entityManager->createQuery(
+            'update Railroad\Railnotifications\Entities\Notification n set n.authorAvatar = :avatar, n.authorDisplayName = :displayName where n.authorId = :authorId'
+        )
+            ->setParameter('avatar', $avatar)
+            ->setParameter('displayName', $displayName)
+            ->setParameter('authorId', $authorId)
+            ->execute();
+    }
+
+    /**
+     * @param $contentTitle
+     * @param $subject
+     * @return int|mixed|string
+     */
+    public function updateLessonContentTitle($contentTitle, $subject)
+    {
+        return $this->entityManager->createQuery(
+            'update Railroad\Railnotifications\Entities\Notification n set n.contentTitle = :title where n.subject = :subject and n.type in (:types)'
+        )
+            ->setParameter('title', $contentTitle)
+            ->setParameter('subject', $subject)
+            ->setParameter('types', [Notification::TYPE_LESSON_COMMENT_LIKED, Notification::TYPE_LESSON_COMMENT_REPLY])
+            ->execute();
+    }
+
+    /**
+     * @param $threadId
+     */
+    public function updateThreadData($threadId)
+    {
+        $thread = $this->railforumProvider->getThreadById($threadId);
+        $posts = $this->railforumProvider->getAllPostIdsInThread($threadId);
+
+        $this->entityManager->createQuery(
+            'update Railroad\Railnotifications\Entities\Notification n set n.contentTitle = :title where n.subject in (:subject) and n.type in (:types)'
+        )
+            ->setParameter('title', $thread['title'])
+            ->setParameter(
+                'subject',
+                array_merge(
+                    [$threadId],
+                    $posts->pluck('id')
+                        ->toArray()
+                )
+            )
+            ->setParameter('types', [
+                Notification::TYPE_FORUM_POST_IN_FOLLOWED_THREAD,
+                Notification::TYPE_FORUM_POST_LIKED,
+                Notification::TYPE_FORUM_POST_REPLY,
+            ])
+            ->execute();
+    }
+
+    /**
+     * @param $postId
+     */
+    public function updatePostData($postId)
+    {
+        $post = $this->railforumProvider->getPostById($postId);
+
+        $this->entityManager->createQuery(
+            'update Railroad\Railnotifications\Entities\Notification n set n.comment = :comment where n.subject in (:subject) and n.type in (:types)'
+        )
+            ->setParameter('comment', $post['content'])
+            ->setParameter('subject', $postId)
+            ->setParameter('types', [
+                Notification::TYPE_FORUM_POST_IN_FOLLOWED_THREAD,
+                Notification::TYPE_FORUM_POST_LIKED,
+                Notification::TYPE_FORUM_POST_REPLY,
+            ])
+            ->execute();
     }
 }

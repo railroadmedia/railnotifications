@@ -39,7 +39,8 @@ class UserNotificationSettingsJsonController extends Controller
 
     /**
      * @param Request $request
-     * @return Fractal
+     * @return JsonResponse
+     * @throws \Doctrine\ORM\NonUniqueResultException
      */
     public function index(Request $request)
     {

@@ -35,8 +35,6 @@ class NotificationBroadcastService
     private $notificationBroadcastRepository;
 
     /**
-     * NotificationBroadcastService constructor.
-     *
      * @param NotificationService $notificationService
      * @param ChannelFactory $channelFactory
      * @param RailnotificationsEntityManager $entityManager

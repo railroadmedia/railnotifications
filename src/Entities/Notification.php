@@ -49,7 +49,7 @@ class Notification
     protected $data;
 
     /**
-     * @ORM\Column(type="railnotification_user", name="subject_id", nullable=true)
+     * @ORM\Column(type="integer", name="subject_id", nullable=true)
      */
     protected $subject;
 
@@ -70,6 +70,48 @@ class Notification
      * @var string
      */
     protected $brand;
+
+    /**
+     * @ORM\Column(type="integer")
+     * @var string
+     */
+    protected $authorId;
+
+    /**
+     * @ORM\Column(type="string")
+     * @var string
+     */
+    protected $authorDisplayName;
+
+    /**
+     * @ORM\Column(type="string")
+     * @var string
+     */
+    protected $authorAvatar;
+
+    /**
+     * @ORM\Column(type="string")
+     * @var string
+     */
+    protected $contentTitle;
+
+    /**
+     * @ORM\Column(type="string")
+     * @var string
+     */
+    protected $contentUrl;
+
+    /**
+     * @ORM\Column(type="string")
+     * @var string
+     */
+    protected $comment;
+
+    /**
+     * @ORM\Column(type="string")
+     * @var string
+     */
+    protected $contentMobileAppUrl;
 
     /**
      * @return int|null
@@ -114,20 +156,20 @@ class Notification
     }
 
     /**
-     * @return User|null
+     * @return int|null
      */
     public function getSubject()
-    : ?User
+    : ?int
     {
         return $this->subject;
     }
 
     /**
-     * @param User $user
+     * @param int|null $subject
      */
-    public function setSubject(?User $user)
+    public function setSubject(?int $subject)
     {
-        $this->subject = $user;
+        $this->subject = $subject;
     }
 
     /**
@@ -178,6 +220,148 @@ class Notification
     public function setBrand(string $brand)
     {
         $this->brand = $brand;
+    }
+
+    /**
+     * @return integer
+     */
+    public function getAuthorId()
+    {
+        return $this->authorId;
+    }
+
+    /**
+     * @param int|null $authorId
+     */
+    public function setAuthorId(?int $authorId)
+    {
+        $this->authorId = $authorId;
+    }
+
+    /**
+     * @return string
+     */
+    public function getAuthorAvatar()
+    : ?string
+    {
+        return $this->authorAvatar;
+    }
+
+    /**
+     * @param string $authorAvatar
+     */
+    public function setAuthorAvatar(?string $authorAvatar)
+    {
+        $this->authorAvatar = $authorAvatar;
+    }
+
+    /**
+     * @return string
+     */
+    public function getAuthorDisplayName()
+    : ?string
+    {
+        return $this->authorDisplayName;
+    }
+
+    /**
+     * @param string $contentTitle
+     */
+    public function setContentTitle(?string $contentTitle)
+    {
+        $this->contentTitle = $contentTitle;
+    }
+
+    /**
+     * @return string
+     */
+    public function getContentUrl()
+    : ?string
+    {
+        return $this->contentUrl;
+    }
+
+    /**
+     * @param string $contentUrl
+     */
+    public function setContentUrl(?string $contentUrl)
+    {
+        $this->contentUrl = $contentUrl;
+    }
+
+    /**
+     * @return string
+     */
+    public function getContentMobileAppUrl()
+    : ?string
+    {
+        return $this->contentMobileAppUrl;
+    }
+
+    /**
+     * @param string $contentMobileAppUrl
+     */
+    public function setContentMobileAppUrl(?string $contentMobileAppUrl)
+    {
+        $this->contentMobileAppUrl = $contentMobileAppUrl;
+    }
+
+    /**
+     * @return string
+     */
+    public function getComment()
+    : ?string
+    {
+        return $this->comment;
+    }
+
+    /**
+     * @param string $comment
+     */
+    public function setComment(?string $comment)
+    {
+        $this->comment = $comment;
+    }
+
+    /**
+     * @return string
+     */
+    public function getContentTitle()
+    : ?string
+    {
+        return $this->contentTitle;
+    }
+
+    /**
+     * @param string $authorDisplayName
+     */
+    public function setAuthorDisplayName(?string $authorDisplayName)
+    {
+        $this->authorDisplayName = $authorDisplayName;
+    }
+
+    /**
+     * @return mixed|string
+     */
+    public function getNotificationType()
+    {
+        return config('railnotifications.mapping_types')[$this->getType()] ?? '';
+    }
+
+    /**
+     * @return mixed|null
+     */
+    public function getCommentId()
+    {
+        return $this->getData()['commentId'] ?? null;
+    }
+
+    /**
+     * @return mixed|null
+     */
+    public function getPostId()
+    {
+        return $this->getData()['postId'] ?? null;
     }
 
 }

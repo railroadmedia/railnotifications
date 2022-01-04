@@ -92,6 +92,7 @@ class NotificationEventListener
         $contentMobileAppUrl = null;
         $comment = null;
         $subjectId = null;
+        $endpointPrefix = config('railnotifications.brand') == 'drumeo' ? '/laravel/public': '';
 
         switch ($event->type) {
             case Notification::TYPE_FORUM_POST_IN_FOLLOWED_THREAD:
@@ -99,7 +100,7 @@ class NotificationEventListener
                 $thread = $this->railforumProvider->getThreadById($post['thread_id']);
 
                 $contentTitle = $thread['title'];
-                $contentUrl = url()->route('forums.post.jump-to', [$post['id']]);
+                $contentUrl = $endpointPrefix . '/members/forums/jump-to-post/' .$post['id'];
                 $contentMobileAppUrl = url()->route('forums.api.post.jump-to', [$post['id']]);
 
                 $comment = $post['content'];
@@ -146,7 +147,7 @@ class NotificationEventListener
                 $thread = $this->railforumProvider->getThreadById($post['thread_id']);
 
                 $contentTitle = $thread['title'];
-                $contentUrl = url()->route('forums.post.jump-to', [$post['id']]);
+                $contentUrl = $endpointPrefix .'/members/forums/jump-to-post/'. $post['id'];
                 $contentMobileAppUrl = url()->route('forums.api.post.jump-to', [$post['id']]);
 
                 $comment = $post['content'];
@@ -163,7 +164,7 @@ class NotificationEventListener
                 $thread = $this->railforumProvider->getThreadById($post['thread_id']);
 
                 $contentTitle = $thread['title'];
-                $contentUrl = url()->route('forums.post.jump-to', [$post['id']]);
+                $contentUrl = $endpointPrefix. '/members/forums/jump-to-post/'. $post['id'];
                 $contentMobileAppUrl = url()->route('forums.api.post.jump-to', [$post['id']]);
 
                 $comment = $post['content'];
@@ -186,7 +187,7 @@ class NotificationEventListener
                 $content = $this->contentProvider->getContentById($comment['content_id']);
 
                 $contentTitle = $content->fetch('fields.title');
-                $contentUrl = $content->fetch('url') . '?goToComment=' . $comment['parent_id'] ?? $comment['id'];
+                $contentUrl =  $endpointPrefix . '/members/jump-to-comment/'. $content['id'].'/' . $comment['parent_id'];
                 $contentMobileAppUrl =
                     $content->fetch('mobile_app_url') . '?goToComment=' . $comment['parent_id'] ?? $comment['id'];
 
@@ -198,15 +199,16 @@ class NotificationEventListener
                 break;
             case Notification::TYPE_LESSON_COMMENT_LIKED:
                 $comment = $this->contentProvider->getCommentById($event->data['commentId']);
+
+
                 $authorId = $event->data['likerId'];
                 $receivingUserIds = [$comment['user_id']];
 
                 $content = $this->contentProvider->getContentById($comment['content_id']);
 
                 $contentTitle = $content->fetch('fields.title');
-                $contentUrl = $content->fetch('url') . '?goToComment=' . $comment['id'];
+                $contentUrl = $endpointPrefix. '/members/jump-to-comment/'. $content['id'].'/' . ($comment['parent_id'] ?? $comment['id']);
                 $contentMobileAppUrl = $content->fetch('mobile_app_url') . '?goToComment=' . $comment['id'];
-
                 $subjectId = $comment['id'];
                 $comment = $comment['comment'];
 

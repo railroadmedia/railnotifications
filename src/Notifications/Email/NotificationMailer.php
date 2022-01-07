@@ -5,6 +5,7 @@ namespace Railroad\Railnotifications\Notifications\Email;
 use Illuminate\Contracts\Mail\Mailer;
 use Illuminate\View\View;
 use Railroad\Railnotifications\Contracts\RailforumProviderInterface;
+use Railroad\Railnotifications\Decorators\Decorator;
 use Railroad\Railnotifications\Entities\Notification;
 use Railroad\Railnotifications\Services\NotificationService;
 use Throwable;
@@ -27,19 +28,27 @@ class NotificationMailer
     private $railforumProvider;
 
     /**
+     * @var Decorator
+     */
+    private $decorator;
+
+    /**
      * @param Mailer $mailer
      * @param NotificationService $notificationService
      * @param RailforumProviderInterface $railforumProvider
+     * @param Decorator $decorator
      */
     public function __construct(
         Mailer $mailer,
         NotificationService $notificationService,
-        RailforumProviderInterface $railforumProvider
+        RailforumProviderInterface $railforumProvider,
+        Decorator $decorator
     )
     {
         $this->mailer = $mailer;
         $this->notificationService = $notificationService;
         $this->railforumProvider = $railforumProvider;
+        $this->decorator = $decorator;
     }
 
     /**
@@ -49,6 +58,8 @@ class NotificationMailer
     public function send(array $notifications)
     {
         $notificationsViews = [];
+
+        $notifications = $this->decorator->decorate($notifications);
 
         foreach ($notifications as $notification) {
 

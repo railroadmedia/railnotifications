@@ -584,10 +584,10 @@ class NotificationService
     public function updateLessonContentTitle($contentTitle, $subject)
     {
         return $this->entityManager->createQuery(
-            'update Railroad\Railnotifications\Entities\Notification n set n.contentTitle = :title where n.subject = :subject and n.type in (:types)'
+            'update Railroad\Railnotifications\Entities\Notification n set n.contentTitle = :title where n.contentUrl like :url and n.type in (:types)'
         )
             ->setParameter('title', $contentTitle)
-            ->setParameter('subject', $subject)
+            ->setParameter('url', '%/jump-to-comment/'.$subject.'%')
             ->setParameter('types', [Notification::TYPE_LESSON_COMMENT_LIKED, Notification::TYPE_LESSON_COMMENT_REPLY])
             ->execute();
     }

@@ -3,14 +3,16 @@
 namespace Railroad\Railnotifications\Tests\Controllers;
 
 use Carbon\Carbon;
+use DMS\PHPUnitExtensions\ArraySubset\ArraySubsetAsserts;
 use Railroad\Railnotifications\Channels\ExampleChannel;
 use Railroad\Railnotifications\Entities\NotificationBroadcast;
 use Railroad\Railnotifications\Tests\TestCase;
 
 class NotificationBroadcastJSONControllerTest extends TestCase
 {
+    use ArraySubsetAsserts;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         parent::setUp();
     }
@@ -45,7 +47,7 @@ class NotificationBroadcastJSONControllerTest extends TestCase
                 'type' => 'single',
                 'status' => 'sent',
             ],
-            $response->decodeResponseJson()
+            $response->json()
         );
     }
 
@@ -70,7 +72,7 @@ class NotificationBroadcastJSONControllerTest extends TestCase
 
         $this->assertEquals(
             [],
-            $response->decodeResponseJson()
+            $response->json()
         );
 
         $this->assertDatabaseMissing(
@@ -104,7 +106,7 @@ class NotificationBroadcastJSONControllerTest extends TestCase
                 'report' => null,
                 'broadcast_on' => null,
             ],
-            $response->decodeResponseJson()
+            $response->json()
         );
     }
 
@@ -119,7 +121,7 @@ class NotificationBroadcastJSONControllerTest extends TestCase
             [
                 'title' => "Not found.",
             ],
-            $response->decodeResponseJson('errors')
+            $response->json('errors')
         );
     }
 
@@ -145,7 +147,7 @@ class NotificationBroadcastJSONControllerTest extends TestCase
                 'broadcast_on' => Carbon::now()
                     ->toDateTimeString(),
             ],
-            $response->decodeResponseJson()
+            $response->json()
         );
     }
 
@@ -160,7 +162,7 @@ class NotificationBroadcastJSONControllerTest extends TestCase
             [
                 'title' => "Not found.",
             ],
-            $response->decodeResponseJson('errors')
+            $response->json('errors')
         );
     }
 
@@ -199,7 +201,7 @@ class NotificationBroadcastJSONControllerTest extends TestCase
                 'status' => NotificationBroadcast::STATUS_FAILED,
                 'report' => $message,
             ],
-            $response->decodeResponseJson()
+            $response->json()
         );
     }
 
@@ -216,7 +218,7 @@ class NotificationBroadcastJSONControllerTest extends TestCase
             [
                 'title' => "Not found.",
             ],
-            $response->decodeResponseJson('errors')
+            $response->json('errors')
         );
     }
 }

@@ -11,7 +11,7 @@ use Railroad\Railnotifications\Entities\Notification;
 
 class NotificationsTransformer extends TransformerAbstract
 {
-    protected $defaultIncludes = [];
+    protected array $defaultIncludes = [];
 
     /**
      * @param Notification $notification
@@ -65,10 +65,12 @@ class NotificationsTransformer extends TransformerAbstract
 
             $response['url'] = $notification->getContentUrl();
 
-            $response['thread'] = [
-                'id' => $post['thread_id'],
-                'title' => $notification->getContentTitle(),
-            ];
+            if (!empty($post)) {
+                $response['thread'] = [
+                    'id' => $post['thread_id'],
+                    'title' => $notification->getContentTitle(),
+                ];
+            }
         }
 
         if ($comment = $this->getComment($notification)) {

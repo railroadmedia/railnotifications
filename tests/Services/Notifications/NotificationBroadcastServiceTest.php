@@ -22,7 +22,7 @@ class NotificationBroadcastServiceTest extends TestCase
      */
     private $classBeingTested;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         parent::setUp();
 

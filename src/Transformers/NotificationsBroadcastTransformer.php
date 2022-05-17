@@ -8,7 +8,7 @@ use Railroad\Railnotifications\Entities\NotificationBroadcast;
 
 class NotificationsBroadcastTransformer extends TransformerAbstract
 {
-    protected $defaultIncludes = ['notification'];
+    protected array $defaultIncludes = ['notification'];
 
     /**
      * @param NotificationBroadcast $notificationBroadcast

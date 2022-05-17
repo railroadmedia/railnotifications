@@ -15,7 +15,7 @@ class UserNotificationSettingsServiceTest extends NotificationsTestCase
      */
     private $classBeingTested;
 
-    public function setUp()
+    public function setUp(): void
     {
         parent::setUp();
 

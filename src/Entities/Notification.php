@@ -43,7 +43,7 @@ class Notification
     protected $type;
 
     /**
-     * @ORM\Column(type="json_array")
+     * @ORM\Column(type="json")
      * @var text
      */
     protected $data;

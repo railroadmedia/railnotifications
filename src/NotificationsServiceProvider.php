@@ -4,16 +4,16 @@ namespace Railroad\Railnotifications;
 
 use Doctrine\Common\Annotations\AnnotationReader;
 use Doctrine\Common\Annotations\AnnotationRegistry;
-use Doctrine\Common\Annotations\CachedReader;
-use Doctrine\Common\Cache\PhpFileCache;
-use Doctrine\Common\Cache\RedisCache;
+use Doctrine\Common\Annotations\IndexedReader;
+use Doctrine\Common\Annotations\PsrCachedReader;
+use Doctrine\Common\Cache\Psr6\DoctrineProvider;
 use Doctrine\Common\EventManager;
-use Doctrine\Common\Persistence\Mapping\Driver\MappingDriverChain;
 use Doctrine\Common\Proxy\AbstractProxyFactory;
 use Doctrine\DBAL\Types\Type;
 use Doctrine\ORM\Configuration;
 use Doctrine\ORM\Mapping\Driver\AnnotationDriver;
 use Doctrine\ORM\Mapping\UnderscoreNamingStrategy;
+use Doctrine\Persistence\Mapping\Driver\MappingDriverChain;
 use Gedmo\DoctrineExtensions;
 use Gedmo\Sortable\SortableListener;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
@@ -22,13 +22,14 @@ use Railroad\Doctrine\Types\Carbon\CarbonDateTimeTimezoneType;
 use Railroad\Doctrine\Types\Carbon\CarbonDateTimeType;
 use Railroad\Doctrine\Types\Carbon\CarbonDateType;
 use Railroad\Doctrine\Types\Carbon\CarbonTimeType;
-use Railroad\Railnotifications\Commands\SetAuthorOnNtifications;
 use Railroad\Railnotifications\Commands\SetUserNotificationSettings;
 use Railroad\Railnotifications\Events\NotificationBroadcast;
 use Railroad\Railnotifications\Listeners\NotificationEventListener;
 use Railroad\Railnotifications\Managers\RailnotificationsEntityManager;
 use Railroad\Railnotifications\Types\UserType;
 use Redis;
+use Symfony\Component\Cache\Adapter\ArrayAdapter;
+use Symfony\Component\Cache\Adapter\FilesystemAdapter;
 
 class NotificationsServiceProvider extends ServiceProvider
 {
@@ -85,27 +86,24 @@ class NotificationsServiceProvider extends ServiceProvider
         // set proxy dir to temp folder on server
         $proxyDir = sys_get_temp_dir();
 
-        // setup redis
-        $redis = new Redis();
-
-        $redis->connect(
-            config('railnotifications.redis_host'),
-            config('railnotifications.redis_port')
-        );
-
-        $redisCache = new RedisCache();
-        $redisCache->setRedis($redis);
+        // array cache
+        $arrayCacheAdapter = new ArrayAdapter();
+        $doctrineArrayCache = DoctrineProvider::wrap($arrayCacheAdapter);
+        app()->instance('EcommerceArrayCache', $doctrineArrayCache);
 
         // file cache
-        $phpFileCache = new PhpFileCache($proxyDir);
+        $phpFileCacheAdapter = new FilesystemAdapter('', 0, $proxyDir);
+        $doctrineFileCache = DoctrineProvider::wrap($arrayCacheAdapter);
 
-        // redis cache instance is referenced in laravel container to be reused when needed
+        // annotation reader
         AnnotationRegistry::registerLoader('class_exists');
 
-        $annotationReader = new AnnotationReader();
+        $annotationReader = new IndexedReader(new AnnotationReader());
 
-        $cachedAnnotationReader = new CachedReader(
-            $annotationReader, $phpFileCache, config('railnotifications.development_mode', false)
+        $cachedAnnotationReader = new PsrCachedReader(
+            $annotationReader,
+            $phpFileCacheAdapter,
+            env('APP_DEBUG', false)
         );
 
         $driverChain = new MappingDriverChain();
@@ -139,9 +137,9 @@ class NotificationsServiceProvider extends ServiceProvider
 
         $ormConfiguration = new Configuration();
 
-        $ormConfiguration->setMetadataCacheImpl($phpFileCache);
-        $ormConfiguration->setQueryCacheImpl($phpFileCache);
-        $ormConfiguration->setResultCacheImpl($redisCache);
+        $ormConfiguration->setMetadataCache($phpFileCacheAdapter);
+        $ormConfiguration->setQueryCache($phpFileCacheAdapter);
+        $ormConfiguration->setResultCache($arrayCacheAdapter);
         $ormConfiguration->setProxyDir($proxyDir);
         $ormConfiguration->setProxyNamespace('DoctrineProxies');
         $ormConfiguration->setAutoGenerateProxyClasses(

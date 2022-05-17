@@ -3,13 +3,15 @@
 namespace Railroad\Railnotifications\Tests\Controllers;
 
 use Carbon\Carbon;
+use DMS\PHPUnitExtensions\ArraySubset\ArraySubsetAsserts;
 use Railroad\Railnotifications\Entities\Notification;
 use Railroad\Railnotifications\Tests\TestCase;
 
 class UserNotificationSettingsJSONControllerTest extends TestCase
 {
+    use ArraySubsetAsserts;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         parent::setUp();
     }
@@ -24,7 +26,7 @@ class UserNotificationSettingsJSONControllerTest extends TestCase
             ]
         );
 
-        $this->assertEquals([], $response->decodeResponseJson('data'));
+        $this->assertEquals([], $response->json('data'));
     }
 
     public function test_index()
@@ -50,7 +52,7 @@ class UserNotificationSettingsJSONControllerTest extends TestCase
         );
 
         $i = 0;
-        foreach ($response->decodeResponseJson('data') as $settingName => $settingValue) {
+        foreach ($response->json('data') as $settingName => $settingValue) {
             $this->assertEquals($userNotificationSettings[$i]['setting_name'], $settingName);
             $this->assertEquals($userNotificationSettings[$i]['setting_value'], $settingValue);
             $i++;
@@ -84,7 +86,7 @@ class UserNotificationSettingsJSONControllerTest extends TestCase
                     'id' => $user['id'],
                 ],
             ],
-            $response->decodeResponseJson()
+            $response->json()
         );
 
         $this->assertDatabaseHas(
@@ -117,7 +119,7 @@ class UserNotificationSettingsJSONControllerTest extends TestCase
             ],
         ];
 
-        $this->assertEquals($errors, $response->decodeResponseJson('errors'));
+        $this->assertEquals($errors, $response->json('errors'));
     }
 
     public function test_update_user_settings()
@@ -148,7 +150,7 @@ class UserNotificationSettingsJSONControllerTest extends TestCase
                     'id' => $user['id'],
                 ],
             ],
-            $response->decodeResponseJson()
+            $response->json()
         );
 
         $this->assertDatabaseHas(
@@ -223,6 +225,6 @@ class UserNotificationSettingsJSONControllerTest extends TestCase
             ],
         ];
 
-        $this->assertEquals($errors, $response->decodeResponseJson('errors'));
+        $this->assertEquals($errors, $response->json('errors'));
     }
 }

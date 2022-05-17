@@ -8,7 +8,7 @@ use Railroad\Railnotifications\Entities\NotificationSetting;
 
 class UserNotificationsSettingsTransformer extends TransformerAbstract
 {
-    protected $defaultIncludes = ['user'];
+    protected array $defaultIncludes = ['user'];
 
     /**
      * @param NotificationSetting $userNotificationSettings

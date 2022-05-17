@@ -3,6 +3,7 @@
 namespace Railroad\Railnotifications\Tests\Controllers;
 
 use Carbon\Carbon;
+use DMS\PHPUnitExtensions\ArraySubset\ArraySubsetAsserts;
 use Railroad\Railnotifications\Contracts\ContentProviderInterface;
 use Railroad\Railnotifications\Contracts\RailforumProviderInterface;
 use Railroad\Railnotifications\Entities\Notification;
@@ -12,8 +13,9 @@ use Railroad\Railnotifications\Tests\TestCase;
 
 class NotificationJSONControllerTest extends TestCase
 {
+    use ArraySubsetAsserts;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         parent::setUp();
     }
@@ -28,7 +30,7 @@ class NotificationJSONControllerTest extends TestCase
             ]
         );
 
-        $this->assertEquals([], $response->decodeResponseJson('data'));
+        $this->assertEquals([], $response->json('data'));
     }
 
     public function test_index()
@@ -76,7 +78,7 @@ class NotificationJSONControllerTest extends TestCase
             ]
         );
 
-        foreach ($response->decodeResponseJson('data') as $index => $resp) {
+        foreach ($response->json('data') as $index => $resp) {
             $this->assertEquals($notifications[$index]['type'], $resp['type']);
             $this->assertEquals(json_decode($notifications[$index]['data'], true), $resp['data']);
             $this->assertEquals($notifications[$index]['read_on'], $resp['read_on']);
@@ -113,7 +115,7 @@ class NotificationJSONControllerTest extends TestCase
                     'id' => $recipient['id'],
                 ],
             ],
-            $response->decodeResponseJson()
+            $response->json()
         );
 
         $this->assertDatabaseHas(
@@ -150,7 +152,7 @@ class NotificationJSONControllerTest extends TestCase
             ],
         ];
 
-        $this->assertEquals($errors, $response->decodeResponseJson('errors'));
+        $this->assertEquals($errors, $response->json('errors'));
     }
 
     public function test_delete_notification()
@@ -217,7 +219,7 @@ class NotificationJSONControllerTest extends TestCase
                     'id' => $recipient['id'],
                 ],
             ],
-            $response->decodeResponseJson()
+            $response->json()
         );
 
         $this->assertDatabaseHas(
@@ -263,7 +265,7 @@ class NotificationJSONControllerTest extends TestCase
                     'id' => $recipient['id'],
                 ],
             ],
-            $response->decodeResponseJson()
+            $response->json()
         );
 
         $this->assertDatabaseHas(
@@ -312,7 +314,7 @@ class NotificationJSONControllerTest extends TestCase
                     'id' => $recipientInitial['id'],
                 ],
             ],
-            $response->decodeResponseJson()
+            $response->json()
         );
     }
 
@@ -327,7 +329,7 @@ class NotificationJSONControllerTest extends TestCase
             [
                 'title' => "Not found.",
             ],
-            $response->decodeResponseJson('errors')
+            $response->json('errors')
         );
     }
 
@@ -352,7 +354,7 @@ class NotificationJSONControllerTest extends TestCase
                 'read_on' => Carbon::now()
                     ->toDateTimeString(),
             ],
-            $response->decodeResponseJson()
+            $response->json()
         );
     }
 
@@ -367,7 +369,7 @@ class NotificationJSONControllerTest extends TestCase
             [
                 'title' => "Not found.",
             ],
-            $response->decodeResponseJson('errors')
+            $response->json('errors')
         );
     }
 
@@ -394,7 +396,7 @@ class NotificationJSONControllerTest extends TestCase
                 'data' => json_decode($notification['data'], true),
                 'read_on' => null,
             ],
-            $response->decodeResponseJson()
+            $response->json()
         );
     }
 
@@ -411,7 +413,7 @@ class NotificationJSONControllerTest extends TestCase
             [
                 'title' => "Not found.",
             ],
-            $response->decodeResponseJson('errors')
+            $response->json('errors')
         );
     }
 
@@ -436,7 +438,7 @@ class NotificationJSONControllerTest extends TestCase
 
         $this->assertEquals(200, $response->getStatusCode());
 
-        foreach ($response->decodeResponseJson('data') as $index => $resp) {
+        foreach ($response->json('data') as $index => $resp) {
             $this->assertEquals($notifications[$index]['type'], $resp['type']);
             $this->assertEquals(json_decode($notifications[$index]['data'], true), $resp['data']);
             $this->assertEquals(
@@ -459,7 +461,7 @@ class NotificationJSONControllerTest extends TestCase
 
         $this->assertEquals(200, $response->getStatusCode());
 
-        $this->assertEquals([], $response->decodeResponseJson('data'));
+        $this->assertEquals([], $response->json('data'));
     }
 
     public function test_count_readed_notifications()
@@ -472,7 +474,7 @@ class NotificationJSONControllerTest extends TestCase
             ]
         );
 
-        $this->assertEquals(0, $response->decodeResponseJson('data'));
+        $this->assertEquals(0, $response->json('data'));
     }
 
     public function test_count_readed_many_notifications()
@@ -496,7 +498,7 @@ class NotificationJSONControllerTest extends TestCase
             ]
         );
 
-        $this->assertEquals(5, $response->decodeResponseJson('data'));
+        $this->assertEquals(5, $response->json('data'));
     }
 
     public function test_count_unreaded_notifications()
@@ -509,7 +511,7 @@ class NotificationJSONControllerTest extends TestCase
             ]
         );
 
-        $this->assertEquals(0, $response->decodeResponseJson('data'));
+        $this->assertEquals(0, $response->json('data'));
     }
 
     public function test_count_unreaded_many_notifications()
@@ -533,7 +535,7 @@ class NotificationJSONControllerTest extends TestCase
             ]
         );
 
-        $this->assertEquals(5, $response->decodeResponseJson('data'));
+        $this->assertEquals(5, $response->json('data'));
     }
 
     public function test_index_only_unread_notifications()
@@ -590,7 +592,7 @@ class NotificationJSONControllerTest extends TestCase
             ]
         );
 
-        foreach ($response->decodeResponseJson('data') as $index => $resp) {
+        foreach ($response->json('data') as $index => $resp) {
             $this->assertEquals($notifications[$index]['type'], $resp['type']);
             $this->assertEquals(json_decode($notifications[$index]['data'], true), $resp['data']);
             $this->assertEquals($notifications[$index]['read_on'], $resp['read_on']);

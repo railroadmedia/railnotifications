@@ -45,27 +45,23 @@ class TestCase extends BaseTestCase
      */
     protected $entityManager;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         parent::setUp();
 
         // Run the schema update tool using our entity metadata
         $this->entityManager = app(RailnotificationsEntityManager::class);
 
-        $this->entityManager->getMetadataFactory()
-            ->getCacheDriver()
-            ->deleteAll();
-
         // make sure laravel is using the same connection
         DB::connection()
             ->setPdo(
                 $this->entityManager->getConnection()
-                    ->getWrappedConnection()
+                    ->getNativeConnection()
             );
         DB::connection()
             ->setReadPdo(
                 $this->entityManager->getConnection()
-                    ->getWrappedConnection()
+                    ->getNativeConnection()
             );
 
         $userProvider = new UserProvider();
@@ -192,67 +188,6 @@ class TestCase extends BaseTestCase
                 return $mock;
             }
         );
-
-
-        //apidoc
-        $apiDocConfig = require(__DIR__ . '/../config/apidoc.php');
-
-        $app['config']->set('apidoc.output', $apiDocConfig['output']);
-        $app['config']->set('apidoc.routes', $apiDocConfig['routes']);
-        $app['config']->set('apidoc.example_languages', $apiDocConfig['example_languages']);
-        $app['config']->set('apidoc.fractal', $apiDocConfig['fractal']);
-        $app['config']->set('apidoc.requiredEntities', $apiDocConfig['requiredEntities']);
-        $app['config']->set('apidoc.entityManager', $apiDocConfig['entityManager']);
-        $app['config']->set('apidoc.postman', $apiDocConfig['postman']);
-
-//        $app->register(ApiDocGeneratorServiceProvider::class);
-    }
-
-    /**
-     * We don't want to use mockery so this is a reimplementation of the mockery version.
-     *
-     * @param  array|string $events
-     * @return $this
-     *
-     * @throws Exception
-     */
-    public function expectsEvents($events)
-    {
-        $events = is_array($events) ? $events : func_get_args();
-
-        $mock =
-            $this->getMockBuilder(Dispatcher::class)
-                ->setMethods(['fire', 'dispatch'])
-                ->getMockForAbstractClass();
-
-        $mock->method('fire')
-            ->willReturnCallback(
-                function ($called) {
-                    $this->firedEvents[] = $called;
-                }
-            );
-
-        $mock->method('dispatch')
-            ->willReturnCallback(
-                function ($called) {
-                    $this->firedEvents[] = $called;
-                }
-            );
-
-        $this->app->instance('events', $mock);
-
-        $this->beforeApplicationDestroyed(
-            function () use ($events) {
-                $fired = $this->getFiredEvents($events);
-                if ($eventsNotFired = array_diff($events, $fired)) {
-                    throw new Exception(
-                        'These expected events were not fired: [' . implode(', ', $eventsNotFired) . ']'
-                    );
-                }
-            }
-        );
-
-        return $this;
     }
 
     protected function createUsersTable()

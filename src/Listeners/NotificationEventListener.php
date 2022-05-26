@@ -294,8 +294,6 @@ class NotificationEventListener
          * and have not received already push notification for same event
          */
         if (empty($user->getNotificationsSummaryFrequencyMinutes()) &&
-            (!in_array('fcm', $broadcastChannels) ||
-                (empty($this->userProvider->getUserFirebaseTokens($user->getId())))) &&
             ($this->userNotificationSettingsService->getUserNotificationSettings(
                     $user->getId(),
                     NotificationSetting::SEND_EMAIL_NOTIF
@@ -343,6 +341,18 @@ class NotificationEventListener
         $this->userNotificationSettingsService->createOrUpdateWhereMatchingData(
             NotificationSetting::NOTIFICATION_SETTINGS_NAME_NOTIFICATION_TYPE[Notification::TYPE_FORUM_POST_IN_FOLLOWED_THREAD],
             $user->getNotifyOnForumFollowedThreadReply(),
+            $user->getId()
+        );
+
+        $this->userNotificationSettingsService->createOrUpdateWhereMatchingData(
+            NotificationSetting::SEND_EMAIL_NOTIF,
+            $user->getSendEmailNotifications(),
+            $user->getId()
+        );
+
+        $this->userNotificationSettingsService->createOrUpdateWhereMatchingData(
+            NotificationSetting::SEND_PUSH_NOTIF,
+            $user->getSendMobileAppPushNotifications(),
             $user->getId()
         );
 
@@ -397,6 +407,18 @@ class NotificationEventListener
         $this->userNotificationSettingsService->createOrUpdateWhereMatchingData(
             NotificationSetting::NOTIFICATION_SETTINGS_NAME_NOTIFICATION_TYPE[Notification::TYPE_FORUM_POST_IN_FOLLOWED_THREAD],
             $user->getNotifyOnForumFollowedThreadReply(),
+            $user->getId()
+        );
+
+        $this->userNotificationSettingsService->createOrUpdateWhereMatchingData(
+            NotificationSetting::SEND_EMAIL_NOTIF,
+            $user->getSendEmailNotifications(),
+            $user->getId()
+        );
+
+        $this->userNotificationSettingsService->createOrUpdateWhereMatchingData(
+            NotificationSetting::SEND_PUSH_NOTIF,
+            $user->getSendMobileAppPushNotifications(),
             $user->getId()
         );
     }

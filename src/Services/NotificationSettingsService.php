@@ -2,6 +2,7 @@
 
 namespace Railroad\Railnotifications\Services;
 
+use Carbon\Carbon;
 use FCM;
 use Railroad\Railnotifications\Contracts\UserProviderInterface;
 use Railroad\Railnotifications\Entities\NotificationSetting;
@@ -48,11 +49,11 @@ class NotificationSettingsService
      * @throws \Doctrine\ORM\ORMException
      * @throws \Doctrine\ORM\OptimisticLockException
      */
-    public function create(string $settingName, string $settingValue, int $userId)
+    public function create(string $settingName, string $settingValue, int $userId, ?string $brand = null)
     {
         $notificationSetting = new NotificationSetting();
 
-        $notificationSetting->setBrand(config('railnotifications.brand'));
+        $notificationSetting->setBrand($brand ?? config('railnotifications.brand'));
         $notificationSetting->setSettingName($settingName);
         $notificationSetting->setSettingValue($settingValue);
 
@@ -75,7 +76,7 @@ class NotificationSettingsService
      * @throws \Doctrine\ORM\ORMException
      * @throws \Doctrine\ORM\OptimisticLockException
      */
-    public function createOrUpdateWhereMatchingData(string $settingName, string $settingValue, int $userId)
+    public function createOrUpdateWhereMatchingData(string $settingName, string $settingValue, int $userId, ?string $brand = null)
     {
         $qb = $this->notificationSettingRepository->createQueryBuilder('ns');
 
@@ -85,7 +86,7 @@ class NotificationSettingsService
                 ->andWhere('ns.settingName = :settingName')
                 ->andWhere('ns.brand = :brand')
                 ->setParameter('userIds', $userId)
-                ->setParameter('brand', config('railnotifications.brand'))
+                ->setParameter('brand', $brand ?? config('railnotifications.brand'))
                 ->setParameter('settingName', $settingName)
                 ->orderBy('ns.id','desc')
                 ->setMaxResults(1)
@@ -95,14 +96,13 @@ class NotificationSettingsService
         if (!empty($existingNotificationSetting)) {
 
             $existingNotificationSetting->setSettingValue($settingValue);
-            $existingNotificationSetting->setBrand(config('railnotifications.brand'));
 
             $this->entityManager->persist($existingNotificationSetting);
             $this->entityManager->flush();
 
             return $existingNotificationSetting;
         } else {
-            return $this->create($settingName, $settingValue, $userId);
+            return $this->create($settingName, $settingValue, $userId, $brand);
         }
     }
 
@@ -153,7 +153,7 @@ class NotificationSettingsService
      * @return mixed
      * @throws \Doctrine\ORM\NonUniqueResultException
      */
-    public function getUserNotificationSettings(int $userId, ?string $settingName = null)
+    public function getUserNotificationSettings(int $userId, ?string $settingName = null, ?string $brand = null)
     {
         $qb = $this->notificationSettingRepository->createQueryBuilder('ns');
 
@@ -161,7 +161,7 @@ class NotificationSettingsService
             ->where('ns.user IN (:userIds)')
             ->andWhere('ns.brand = :brand')
             ->setParameter('userIds', $userId)
-            ->setParameter('brand', config('railnotifications.brand'));
+            ->setParameter('brand', $brand ?? config('railnotifications.brand'));
 
         if ($settingName) {
             $qb->andWhere('ns.settingName = :settingName')

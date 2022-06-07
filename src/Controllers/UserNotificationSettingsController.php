@@ -43,11 +43,13 @@ class UserNotificationSettingsController extends Controller
     public function createOrUpdateUserNotificationsSettings(Request $request)
     {
         foreach ($request->all() as $settingName => $settingValue) {
-            if (in_array($settingName, NotificationSetting::NOTIFICATION_SETTINGS_NAME_NOTIFICATION_TYPE)) {
+            if (in_array($settingName, NotificationSetting::NOTIFICATION_SETTINGS_NAME_NOTIFICATION_TYPE)
+                || (in_array($settingName, [NotificationSetting::SEND_EMAIL_NOTIF, NotificationSetting::SEND_PUSH_NOTIF, NotificationSetting::SEND_WEEKLY]))) {
                 $this->notificationSettingsService->createOrUpdateWhereMatchingData(
                     $settingName,
                     $settingValue,
-                    $request->get('user_id', auth()->id())
+                    $request->get('user_id', auth()->id()),
+                    $request->get('brand')
                 );
             }
         }

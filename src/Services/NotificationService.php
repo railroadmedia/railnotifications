@@ -232,7 +232,7 @@ class NotificationService
      * @param int $skip
      * @return mixed
      */
-    public function getManyPaginated(int $recipientId, int $amount, int $skip)
+    public function getManyPaginated(int $recipientId, int $amount, int $skip, ?string $brand = null)
     {
         $qb =
             $this->notificationRepository->createQueryBuilder('n')
@@ -242,7 +242,7 @@ class NotificationService
                 )
                 ->andWhere('n.brand = :brand')
                 ->orderBy('n.createdAt', 'desc')
-                ->setParameter('brand', config('railnotifications.brand'))
+                ->setParameter('brand', $brand ?? config('railnotifications.brand'))
                 ->setParameter('recipientId', $recipientId);
 
         if ($this::$onlyUnread) {
@@ -292,7 +292,7 @@ class NotificationService
      * @throws \Doctrine\ORM\NoResultException
      * @throws \Doctrine\ORM\NonUniqueResultException
      */
-    public function getUnreadCount(int $recipientId)
+    public function getUnreadCount(int $recipientId, ?string $brand = null)
     {
         $qb = $this->notificationRepository->createQueryBuilder('n');
 
@@ -305,7 +305,7 @@ class NotificationService
                     ->isNull('n.readOn')
             )
             ->andWhere('n.brand = :brand')
-            ->setParameter('brand', config('railnotifications.brand'))
+            ->setParameter('brand', $brand ?? config('railnotifications.brand'))
             ->setParameter('recipientId', $recipientId)
             ->getQuery()
             ->getSingleScalarResult();
@@ -317,7 +317,7 @@ class NotificationService
      * @throws \Doctrine\ORM\NoResultException
      * @throws \Doctrine\ORM\NonUniqueResultException
      */
-    public function getReadCount(int $recipientId)
+    public function getReadCount(int $recipientId, ?string $brand = null)
     {
         $qb = $this->notificationRepository->createQueryBuilder('n');
 
@@ -330,7 +330,7 @@ class NotificationService
                     ->isNotNull('n.readOn')
             )
             ->andWhere('n.brand = :brand')
-            ->setParameter('brand', config('railnotifications.brand'))
+            ->setParameter('brand', $brand ?? config('railnotifications.brand'))
             ->setParameter('recipientId', $recipientId)
             ->getQuery()
             ->getSingleScalarResult();

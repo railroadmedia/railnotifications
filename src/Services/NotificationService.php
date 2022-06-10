@@ -7,6 +7,7 @@ use FCM;
 use Railroad\Railnotifications\Contracts\ContentProviderInterface;
 use Railroad\Railnotifications\Contracts\RailforumProviderInterface;
 use Railroad\Railnotifications\Contracts\UserProviderInterface;
+use Railroad\Railnotifications\Decorators\Decorator;
 use Railroad\Railnotifications\Entities\Notification;
 use Railroad\Railnotifications\Managers\RailnotificationsEntityManager;
 use Throwable;
@@ -38,6 +39,11 @@ class NotificationService
      */
     private $railforumProvider;
 
+    /**
+     * @var Decorator
+     */
+    private $decorator;
+
     public static $onlyUnread = false;
 
     /**
@@ -45,17 +51,20 @@ class NotificationService
      * @param UserProviderInterface $userProvider
      * @param ContentProviderInterface $contentProvider
      * @param RailforumProviderInterface $railforumProvider
+     * @param Decorator $decorator
      */
     public function __construct(
         RailnotificationsEntityManager $entityManager,
         UserProviderInterface $userProvider,
         ContentProviderInterface $contentProvider,
-        RailforumProviderInterface $railforumProvider
+        RailforumProviderInterface $railforumProvider,
+        Decorator $decorator
     ) {
         $this->entityManager = $entityManager;
         $this->userProvider = $userProvider;
         $this->contentProvider = $contentProvider;
         $this->railforumProvider = $railforumProvider;
+        $this->decorator = $decorator;
 
         $this->notificationRepository = $this->entityManager->getRepository(Notification::class);
     }
@@ -283,7 +292,7 @@ class NotificationService
             $results[] = $notificationData;
         }
 
-        return $results;
+        return $this->decorator->decorate($results);
     }
 
     /**
@@ -446,7 +455,7 @@ class NotificationService
      * @throws \Doctrine\ORM\ORMException
      * @throws \Doctrine\ORM\OptimisticLockException
      */
-    public function markAllRead(int $recipientId, string $readOnDateTimeString = null)
+    public function markAllRead(int $recipientId, string $readOnDateTimeString = null, ?string $brand = null)
     {
         $qb = $this->notificationRepository->createQueryBuilder('n');
 
@@ -460,7 +469,7 @@ class NotificationService
                         ->isNull('n.readOn')
                 )
                 ->andWhere('n.brand = :brand')
-                ->setParameter('brand', config('railnotifications.brand'))
+                ->setParameter('brand', $brand ?? config('railnotifications.brand'))
                 ->setParameter('recipientId', $recipientId)
                 ->getQuery()
                 ->getResult();

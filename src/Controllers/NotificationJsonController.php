@@ -164,7 +164,8 @@ class NotificationJsonController extends Controller
 
         $notifications = $this->notificationService->markAllRead(
             $recipientId,
-            $request->get('read_on_date_time')
+            $request->get('read_on_date_time'),
+            $request->get('brand')
         );
 
         return ResponseService::notification($notifications);

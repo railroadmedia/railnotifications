@@ -86,7 +86,8 @@ class NotificationService
         $contentTitle = null,
         $contentUrl = null,
         $contentMobileAppUrl = null,
-        $comment = null
+        $comment = null,
+        $brand = null
     ) {
         $notification = new Notification();
 
@@ -94,7 +95,7 @@ class NotificationService
 
         $notification->setData($data);
 
-        $notification->setBrand(config('railnotifications.brand'));
+        $notification->setBrand($brand ?? config('railnotifications.brand'));
 
         $notification->setContentTitle($contentTitle);
         $notification->setContentUrl($contentUrl);
@@ -171,7 +172,7 @@ class NotificationService
      * @throws \Doctrine\ORM\ORMException
      * @throws \Doctrine\ORM\OptimisticLockException
      */
-    public function getWhereMatchingData(string $type, array $data, int $recipientId)
+    public function getWhereMatchingData(string $type, array $data, int $recipientId, ?string $brand = null)
     {
         $qb = $this->notificationRepository->createQueryBuilder('n');
 
@@ -183,7 +184,7 @@ class NotificationService
             ->setParameter('recipientId', $recipientId)
             ->setParameter('type', $type)
             ->setParameter('data', json_encode($data))
-            ->setParameter('brand', config('railnotifications.brand'))
+            ->setParameter('brand', $brand ?? config('railnotifications.brand'))
             ->getQuery()
             ->getOneOrNullResult();
     }

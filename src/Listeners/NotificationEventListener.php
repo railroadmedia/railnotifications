@@ -6,6 +6,8 @@ use Doctrine\ORM\NonUniqueResultException;
 use Doctrine\ORM\OptimisticLockException;
 use Doctrine\ORM\ORMException;
 use Illuminate\Support\Facades\Event;
+use Railroad\Railforums\Events\PostCreated;
+use Railroad\Railforums\Events\PostLiked;
 use Railroad\Railnotifications\Contracts\ContentProviderInterface;
 use Railroad\Railnotifications\Contracts\RailforumProviderInterface;
 use Railroad\Railnotifications\Contracts\UserProviderInterface;
@@ -432,6 +434,159 @@ class NotificationEventListener
         $job = new UpdateNotificationsPostData($event->getPostId());
 
         dispatch_now($job);
+    }
+
+    /**
+     * @param PostLiked $event
+     * @throws BroadcastNotificationFailure
+     * @throws NonUniqueResultException
+     * @throws ORMException
+     * @throws OptimisticLockException
+     */
+    public function handlePostLiked(PostLiked $event)
+    {
+        $endpointPrefix = config('railnotifications.brand') == 'drumeo' ? '/laravel/public' : '';
+
+        $post = $this->railforumProvider->getPostById($event->getPostId());
+
+        $authorId = $event->getLikerId();
+        $receivingUserIds = [$post['author_id']];
+
+        $thread = $this->railforumProvider->getThreadById($post['thread_id']);
+
+        $contentTitle = $thread['title'];
+        $contentUrl = $endpointPrefix.'/members/forums/jump-to-post/'.$post['id'];
+        $contentMobileAppUrl = url()->route('forums.api.post.jump-to', [$post['id']]);
+
+        $comment = $post['content'];
+        $subjectId = $post['id'];
+
+        $receivingUserIds = array_diff($receivingUserIds, [$authorId]);
+
+        $data = [
+            'postId' => $event->getPostId(),
+            'likerId' => $event->getLikerId(),
+        ];
+
+        $this->processNotificationsForRecipients(
+            $receivingUserIds,
+            Notification::TYPE_FORUM_POST_LIKED,
+            $data,
+            $event->getBrand(),
+            $authorId,
+            $subjectId,
+            $contentTitle,
+            $contentUrl,
+            $contentMobileAppUrl,
+            $comment
+        );
+    }
+
+    public function handlePostCreated(PostCreated $event)
+    {
+        $post = $this->railforumProvider->getPostById($event->getPostId());
+        $thread = $this->railforumProvider->getThreadById($post['thread_id']);
+
+        $contentTitle = $thread['title'];
+        $contentUrl = '/members/forums/jump-to-post/'.$post['id'];
+        $contentMobileAppUrl = url()->route('forums.api.post.jump-to', [$post['id']]);
+
+        $comment = $post['content'];
+        $subjectId = $post['id'];
+
+        $authorId = $post['author_id'];
+        $threadFollowers = $this->railforumProvider->getThreadFollowerIds($post['thread_id']);
+        $receivingUserIds =
+            array_diff(($threadFollowers) ? $threadFollowers->toArray() : [], [$post['author_id']]);
+
+        $data = [
+            'postId' => $event->getPostId()
+        ];
+
+        $this->processNotificationsForRecipients(
+            $receivingUserIds,
+            Notification::TYPE_FORUM_POST_IN_FOLLOWED_THREAD,
+            $data,
+            $event->getBrand(),
+            $authorId,
+            $subjectId,
+            $contentTitle,
+            $contentUrl,
+            $contentMobileAppUrl,
+            $comment
+        );
+    }
+
+    /**
+     * @param array $receivingUserIds
+     * @param string $type
+     * @param array $data
+     * @param string $brand
+     * @param int $authorId
+     * @param mixed $subjectId
+     * @param mixed $contentTitle
+     * @param string $contentUrl
+     * @param string $contentMobileAppUrl
+     * @param mixed $comment
+     * @throws BroadcastNotificationFailure
+     * @throws NonUniqueResultException
+     * @throws ORMException
+     * @throws OptimisticLockException
+     */
+    private function processNotificationsForRecipients(
+        array $receivingUserIds,
+        string $type,
+        array $data,
+        string $brand,
+        int $authorId,
+        mixed $subjectId,
+        mixed $contentTitle,
+        string $contentUrl,
+        string $contentMobileAppUrl,
+        mixed $comment
+    )
+    : void {
+        foreach ($receivingUserIds as $receivingUserId) {
+            // create the notification if one doesn't already exist for the underlying action
+            $existingNotification = $this->notificationService->getWhereMatchingData(
+                $type,
+                $data,
+                $receivingUserId,
+                $brand
+            );
+
+            if (!empty($existingNotification)) {
+                continue;
+            }
+
+            $notification = $this->notificationService->create(
+                $type,
+                $data,
+                $receivingUserId,
+                $authorId,
+                $subjectId,
+                $contentTitle,
+                $contentUrl,
+                $contentMobileAppUrl,
+                $comment,
+                $brand
+            );
+
+            $user = $this->userProvider->getRailnotificationsUserById($receivingUserId);
+
+            if ($user) {
+                $shouldReceiveNotification =
+                    $this->shouldReceiveNotification($user, $type);
+
+                if ($shouldReceiveNotification) {
+                    $broadcastChannels = $this->getUserBroadcastChannels($user);
+
+                    foreach ($broadcastChannels as $channel) {
+                        $this->notificationBroadcastService->broadcast($notification->getId(), $channel);
+                    }
+                }
+            }
+        }
     }
 }
 

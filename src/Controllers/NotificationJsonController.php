@@ -74,7 +74,7 @@ class NotificationJsonController extends Controller
                     'n.recipient = :recipientId'
                 )
                 ->andWhere('n.brand = :brand')
-                ->setParameter('brand', config('railnotifications.brand'))
+                ->setParameter('brand', $request->get('brand',config('railnotifications.brand')))
                 ->setParameter('recipientId', $userId)
                 ->setMaxResults($limit)
                 ->setFirstResult($first)

@@ -267,11 +267,12 @@ class NotificationEventListener
      * @return bool|mixed
      * @throws NonUniqueResultException
      */
-    private function shouldReceiveNotification($user, $type)
+    private function shouldReceiveNotification($user, $type, $brand = null)
     {
         return $this->userNotificationSettingsService->getUserNotificationSettings(
                 $user->getId(),
-                NotificationSetting::NOTIFICATION_SETTINGS_NAME_NOTIFICATION_TYPE[$type]
+                NotificationSetting::NOTIFICATION_SETTINGS_NAME_NOTIFICATION_TYPE[$type],
+                $brand ?? config('railnotifications.brand')
             ) ?? false;
     }
 
@@ -445,8 +446,6 @@ class NotificationEventListener
      */
     public function handlePostLiked(PostLiked $event)
     {
-        $endpointPrefix = config('railnotifications.brand') == 'drumeo' ? '/laravel/public' : '';
-
         $post = $this->railforumProvider->getPostById($event->getPostId());
 
         $authorId = $event->getLikerId();
@@ -454,9 +453,10 @@ class NotificationEventListener
 
         $thread = $this->railforumProvider->getThreadById($post['thread_id']);
 
+        $brand = $event->getBrand();
         $contentTitle = $thread['title'];
-        $contentUrl = $endpointPrefix.'/members/forums/jump-to-post/'.$post['id'];
-        $contentMobileAppUrl = url()->route('forums.api.post.jump-to', [$post['id']]);
+        $contentUrl = url($brand . '/forums/jump-to-post/'.$post['id']);
+        $contentMobileAppUrl = url()->route('forums.api.post.jump-to', [$post['id'], 'brand' => $brand]);
 
         $comment = $post['content'];
         $subjectId = $post['id'];
@@ -482,14 +482,22 @@ class NotificationEventListener
         );
     }
 
+    /**
+     * @param PostCreated $event
+     * @throws BroadcastNotificationFailure
+     * @throws NonUniqueResultException
+     * @throws ORMException
+     * @throws OptimisticLockException
+     */
     public function handlePostCreated(PostCreated $event)
     {
         $post = $this->railforumProvider->getPostById($event->getPostId());
         $thread = $this->railforumProvider->getThreadById($post['thread_id']);
 
+        $brand = $event->getBrand();
         $contentTitle = $thread['title'];
-        $contentUrl = '/members/forums/jump-to-post/'.$post['id'];
-        $contentMobileAppUrl = url()->route('forums.api.post.jump-to', [$post['id']]);
+        $contentUrl = url($brand . '/forums/jump-to-post/'.$post['id']);
+        $contentMobileAppUrl = url()->route('forums.api.post.jump-to', [$post['id'], 'brand' => $brand]);
 
         $comment = $post['content'];
         $subjectId = $post['id'];
@@ -576,7 +584,7 @@ class NotificationEventListener
 
             if ($user) {
                 $shouldReceiveNotification =
-                    $this->shouldReceiveNotification($user, $type);
+                    $this->shouldReceiveNotification($user, $type, $brand);
 
                 if ($shouldReceiveNotification) {
                     $broadcastChannels = $this->getUserBroadcastChannels($user);

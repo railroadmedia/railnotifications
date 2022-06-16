@@ -266,9 +266,8 @@ class NotificationService
                 ->getResult();
 
         $results = [];
-
+        $notifications = $this->decorator->decorate($notifications);
         foreach ($notifications as $notification) {
-
             $notificationData = [
                 'id' => $notification->getId(),
                 'type' => $notification->getNotificationType(),
@@ -293,7 +292,7 @@ class NotificationService
             $results[] = $notificationData;
         }
 
-        return $this->decorator->decorate($results);
+        return $results;
     }
 
     /**
@@ -374,6 +373,7 @@ class NotificationService
                 $result->andWhere('n.createdAt >= :createdAtDate')
                     ->setParameter('createdAtDate', $createdAfterDateTimeString);
         }
+
         return $result->getQuery()
             ->getResult();
     }
@@ -506,7 +506,7 @@ class NotificationService
         $string = preg_replace(
             "~<blockquote(.*?)>(.*)</blockquote>~si",
             "",
-            ' ' . $string . ' '
+            ' '.$string.' '
         );
 
         // remove bad html tags and other html special characters

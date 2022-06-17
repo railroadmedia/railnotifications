@@ -6,6 +6,8 @@ use Doctrine\ORM\NonUniqueResultException;
 use Doctrine\ORM\OptimisticLockException;
 use Doctrine\ORM\ORMException;
 use Illuminate\Support\Facades\Event;
+use Railroad\Railcontent\Events\CommentCreated;
+use Railroad\Railcontent\Events\CommentLiked;
 use Railroad\Railforums\Events\PostCreated;
 use Railroad\Railforums\Events\PostLiked;
 use Railroad\Railnotifications\Contracts\ContentProviderInterface;
@@ -514,6 +516,102 @@ class NotificationEventListener
         $this->processNotificationsForRecipients(
             $receivingUserIds,
             Notification::TYPE_FORUM_POST_IN_FOLLOWED_THREAD,
+            $data,
+            $event->getBrand(),
+            $authorId,
+            $subjectId,
+            $contentTitle,
+            $contentUrl,
+            $contentMobileAppUrl,
+            $comment
+        );
+    }
+
+    /**
+     * @param CommentCreated $event
+     * @throws BroadcastNotificationFailure
+     * @throws NonUniqueResultException
+     * @throws ORMException
+     * @throws OptimisticLockException
+     */
+    public function handleCommentCreated(CommentCreated $event)
+    {
+        $comment = $this->contentProvider->getCommentById($event->getCommentId());
+        $authorId = $comment['user_id'];
+        $originalComment = null;
+        if ($comment['parent_id']) {
+            $originalComment = $this->contentProvider->getCommentById(
+                $comment['parent_id']
+            );
+        }
+        $receivingUserIds = ($originalComment && $originalComment['user_id'] != $comment['user_id']) ? [$originalComment['user_id']] : [];
+
+        $content = $this->contentProvider->getContentById($comment['content_id']);
+
+        $brand = $event->getBrand();
+        $contentTitle = $content->fetch('fields.title');
+        $contentUrl = url($brand . '/jump-to-comment/'. $content['id'].'/' . $comment['parent_id']);
+        $contentMobileAppUrl =  $content->fetch('mobile_app_url') . '?goToComment=' . $comment['parent_id'] ?? $comment['id'].'&brand='.$brand;
+
+        $subjectId = $comment['parent_id'] ?? $comment['id'];
+        $comment = $comment['comment'];
+
+        $receivingUserIds = array_diff($receivingUserIds, [$authorId]);
+
+        $data = [
+            'commentId' => $event->getCommentId()
+        ];
+
+        $this->processNotificationsForRecipients(
+            $receivingUserIds,
+            Notification::TYPE_LESSON_COMMENT_REPLY,
+            $data,
+            $event->getBrand(),
+            $authorId,
+            $subjectId,
+            $contentTitle,
+            $contentUrl,
+            $contentMobileAppUrl,
+            $comment
+        );
+    }
+
+    /**
+     * @param CommentCreated $event
+     * @throws BroadcastNotificationFailure
+     * @throws NonUniqueResultException
+     * @throws ORMException
+     * @throws OptimisticLockException
+     */
+    public function handleCommentLiked(CommentLiked $event)
+    {
+        $comment = $this->contentProvider->getCommentById($event->getCommentId());
+
+        $authorId = $event->userId;
+
+        $receivingUserIds = [$comment['user_id']];
+
+        $content = $this->contentProvider->getContentById($comment['content_id']);
+
+
+        $brand = $event->getBrand();
+        $contentTitle = $content->fetch('fields.title');
+        $contentUrl = url($brand . '/jump-to-comment/'. $content['id'].'/' . ($comment['parent_id'] ?? $comment['id']));
+        $contentMobileAppUrl =  $content->fetch('mobile_app_url') . '?goToComment=' . $comment['id'].'&brand='.$brand;
+
+        $subjectId = $comment['id'];
+        $comment = $comment['comment'];
+
+        $receivingUserIds = array_diff($receivingUserIds, [$authorId]);
+
+        $data = [
+            'commentId' => $event->getCommentId(),
+            'likerId' => $event->getUserId()
+        ];
+
+        $this->processNotificationsForRecipients(
+            $receivingUserIds,
+            Notification::TYPE_LESSON_COMMENT_LIKED,
             $data,
             $event->getBrand(),
             $authorId,

@@ -128,7 +128,7 @@ class NotificationsTransformer extends TransformerAbstract
         $content = [
             'url' => $notification->getContentUrl(),
             'mobile_app_url' => $notification->getContentMobileAppUrl(),
-            'musora_api_mobile_app_url' => str_replace(['/api/','members/'], ['/musora-api/',''], $notification->getContentMobileAppUrl()),
+            'musora_api_mobile_app_url' => str_replace(['/api/','members/','semester-packs/lesson'], ['/musora-api/','pack/lesson'], $notification->getContentMobileAppUrl()),
         ];
 
         return $this->item(

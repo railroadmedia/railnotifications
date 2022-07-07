@@ -48,6 +48,15 @@ class UserNotificationSettingsJsonController extends Controller
 
         $userNotificationsSettings = $this->notificationSettingsService->getUserNotificationSettings($userId);
 
+        $notificationSettingsTypes = array_merge(NotificationSetting::NOTIFICATION_SETTINGS_NAME_NOTIFICATION_TYPE,[
+                NotificationSetting::SEND_EMAIL_NOTIF,
+                NotificationSetting::SEND_PUSH_NOTIF,
+                NotificationSetting::SEND_WEEKLY,
+        ]);
+        foreach ($notificationSettingsTypes as $type) {
+            $userNotificationsSettings[$type] = $userNotificationsSettings[$type] ?? false;
+        }
+
         return ResponseService::empty(200)
             ->setData(['data' => $userNotificationsSettings]);
     }
@@ -112,9 +121,15 @@ class UserNotificationSettingsJsonController extends Controller
     public function createOrUpdateUserNotificationsSettings(Request $request)
     {
         foreach ($request->all() as $settingName => $settingValue) {
-            if (in_array($settingName, NotificationSetting::NOTIFICATION_SETTINGS_NAME_NOTIFICATION_TYPE)
-                || (in_array($settingName, [NotificationSetting::SEND_EMAIL_NOTIF, NotificationSetting::SEND_PUSH_NOTIF, NotificationSetting::SEND_WEEKLY]))) {
-
+            if (in_array($settingName, NotificationSetting::NOTIFICATION_SETTINGS_NAME_NOTIFICATION_TYPE) ||
+                (in_array(
+                    $settingName,
+                    [
+                        NotificationSetting::SEND_EMAIL_NOTIF,
+                        NotificationSetting::SEND_PUSH_NOTIF,
+                        NotificationSetting::SEND_WEEKLY,
+                    ]
+                ))) {
                 $this->notificationSettingsService->createOrUpdateWhereMatchingData(
                     $settingName,
                     $settingValue,
@@ -124,7 +139,8 @@ class UserNotificationSettingsJsonController extends Controller
             }
         }
 
-        $userNotificationsSettings = $this->notificationSettingsService->getUserNotificationSettings($request->get('user_id', auth()->id()));
+        $userNotificationsSettings =
+            $this->notificationSettingsService->getUserNotificationSettings($request->get('user_id', auth()->id()));
 
         return ResponseService::empty(200)
             ->setData(['data' => $userNotificationsSettings]);

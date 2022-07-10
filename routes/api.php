@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::group(
     [
+        'as' => 'api.',
         'prefix' => 'api/railnotifications',
         'middleware' => config('railnotifications.api_middleware'),
     ],
@@ -129,7 +130,7 @@ Route::group(
             '/user-notification-settings/update',
             \Railroad\Railnotifications\Controllers\UserNotificationSettingsJsonController::class . '@createOrUpdateUserNotificationsSettings'
         )
-            ->name('user-notification-settings.update');
+            ->name('user-notification-settings.create-or-update');
     }
 );
 

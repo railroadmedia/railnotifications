@@ -129,7 +129,7 @@ Route::group(
             '/user-notification-settings/update',
             \Railroad\Railnotifications\Controllers\UserNotificationSettingsController::class . '@createOrUpdateUserNotificationsSettings'
         )
-            ->name('user-notification-settings.update');
+            ->name('user-notification-settings.create-or-update');
 
     }
 );

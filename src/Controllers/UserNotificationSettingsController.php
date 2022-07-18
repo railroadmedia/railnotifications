@@ -7,6 +7,7 @@ use Doctrine\ORM\ORMException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Railroad\Railnotifications\Contracts\UserProviderInterface;
 use Railroad\Railnotifications\Entities\NotificationSetting;
 use Railroad\Railnotifications\Services\NotificationSettingsService;
 
@@ -17,20 +18,20 @@ use Railroad\Railnotifications\Services\NotificationSettingsService;
  */
 class UserNotificationSettingsController extends Controller
 {
-    /**
-     * @var NotificationSettingsService
-     */
-    private $notificationSettingsService;
+
+    private NotificationSettingsService $notificationSettingsService;
+    private UserProviderInterface $userProvider;
 
     /**
-     * UserNotificationSettingsJsonController constructor.
-     *
      * @param NotificationSettingsService $notificationSettingsService
+     * @param UserProviderInterface $userProvider
      */
     public function __construct(
-        NotificationSettingsService $notificationSettingsService
+        NotificationSettingsService $notificationSettingsService,
+        UserProviderInterface $userProvider
     ) {
         $this->notificationSettingsService = $notificationSettingsService;
+        $this->userProvider = $userProvider;
     }
 
     /**
@@ -43,14 +44,25 @@ class UserNotificationSettingsController extends Controller
     public function createOrUpdateUserNotificationsSettings(Request $request)
     {
         foreach ($request->all() as $settingName => $settingValue) {
-            if (in_array($settingName, NotificationSetting::NOTIFICATION_SETTINGS_NAME_NOTIFICATION_TYPE)
-                || (in_array($settingName, [NotificationSetting::SEND_EMAIL_NOTIF, NotificationSetting::SEND_PUSH_NOTIF, NotificationSetting::SEND_WEEKLY]))) {
+            if (in_array($settingName, NotificationSetting::NOTIFICATION_SETTINGS_NAME_NOTIFICATION_TYPE) ||
+                (in_array(
+                    $settingName,
+                    [
+                        NotificationSetting::SEND_EMAIL_NOTIF,
+                        NotificationSetting::SEND_PUSH_NOTIF,
+                        NotificationSetting::SEND_WEEKLY,
+                    ]
+                ))) {
                 $this->notificationSettingsService->createOrUpdateWhereMatchingData(
                     $settingName,
                     $settingValue,
                     $request->get('user_id', auth()->id()),
                     $request->get('brand')
                 );
+            }
+
+            if($settingName == NotificationSetting::NOTIFICATIONS_FREQUENCY){
+                $this->userProvider->updateUserNotificationsSummaryFrequency(auth()->id(), $settingValue);
             }
         }
 

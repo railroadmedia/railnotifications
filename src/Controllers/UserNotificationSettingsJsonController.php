@@ -7,6 +7,7 @@ use Doctrine\ORM\ORMException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Railroad\Railnotifications\Contracts\UserProviderInterface;
 use Railroad\Railnotifications\Entities\NotificationSetting;
 use Railroad\Railnotifications\Requests\UserNotificationSettingsDeleteRequest;
 use Railroad\Railnotifications\Requests\UserNotificationSettingsRequest;
@@ -21,20 +22,19 @@ use Spatie\Fractal\Fractal;
  */
 class UserNotificationSettingsJsonController extends Controller
 {
-    /**
-     * @var NotificationSettingsService
-     */
-    private $notificationSettingsService;
+    private NotificationSettingsService $notificationSettingsService;
+    private UserProviderInterface $userProvider;
 
     /**
-     * UserNotificationSettingsJsonController constructor.
-     *
      * @param NotificationSettingsService $notificationSettingsService
+     * @param UserProviderInterface $userProvider
      */
     public function __construct(
-        NotificationSettingsService $notificationSettingsService
+        NotificationSettingsService $notificationSettingsService,
+        UserProviderInterface $userProvider
     ) {
         $this->notificationSettingsService = $notificationSettingsService;
+        $this->userProvider = $userProvider;
     }
 
     /**
@@ -45,17 +45,19 @@ class UserNotificationSettingsJsonController extends Controller
     public function index(Request $request)
     {
         $userId = $request->get('user_id', auth()->id());
-
+        $user = $this->userProvider->getRailnotificationsUserById(auth()->id());
         $userNotificationsSettings = $this->notificationSettingsService->getUserNotificationSettings($userId);
 
-        $notificationSettingsTypes = array_merge(NotificationSetting::NOTIFICATION_SETTINGS_NAME_NOTIFICATION_TYPE,[
-                NotificationSetting::SEND_EMAIL_NOTIF,
-                NotificationSetting::SEND_PUSH_NOTIF,
-                NotificationSetting::SEND_WEEKLY,
+        $notificationSettingsTypes = array_merge(NotificationSetting::NOTIFICATION_SETTINGS_NAME_NOTIFICATION_TYPE, [
+            NotificationSetting::SEND_EMAIL_NOTIF,
+            NotificationSetting::SEND_PUSH_NOTIF,
+            NotificationSetting::SEND_WEEKLY,
         ]);
         foreach ($notificationSettingsTypes as $type) {
             $userNotificationsSettings[$type] = $userNotificationsSettings[$type] ?? false;
         }
+        $userNotificationsSettings[NotificationSetting::NOTIFICATIONS_FREQUENCY] =
+            $user->getNotificationsSummaryFrequencyMinutes();
 
         return ResponseService::empty(200)
             ->setData(['data' => $userNotificationsSettings]);
@@ -122,14 +124,11 @@ class UserNotificationSettingsJsonController extends Controller
     {
         foreach ($request->all() as $settingName => $settingValue) {
             if (in_array($settingName, NotificationSetting::NOTIFICATION_SETTINGS_NAME_NOTIFICATION_TYPE) ||
-                (in_array(
-                    $settingName,
-                    [
-                        NotificationSetting::SEND_EMAIL_NOTIF,
-                        NotificationSetting::SEND_PUSH_NOTIF,
-                        NotificationSetting::SEND_WEEKLY,
-                    ]
-                ))) {
+                (in_array($settingName, [
+                                          NotificationSetting::SEND_EMAIL_NOTIF,
+                                          NotificationSetting::SEND_PUSH_NOTIF,
+                                          NotificationSetting::SEND_WEEKLY,
+                                      ]))) {
                 $this->notificationSettingsService->createOrUpdateWhereMatchingData(
                     $settingName,
                     $settingValue,
@@ -137,12 +136,15 @@ class UserNotificationSettingsJsonController extends Controller
                     $request->get('brand')
                 );
             }
+
+            if ($settingName == NotificationSetting::NOTIFICATIONS_FREQUENCY) {
+                $this->userProvider->updateUserNotificationsSummaryFrequency(auth()->id(), $settingValue);
+            }
         }
 
         $userNotificationsSettings =
             $this->notificationSettingsService->getUserNotificationSettings($request->get('user_id', auth()->id()));
 
-        return ResponseService::empty(200)
-            ->setData(['data' => $userNotificationsSettings]);
+        return $this->index($request);
     }
 }

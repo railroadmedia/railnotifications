@@ -34,6 +34,7 @@ class NotificationSetting
     const SEND_EMAIL_NOTIF = 'send_email';
     const SEND_PUSH_NOTIF = 'send_in_app_push_notification';
     const SEND_WEEKLY = 'notify_weekly_update';
+    const NOTIFICATIONS_FREQUENCY = 'notifications_summary_frequency_minutes';
 
     /**
      * @ORM\Id @ORM\GeneratedValue @ORM\Column(type="integer")

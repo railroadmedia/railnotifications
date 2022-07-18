@@ -41,4 +41,12 @@ interface UserProviderInterface
      * @return mixed
      */
     public function updateUserFirebaseToken($userId, $oldToken, $newToken);
+
+    /**
+     * @param int $userId
+     * @param string|null $notificationsSummaryFrequency
+     * @return mixed
+     */
+    public function updateUserNotificationsSummaryFrequency(int $userId,?string $notificationsSummaryFrequency);
+
 }

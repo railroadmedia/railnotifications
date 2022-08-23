@@ -9,6 +9,7 @@ use Doctrine\Common\Annotations\PsrCachedReader;
 use Doctrine\Common\Cache\Psr6\DoctrineProvider;
 use Doctrine\Common\EventManager;
 use Doctrine\Common\Proxy\AbstractProxyFactory;
+use Doctrine\DBAL\DriverManager;
 use Doctrine\DBAL\Types\Type;
 use Doctrine\ORM\Configuration;
 use Doctrine\ORM\Mapping\Driver\AnnotationDriver;
@@ -17,11 +18,14 @@ use Doctrine\Persistence\Mapping\Driver\MappingDriverChain;
 use Gedmo\DoctrineExtensions;
 use Gedmo\Sortable\SortableListener;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
+use Illuminate\Support\Facades\DB;
 use Railroad\Doctrine\TimestampableListener;
 use Railroad\Doctrine\Types\Carbon\CarbonDateTimeTimezoneType;
 use Railroad\Doctrine\Types\Carbon\CarbonDateTimeType;
 use Railroad\Doctrine\Types\Carbon\CarbonDateType;
 use Railroad\Doctrine\Types\Carbon\CarbonTimeType;
+use Railroad\Ecommerce\Drivers\ExistingPDOSqliteDriver;
+use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Railnotifications\Commands\SetUserNotificationSettings;
 use Railroad\Railnotifications\Events\NotificationBroadcast;
 use Railroad\Railnotifications\Listeners\NotificationEventListener;
@@ -138,8 +142,6 @@ class NotificationsServiceProvider extends ServiceProvider
         $ormConfiguration = new Configuration();
 
         $ormConfiguration->setMetadataCache($phpFileCacheAdapter);
-        $ormConfiguration->setQueryCache($phpFileCacheAdapter);
-        $ormConfiguration->setResultCache($arrayCacheAdapter);
         $ormConfiguration->setProxyDir($proxyDir);
         $ormConfiguration->setProxyNamespace('DoctrineProxies');
         $ormConfiguration->setAutoGenerateProxyClasses(
@@ -152,29 +154,32 @@ class NotificationsServiceProvider extends ServiceProvider
         );
 
         // orm configuration instance is referenced in laravel container to be reused when needed
-        if (config('railnotifications.database_in_memory') !== true) {
-            $databaseOptions = [
-                'driver' => config('railnotifications.database_driver'),
-                'dbname' => config('railnotifications.database_name'),
-                'user' => config('railnotifications.database_user'),
-                'password' => config('railnotifications.database_password'),
-                'host' => config('railnotifications.database_host'),
-            ];
-        } else {
-            $databaseOptions = [
-                'driver' => config('railnotifications.database_driver'),
-                'user' => config('railnotifications.database_user'),
-                'password' => config('railnotifications.database_password'),
-                'memory' => true,
-            ];
-        }
+        $databaseOptions = [
+            'driver' => config('railnotifications.database_driver'),
+            'dbname' => config('railnotifications.database_name'),
+            'user' => config('railnotifications.database_user'),
+            'password' => config('railnotifications.database_password'),
+            'host' => config('railnotifications.database_host'),
+        ];
 
         //register the entity manager
-        $entityManager = RailnotificationsEntityManager::create(
-            $databaseOptions,
-            $ormConfiguration,
-            $eventManager
-        );
+        if (config('railnotifications.database_in_memory', false)) {
+            $pdo = DB::connection(config('railnotifications.database_connection_name'))->getPdo();
+
+            $entityManager = RailnotificationsEntityManager::create(
+                DriverManager::getConnection(
+                    [
+                        'driver' => 'pdo_' . $pdo->getAttribute(\PDO::ATTR_DRIVER_NAME),
+                        'driverClass' => ExistingPDOSqliteDriver::class,
+                        'pdo' => $pdo,
+                    ],
+                    $ormConfiguration, $eventManager),
+                $ormConfiguration,
+                $eventManager
+            );
+        } else {
+            $entityManager = RailnotificationsEntityManager::create($databaseOptions, $ormConfiguration, $eventManager);
+        }
 
         // register the entity manager as a singleton
         app()->instance(RailnotificationsEntityManager::class, $entityManager);

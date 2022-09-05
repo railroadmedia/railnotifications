@@ -2,6 +2,7 @@
 
 namespace Railroad\Railnotifications\Transformers;
 
+use Carbon\Carbon;
 use League\Fractal\Resource\Item;
 use League\Fractal\TransformerAbstract;
 use Railroad\Railnotifications\Contracts\ContentProviderInterface;
@@ -49,6 +50,8 @@ class NotificationsTransformer extends TransformerAbstract
             'created_at' => $notification->getCreatedAt() ?
                 $notification->getCreatedAt()
                     ->toDateTimeString() : null,
+            'created_at_diff' =>
+                $notification->getCreatedAt() ? Carbon::parse($notification->getCreatedAt())->diffForHumans() : null,
             'updated_at' => $notification->getUpdatedAt() ?
                 $notification->getUpdatedAt()
                     ->toDateTimeString() : null,

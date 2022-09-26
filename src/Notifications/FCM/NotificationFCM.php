@@ -69,7 +69,7 @@ class NotificationFCM
             $tokens = [];
 
             foreach ($firebaseTokens as $firebaseToken) {
-                $tokens[] = $firebaseToken->getToken();
+                $tokens[] = $firebaseToken['token'];
             }
 
             if (empty($tokens)) {
@@ -191,7 +191,7 @@ class NotificationFCM
                 $tokens = [];
 
                 foreach ($firebaseTokens as $firebaseToken) {
-                    $tokens[] = $firebaseToken->getToken();
+                    $tokens[] = $firebaseToken['token'];
                 }
 
                 if (empty($tokens)) {
@@ -204,7 +204,7 @@ class NotificationFCM
                 $optionBuilder->setTimeToLive(60 * 20);
 
                 $notificationBuilder = new PayloadNotificationBuilder(
-                    'Pianote - You have ' . $notificationData['count'] . ' new notifications.'
+                    'Musora - You have ' . $notificationData['count'] . ' new notifications.'
                 );
                 $notificationBuilder->setBody($fcmMessage)
                     ->setSound('default');

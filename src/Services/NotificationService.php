@@ -251,7 +251,7 @@ class NotificationService
                     'n.recipient = :recipientId'
                 )
                 ->andWhere('n.brand = :brand')
-                ->orderBy('n.createdAt', 'desc')
+                ->orderBy('n.id', 'desc')
                 ->setParameter('brand', $brand ?? config('railnotifications.brand'))
                 ->setParameter('recipientId', $recipientId);
 

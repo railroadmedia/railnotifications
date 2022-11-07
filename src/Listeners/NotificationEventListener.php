@@ -551,7 +551,7 @@ class NotificationEventListener
         $brand = $event->getBrand();
         $contentTitle = $content->fetch('fields.title');
         $contentUrl = url($brand . '/jump-to-comment/'. $content['id'].'/' . $comment['parent_id']);
-        $contentMobileAppUrl =  $content->fetch('mobile_app_url') . '?goToComment=' . $comment['parent_id'] ?? $comment['id'].'&brand='.$brand;
+        $contentMobileAppUrl =  $content->fetch('mobile_app_url') . '?goToComment=' . $comment['parent_id'] ?? $comment['id'];
 
         $subjectId = $comment['parent_id'] ?? $comment['id'];
         $comment = $comment['comment'];
@@ -597,7 +597,7 @@ class NotificationEventListener
         $brand = $event->getBrand();
         $contentTitle = $content->fetch('fields.title');
         $contentUrl = url($brand . '/jump-to-comment/'. $content['id'].'/' . ($comment['parent_id'] ?? $comment['id']));
-        $contentMobileAppUrl =  $content->fetch('mobile_app_url') . '?goToComment=' . $comment['id'].'&brand='.$brand;
+        $contentMobileAppUrl =  $content->fetch('mobile_app_url') . '?goToComment=' . $comment['id'];
 
         $subjectId = $comment['id'];
         $comment = $comment['comment'];

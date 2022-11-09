@@ -364,9 +364,7 @@ class NotificationService
                         ->isNull('n.readOn')
                 )
                 ->orderBy('n.createdAt', 'desc')
-                ->setParameter('recipientId', $recipientId)
-                ->andWhere('n.brand = :brand')
-                ->setParameter('brand', config('railnotifications.brand'));
+                ->setParameter('recipientId', $recipientId);
 
         if ($createdAfterDateTimeString) {
             $result =
@@ -388,10 +386,7 @@ class NotificationService
             $this->notificationRepository->createQueryBuilder('n')
                 ->select('n.recipient as id');
 
-        $result =
-            $qb->where('n.readOn IS NULL')
-                ->andWhere('n.brand = :brand')
-                ->setParameter('brand', config('railnotifications.brand'));
+        $result = $qb->where('n.readOn IS NULL');
 
         if ($createdAfterDateTimeString) {
             $result =

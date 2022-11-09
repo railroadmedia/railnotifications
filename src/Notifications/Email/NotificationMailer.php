@@ -43,7 +43,8 @@ class NotificationMailer
         NotificationService $notificationService,
         RailforumProviderInterface $railforumProvider,
         Decorator $decorator
-    ) {
+    )
+    {
         $this->mailer = $mailer;
         $this->notificationService = $notificationService;
         $this->railforumProvider = $railforumProvider;
@@ -61,6 +62,7 @@ class NotificationMailer
         $notifications = $this->decorator->decorate($notifications);
 
         foreach ($notifications as $notification) {
+
             $likeCount = 0;
 
             $receivingUser = $notification->getRecipient();
@@ -101,8 +103,7 @@ class NotificationMailer
                     'avatarUrl' => $notification->getAuthorAvatar(),
                     'contentUrl' => $notification->getContentUrl(),
                     'notificationType' => $notification->getType(),
-                    'totalLikes' => $likeCount,
-                    'userId' => $receivingUser->getId(),
+                    'totalLikes' => $likeCount
                 ]
             );
         }
@@ -149,11 +150,9 @@ class NotificationMailer
                 $notificationViewsRendered[] = $notificationView->render();
             }
 
-            $userId = $notificationViews[0]->getData()['userId'];
-
             $this->mailer->send(
                 new AggregatedNotificationsEmail(
-                    $recipientEmail, $notificationViewsRendered, $subject, $userId
+                    $recipientEmail, $notificationViewsRendered, $subject
                 )
             );
         }

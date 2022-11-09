@@ -12,26 +12,21 @@ class AggregatedNotificationsEmail extends Mailable
 
     public $subject;
 
-    private $userId;
-
     /**
      * AggregatedNotificationsEmail constructor.
      *
      * @param $recipientEmail
      * @param $renderedNotificationRows
      * @param $subject
-     * @param $userId
      */
     public function __construct(
         $recipientEmail,
         $renderedNotificationRows,
-        $subject,
-        $userId
+        $subject
     ) {
         $this->recipientEmail = $recipientEmail;
         $this->renderedNotificationRows = $renderedNotificationRows;
         $this->subject = $subject;
-        $this->userId = $userId;
     }
 
     /**
@@ -51,7 +46,6 @@ class AggregatedNotificationsEmail extends Mailable
                 [
                     'notificationRows' => $this->renderedNotificationRows,
                     'to' => $this->recipientEmail,
-                    'userId' => $this->userId,
                 ]
             );
     }

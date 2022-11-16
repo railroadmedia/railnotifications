@@ -59,7 +59,7 @@ class BroadcastNotificationsAggregated implements ShouldQueue
 
                 $channel->sendAggregated($notificationBroadcasts);
             }
-        } catch (Exception $exception) {
+        } catch (\Throwable $exception) {
             throw new BroadcastNotificationsAggregatedFailure(
                 $this->notificationBroadcastIds,
                 $exception->getMessage(),

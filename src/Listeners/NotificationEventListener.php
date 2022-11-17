@@ -296,11 +296,9 @@ class NotificationEventListener
 
         /**
          * Users receive email notifications if SEND_EMAIL_NOTIF is true
-         * and have not received already push notification for same event
+         * and choose to receive instant email notifications
          */
         if (empty($user->getNotificationsSummaryFrequencyMinutes()) &&
-            (!in_array('fcm', $broadcastChannels) ||
-                (empty($this->userProvider->getUserFirebaseTokens($user->getId())))) &&
             ($this->userNotificationSettingsService->getUserNotificationSettings(
                     $user->getId(),
                     NotificationSetting::SEND_EMAIL_NOTIF

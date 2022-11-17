@@ -76,9 +76,7 @@ class NotificationMailer
                     break;
                 case Notification::TYPE_FORUM_POST_LIKED:
                     $view = 'railnotifications::forums.user-liked-forum-row';
-
-                    $post = $this->railforumProvider->getPostById($notification->getPostId());
-                    $likeCount = $post['like_count'];
+                    $likeCount = $this->railforumProvider->getPostLikeCount($notification->getPostId());
                     break;
                 case Notification::TYPE_LESSON_COMMENT_REPLY:
                     $view = 'railnotifications::lessons.lesson-comment-reply-posted-row';

@@ -22,6 +22,11 @@ class ForumProvider implements RailforumProviderInterface
         // TODO: Implement getPostById() method.
     }
 
+    public function getPostLikeCount(int $postId): int
+    {
+        // TODO: Implement getPostLikeCount() method.
+    }
+
     /**
      * @inheritDoc
      */

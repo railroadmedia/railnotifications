@@ -11,6 +11,8 @@ interface RailforumProviderInterface
      */
     public function getPostById($id) ;
 
+    public function getPostLikeCount(int $postId) : int;
+
     /**
      * @param int $id
      * @return array|null

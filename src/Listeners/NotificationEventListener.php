@@ -104,7 +104,8 @@ class NotificationEventListener
                 $thread = $this->railforumProvider->getThreadById($post['thread_id']);
 
                 $contentTitle = $thread['title'];
-                $contentUrl = $endpointPrefix . '/members/forums/jump-to-post/' .$post['id'];
+                $contentUrl = $post['url'] ?? $endpointPrefix . '/members/forums/jump-to-post/' .$post['id'];
+
                 $contentMobileAppUrl = url()->route('forums.api.post.jump-to', [$post['id']]);
 
                 $comment = $post['content'];
@@ -151,7 +152,7 @@ class NotificationEventListener
                 $thread = $this->railforumProvider->getThreadById($post['thread_id']);
 
                 $contentTitle = $thread['title'];
-                $contentUrl = $endpointPrefix .'/members/forums/jump-to-post/'. $post['id'];
+                $contentUrl = $post['url'] ?? $endpointPrefix .'/members/forums/jump-to-post/'. $post['id'];
                 $contentMobileAppUrl = url()->route('forums.api.post.jump-to', [$post['id']]);
 
                 $comment = $post['content'];
@@ -168,7 +169,7 @@ class NotificationEventListener
                 $thread = $this->railforumProvider->getThreadById($post['thread_id']);
 
                 $contentTitle = $thread['title'];
-                $contentUrl = $endpointPrefix. '/members/forums/jump-to-post/'. $post['id'];
+                $contentUrl = $post['url'] ?? $endpointPrefix. '/members/forums/jump-to-post/'. $post['id'];
                 $contentMobileAppUrl = url()->route('forums.api.post.jump-to', [$post['id']]);
 
                 $comment = $post['content'];
@@ -191,7 +192,7 @@ class NotificationEventListener
                 $content = $this->contentProvider->getContentById($comment['content_id']);
 
                 $contentTitle = $content->fetch('fields.title');
-                $contentUrl =  $endpointPrefix . '/members/jump-to-comment/'. $content['id'].'/' . $comment['parent_id'];
+                $contentUrl =  $comment['url'] ?? $endpointPrefix . '/members/jump-to-comment/'. $content['id'].'/' . $comment['parent_id'];
                 $contentMobileAppUrl =
                     $content->fetch('mobile_app_url') . '?goToComment=' . $comment['parent_id'] ?? $comment['id'];
 
@@ -211,7 +212,7 @@ class NotificationEventListener
                 $content = $this->contentProvider->getContentById($comment['content_id']);
 
                 $contentTitle = $content->fetch('fields.title');
-                $contentUrl = $endpointPrefix. '/members/jump-to-comment/'. $content['id'].'/' . ($comment['parent_id'] ?? $comment['id']);
+                $contentUrl = $comment['url'] ?? $endpointPrefix. '/members/jump-to-comment/'. $content['id'].'/' . ($comment['parent_id'] ?? $comment['id']);
                 $contentMobileAppUrl = $content->fetch('mobile_app_url') . '?goToComment=' . $comment['id'];
                 $subjectId = $comment['id'];
                 $comment = $comment['comment'];
@@ -455,7 +456,7 @@ class NotificationEventListener
 
         $brand = $event->getBrand();
         $contentTitle = $thread['title'];
-        $contentUrl = url($brand . '/forums/jump-to-post/'.$post['id']);
+        $contentUrl = $post['url'] ?? url($brand . '/forums/jump-to-post/'.$post['id']);
         $contentMobileAppUrl = url()->route('forums.api.post.jump-to', [$post['id'], 'brand' => $brand]);
 
         $comment = $post['content'];
@@ -496,7 +497,7 @@ class NotificationEventListener
 
         $brand = $event->getBrand();
         $contentTitle = $thread['title'];
-        $contentUrl = url($brand . '/forums/jump-to-post/'.$post['id']);
+        $contentUrl = $post['url'] ?? url($brand . '/forums/jump-to-post/'.$post['id']);
         $contentMobileAppUrl = url()->route('forums.api.post.jump-to', [$post['id'], 'brand' => $brand]);
 
         $comment = $post['content'];
@@ -548,7 +549,7 @@ class NotificationEventListener
 
         $brand = $event->getBrand();
         $contentTitle = $content->fetch('fields.title');
-        $contentUrl = url($brand . '/jump-to-comment/'. $content['id'].'/' . $comment['parent_id']);
+        $contentUrl = $comment['url'] ?? url($brand . '/jump-to-comment/'. $content['id'].'/' . $comment['parent_id']);
         $contentMobileAppUrl =  $content->fetch('mobile_app_url') . '?goToComment=' . $comment['parent_id'] ?? $comment['id'];
 
         $subjectId = $comment['parent_id'] ?? $comment['id'];
@@ -594,7 +595,7 @@ class NotificationEventListener
 
         $brand = $event->getBrand();
         $contentTitle = $content->fetch('fields.title');
-        $contentUrl = url($brand . '/jump-to-comment/'. $content['id'].'/' . ($comment['parent_id'] ?? $comment['id']));
+        $contentUrl = $comment['url'] ?? url($brand . '/jump-to-comment/'. $content['id'].'/' . ($comment['parent_id'] ?? $comment['id']));
         $contentMobileAppUrl =  $content->fetch('mobile_app_url') . '?goToComment=' . $comment['id'];
 
         $subjectId = $comment['id'];

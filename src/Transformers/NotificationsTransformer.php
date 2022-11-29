@@ -83,6 +83,12 @@ class NotificationsTransformer extends TransformerAbstract
                 $comment['replies'][$index]['comment'] = strip_tags(html_entity_decode($reply['comment']));
             }
             $response['comment'] = $comment;
+
+            $contentProvider = app()->make(ContentProviderInterface::class);
+            $content = $contentProvider->getContentById($comment['content_id']);
+            if($content) {
+                $response['content_type'] = $content['type'];
+            }
         }
 
         return $response;

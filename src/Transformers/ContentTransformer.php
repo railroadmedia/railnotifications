@@ -21,7 +21,8 @@ class ContentTransformer extends TransformerAbstract
             'mobile_app_url' => $content->fetch('new_mobile_app_url', ''),
             'musora_api_mobile_app_url' => $content->fetch('new_musora_api_mobile_app_url', ''),
             'display_name' =>$title,
-            'thumbnail_url' => $content->fetch('data.thumbnail_url')
+            'thumbnail_url' => $content->fetch('data.thumbnail_url'),
+            'content_type' => $content->fetch('type','')
         ];
     }
 }

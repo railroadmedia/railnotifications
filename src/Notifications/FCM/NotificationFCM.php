@@ -132,6 +132,10 @@ class NotificationFCM
             if ($commentId = $notification->getCommentId()) {
                 $dataArray['commentId'] = $commentId;
                 $dataArray['content_id'] = $this->contentProvider->getCommentById($commentId)['content_id'] ?? '';
+                if(!empty($dataArray['content_id'])) {
+                    $content = $this->contentProvider->getContentById($dataArray['content_id']);
+                    $dataArray['content_type'] = $content['type'] ?? '';
+                }
                 $dataArray['title'] = $notification->getContentTitle();
             }
 

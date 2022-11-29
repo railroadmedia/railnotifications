@@ -558,7 +558,7 @@ class NotificationEventListener
         $receivingUserIds = array_diff($receivingUserIds, [$authorId]);
 
         $data = [
-            'commentId' => $event->getCommentId()
+            'commentId' => $event->getParentId() ?? $event->getCommentId()
         ];
 
         $this->processNotificationsForRecipients(

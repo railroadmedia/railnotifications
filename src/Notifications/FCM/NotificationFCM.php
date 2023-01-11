@@ -112,7 +112,6 @@ class NotificationFCM
 
             $optionBuilder = new OptionsBuilder();
             $optionBuilder->setTimeToLive(60 * 20);
-            Log::debug('Firebase tokens for user id:: '.$receivingUser->getId().'  fcm message:::   '.var_export($fcmMessage, true));
 
             $notificationBuilder = new PayloadNotificationBuilder($fcmTitle);
             $notificationBuilder->setBody($fcmMessage)
@@ -147,6 +146,8 @@ class NotificationFCM
             $option = $optionBuilder->build();
             $notification = $notificationBuilder->build();
             $data = $dataBuilder->build();
+
+            Log::debug('Firebase tokens for user id:: '.$receivingUser->getId().'  notification builder:::   '.var_export($notification, true));
 
             Log::debug('Firebase tokens for user id:: '.$receivingUser->getId().'  data builder:::   '.var_export($data, true));
 

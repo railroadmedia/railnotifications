@@ -12,6 +12,7 @@ use Railroad\Railnotifications\Contracts\RailforumProviderInterface;
 use Railroad\Railnotifications\Contracts\UserProviderInterface;
 use Railroad\Railnotifications\Entities\Notification;
 use Railroad\Railnotifications\Services\NotificationService;
+use Illuminate\Support\Facades\Log;
 
 class NotificationFCM
 {

@@ -83,20 +83,20 @@ class NotificationFCM
             switch ($notification->getType()) {
                 case Notification::TYPE_FORUM_POST_IN_FOLLOWED_THREAD:
                     $fcmTitle =
-                        explode('@', $notification->getAuthorDisplayName())[0] . ' posted in a forum thread you follow';
+                        explode('@', $notification->getAuthorDisplayName())[0] . ' posted in a followed '.$notification->getBrand().' thread!';
                     break;
                 case Notification::TYPE_FORUM_POST_REPLY:
-                    $fcmTitle = explode('@', $notification->getAuthorDisplayName())[0] . ' replied to your forum post';
+                    $fcmTitle = explode('@', $notification->getAuthorDisplayName())[0] . ' posted in your '.$notification->getBrand().' thread!';
                     break;
                 case Notification::TYPE_FORUM_POST_LIKED:
-                    $fcmTitle = explode('@', $notification->getAuthorDisplayName())[0] . ' liked your forum post';
+                    $fcmTitle = explode('@', $notification->getAuthorDisplayName())[0] . ' liked your '.$notification->getBrand().' forum post!';
                     break;
                 case Notification::TYPE_LESSON_COMMENT_REPLY:
                     $fcmTitle =
-                        explode('@', $notification->getAuthorDisplayName())[0] . ' replied to your lesson comment';
+                        explode('@', $notification->getAuthorDisplayName())[0] . ' replied to your '.$notification->getBrand().' lesson comment!';
                     break;
                 case Notification::TYPE_LESSON_COMMENT_LIKED:
-                    $fcmTitle = explode('@', $notification->getAuthorDisplayName())[0] . ' liked your lesson comment';
+                    $fcmTitle = explode('@', $notification->getAuthorDisplayName())[0] . ' liked your '.$notification->getBrand().' lesson comment!';
                     break;
                 case Notification::TYPE_NEW_CONTENT_RELEASES:
                     $fcmTitle = 'New content released';

@@ -72,6 +72,8 @@ class NotificationFCM
                 $tokens[] = $firebaseToken['token'];
             }
 
+            Log::debug('Firebase tokens for user id:: '.$receivingUser->getId().'     '.var_export($tokens, true));
+
             if (empty($tokens)) {
                 return null;
             }

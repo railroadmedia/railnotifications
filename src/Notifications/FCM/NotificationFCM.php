@@ -73,30 +73,37 @@ class NotificationFCM
                 $tokens[] = $firebaseToken['token'];
             }
 
-            Log::debug('Firebase tokens for user id:: '.$receivingUser->getId().'     '.var_export($tokens, true));
+            Log::debug('Send Firebase tokens for user id:: '.$receivingUser->getId().'   tokens::  '.var_export($tokens, true));
 
             if (empty($tokens)) {
                 return null;
             }
 
+            $fcmMessage = '';
+
             //set notification title
             switch ($notification->getType()) {
                 case Notification::TYPE_FORUM_POST_IN_FOLLOWED_THREAD:
                     $fcmTitle =
-                        explode('@', $notification->getAuthorDisplayName())[0] . ' posted in a followed '.$notification->getBrand().' thread!';
+                        explode('@', $notification->getAuthorDisplayName())[0] . ' posted in a followed '.ucfirst($notification->getBrand()).' thread!';
+                    $fcmMessage = 'See their post in '.$notification->getContentTitle();
                     break;
                 case Notification::TYPE_FORUM_POST_REPLY:
-                    $fcmTitle = explode('@', $notification->getAuthorDisplayName())[0] . ' posted in your '.$notification->getBrand().' thread!';
+                    $fcmTitle = explode('@', $notification->getAuthorDisplayName())[0] . ' posted in your '.ucfirst($notification->getBrand()).' thread!';
+                    $fcmMessage = 'See their reply in '.$notification->getContentTitle();
                     break;
                 case Notification::TYPE_FORUM_POST_LIKED:
-                    $fcmTitle = explode('@', $notification->getAuthorDisplayName())[0] . ' liked your '.$notification->getBrand().' forum post!';
+                    $fcmTitle = explode('@', $notification->getAuthorDisplayName())[0] . ' liked your '.ucfirst($notification->getBrand()).' forum post!';
+                    $fcmMessage = 'See the post in '.$notification->getContentTitle();
                     break;
                 case Notification::TYPE_LESSON_COMMENT_REPLY:
                     $fcmTitle =
-                        explode('@', $notification->getAuthorDisplayName())[0] . ' replied to your '.$notification->getBrand().' lesson comment!';
+                        explode('@', $notification->getAuthorDisplayName())[0] . ' replied to your '.ucfirst($notification->getBrand()).' lesson comment!';
+                    $fcmMessage = 'See their reply on '.$notification->getContentTitle();
                     break;
                 case Notification::TYPE_LESSON_COMMENT_LIKED:
-                    $fcmTitle = explode('@', $notification->getAuthorDisplayName())[0] . ' liked your '.$notification->getBrand().' lesson comment!';
+                    $fcmTitle = explode('@', $notification->getAuthorDisplayName())[0] . ' liked your '.ucfirst($notification->getBrand()).' lesson comment!';
+                    $fcmMessage = 'See the comment on '.$notification->getContentTitle();
                     break;
                 case Notification::TYPE_NEW_CONTENT_RELEASES:
                     $fcmTitle = 'New content released';
@@ -107,8 +114,6 @@ class NotificationFCM
             }
 
             //set notification message
-            $fcmMessage = $notification->getContentTitle() . "\n";
-            $fcmMessage .= NotificationService::cleanStringForMobileNotification($notification->getComment(), 120);
 
             $optionBuilder = new OptionsBuilder();
             $optionBuilder->setTimeToLive(60 * 20);
@@ -147,11 +152,7 @@ class NotificationFCM
             $notification = $notificationBuilder->build();
             $data = $dataBuilder->build();
 
-            Log::debug('Firebase tokens for user id:: '.$receivingUser->getId().'  notification builder:::   '.var_export($notification, true));
-
-            Log::debug('Firebase tokens for user id:: '.$receivingUser->getId().'  data builder:::   '.var_export($data, true));
-
-            //send notification
+             //send notification
             $downstreamResponse = FCM::sendTo($tokens, $option, $notification, $data);
 
             //remove stored tokens that become stale

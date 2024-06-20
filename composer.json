@@ -16,7 +16,6 @@
     "guzzlehttp/guzzle": "^7.2",
     "kreait/firebase-php": "^6.3",
     "doctrine/dbal": "^3.3",
-    "code-lts/laravel-fcm": "1.7.*",
     "symfony/dom-crawler": "^6.0",
     "railroad/doctrine": "2.0.*",
     "railroad/doctrine-array-hydrator": "^2.0",

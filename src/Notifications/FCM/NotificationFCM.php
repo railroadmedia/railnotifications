@@ -3,16 +3,13 @@
 namespace Railroad\Railnotifications\Notifications\FCM;
 
 use Exception;
-use LaravelFCM\Facades\FCM;
-use LaravelFCM\Message\OptionsBuilder;
-use LaravelFCM\Message\PayloadDataBuilder;
-use LaravelFCM\Message\PayloadNotificationBuilder;
+use Illuminate\Support\Facades\Log;
 use Railroad\Railnotifications\Contracts\ContentProviderInterface;
 use Railroad\Railnotifications\Contracts\RailforumProviderInterface;
 use Railroad\Railnotifications\Contracts\UserProviderInterface;
 use Railroad\Railnotifications\Entities\Notification;
+use Railroad\Railnotifications\Services\FirebaseCloudMessaging;
 use Railroad\Railnotifications\Services\NotificationService;
-use Illuminate\Support\Facades\Log;
 
 class NotificationFCM
 {
@@ -36,6 +33,8 @@ class NotificationFCM
      */
     private $forumProvider;
 
+    protected $fcm;
+
     /**
      * @param UserProviderInterface $userProvider
      * @param ContentProviderInterface $contentProvider
@@ -46,12 +45,14 @@ class NotificationFCM
         UserProviderInterface $userProvider,
         ContentProviderInterface $contentProvider,
         NotificationService $notificationService,
-        RailforumProviderInterface $forumProvider
+        RailforumProviderInterface $forumProvider,
+        FirebaseCloudMessaging $firebaseCloudMessaging
     ) {
         $this->userProvider = $userProvider;
         $this->contentProvider = $contentProvider;
         $this->forumProvider = $forumProvider;
         $this->notificationService = $notificationService;
+        $this->fcm= $firebaseCloudMessaging;
     }
 
     /**
@@ -113,65 +114,41 @@ class NotificationFCM
                     break;
             }
 
-            //set notification message
-
-            $optionBuilder = new OptionsBuilder();
-            $optionBuilder->setTimeToLive(60 * 20);
-
-            $notificationBuilder = new PayloadNotificationBuilder($fcmTitle);
-            $notificationBuilder->setBody($fcmMessage)
-                ->setSound('default');
-
-            $dataBuilder = new PayloadDataBuilder();
-
+            //set notification data
             $dataArray = [
                 'uri' => $notification->getContentUrl(),
-                'commentId' => $notification->getCommentId() ?? $notification->getPostId(),
+                'commentId' => json_encode($notification->getCommentId() ?? $notification->getPostId()),
                 'type' => $notification->getType(),
                 'mobile_app_url' => $notification->getContentMobileAppUrl(),
             ];
 
             if ($postId = $notification->getPostId()) {
-                $dataArray['commentId'] = $postId;
-                $dataArray['threadId'] = $this->forumProvider->getPostById($postId)['thread_id'] ?? '';
+                $dataArray['commentId'] = json_encode($postId);
+                $dataArray['threadId'] = json_encode($this->forumProvider->getPostById($postId)['thread_id'] ?? '');
                 $dataArray['threadTitle'] = $notification->getContentTitle();
             }
 
             if ($commentId = $notification->getCommentId()) {
-                $dataArray['commentId'] = $commentId;
+                $dataArray['commentId'] = json_encode($commentId);
                 $dataArray['content_id'] = $this->contentProvider->getCommentById($commentId)['content_id'] ?? '';
                 if(!empty($dataArray['content_id'])) {
                     $content = $this->contentProvider->getContentById($dataArray['content_id']);
                     $dataArray['content_type'] = $content['type'] ?? '';
+                    $dataArray['content_id'] = json_encode($dataArray['content_id']);
                 }
                 $dataArray['title'] = $notification->getContentTitle();
             }
 
-            $dataBuilder->addData($dataArray);
-            $option = $optionBuilder->build();
-            $notification = $notificationBuilder->build();
-            $data = $dataBuilder->build();
+            $notifications = $this->getNotifications($tokens, $fcmTitle, $fcmMessage, $dataArray);
+            $response = $this->fcm->sendMessage($notifications);
 
-             //send notification
-            $downstreamResponse = FCM::sendTo($tokens, $option, $notification, $data);
-
-            //remove stored tokens that become stale
-            $this->userProvider->deleteUserFirebaseTokens(
-                $receivingUser->getId(),
-                $downstreamResponse->tokensToDelete()
-            );
-
-            foreach ($downstreamResponse->tokensToModify() as $oldToken => $newToken) {
-                $this->userProvider->updateUserFirebaseToken($receivingUser->getId(), $oldToken, $newToken);
-            }
-
-            return $downstreamResponse;
+            return response()->json($response);
 
         } catch (Exception $messagingException) {
-            error_log($messagingException);
             error_log(
                 'FCM notifications exception  ::::::::::::::::::::::::::::::::: ' . $messagingException->getMessage()
             );
+            return response()->json();
         }
     }
 
@@ -208,19 +185,9 @@ class NotificationFCM
                 if (empty($tokens)) {
                     return null;
                 }
-
+                $fcmTitle = 'Musora - You have ' . $notificationData['count'] . ' new notifications.';
                 $fcmMessage = 'Tap here to view them.';
 
-                $optionBuilder = new OptionsBuilder();
-                $optionBuilder->setTimeToLive(60 * 20);
-
-                $notificationBuilder = new PayloadNotificationBuilder(
-                    'Musora - You have ' . $notificationData['count'] . ' new notifications.'
-                );
-                $notificationBuilder->setBody($fcmMessage)
-                    ->setSound('default');
-
-                $dataBuilder = new PayloadDataBuilder();
                 $dataArray = [
                     'type' => 'aggregated',
                     'mobile_app_url' => config('railnotifications.app_notifications_deep_link_url'),
@@ -228,24 +195,10 @@ class NotificationFCM
                     'url' => config('railnotifications.app_notifications_deep_link_url'),
                 ];
 
-                $dataBuilder->addData($dataArray);
+                $notifications = $this->getNotifications($tokens, $fcmTitle, $fcmMessage, $dataArray);
+                $response = $this->fcm->sendMessage($notifications);
 
-                $option = $optionBuilder->build();
-                $notification = $notificationBuilder->build();
-                $data = $dataBuilder->build();
-
-                $downstreamResponse = FCM::sendTo($tokens, $option, $notification, $data);
-
-                $this->userProvider->deleteUserFirebaseTokens(
-                    $receivingUser->getId(),
-                    $downstreamResponse->tokensToDelete()
-                );
-
-                foreach ($downstreamResponse->tokensToModify() as $oldToken => $newToken) {
-                    $this->userProvider->updateUserFirebaseToken($receivingUser->getId(), $oldToken, $newToken);
-                }
-
-                return $downstreamResponse;
+                return response()->json($response);
             }
 
         } catch (Exception $messagingException) {
@@ -254,5 +207,46 @@ class NotificationFCM
                 'FCM notifications exception  ::::::::::::::::::::::::::::::::: ' . $messagingException->getMessage()
             );
         }
+    }
+
+    /**
+     * @param array  $tokens
+     * @param string $fcmTitle
+     * @param string $fcmMessage
+     * @param array  $dataArray
+     * @return array
+     */
+    private function getNotifications(array $tokens, string $fcmTitle, string $fcmMessage, array $dataArray): array
+    {
+        $notifications = [];
+        $ttl           = 60 * 20;
+        foreach ($tokens as $token) {
+            $notifications[] = [
+                'message' => [
+                    'token'        => $token,
+                    'notification' => [
+                        'title' => $fcmTitle,
+                        'body'  => $fcmMessage,
+                    ],
+                    'data'         => $dataArray,
+                    'android'      => [
+                        'ttl'      => $ttl . 's',
+                        'priority' => 'high',
+                    ],
+                    'apns'         => [
+                        'headers' => [
+                            'apns-priority' => '10',
+                        ],
+                        'payload' => [
+                            'aps' => [
+                                'badge' => 42,
+                            ],
+                        ],
+                    ],
+                ]
+            ];
+        }
+
+        return $notifications;
     }
 }

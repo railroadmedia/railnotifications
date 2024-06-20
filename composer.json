@@ -44,16 +44,6 @@
       "Railroad\\Railnotifications\\Tests\\": "tests/"
     }
   },
-  "extra": {
-    "laravel": {
-      "providers": [
-        "LaravelFCM\\FCMServiceProvider"
-      ],
-      "aliases": {
-        "FCM": "LaravelFCM\\Facades\\FCM"
-      }
-    }
-  },
   "config": {
     "allow-plugins": {
       "kylekatarnls/update-helper": true,

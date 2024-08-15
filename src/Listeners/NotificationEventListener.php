@@ -360,7 +360,7 @@ class NotificationEventListener
                 $user->getId(), $user->getDisplayName(), $user->getProfilePictureUrl()
             );
 
-            dispatch_now($job);
+            dispatch_sync($job);
         }
     }
 
@@ -425,7 +425,7 @@ class NotificationEventListener
     {
         $job = new UpdateNotificationsThreadData($event->getThreadId());
 
-        dispatch_now($job);
+        dispatch_sync($job);
     }
 
     /**
@@ -435,7 +435,7 @@ class NotificationEventListener
     {
         $job = new UpdateNotificationsPostData($event->getPostId());
 
-        dispatch_now($job);
+        dispatch_sync($job);
     }
 
     /**

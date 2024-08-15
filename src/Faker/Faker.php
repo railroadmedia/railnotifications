@@ -9,10 +9,10 @@ class Faker extends Generator
 {
     public function notification(array $override = [])
     {
-        return array_merge(
+        $array = array_merge(
             [
                 'type' => $this->randomElement(array_keys(config('railnotifications.mapping_types'))),
-                'data' => json_encode(['commentId' => $this->randomNumber()]),
+                'data' => json_encode(['commentId' => $override['commentId'] ?? $this->randomNumber()]),
                 'subject_id' => null,
                 'author_id' => $this->randomNumber(),
                 'author_avatar' => $this->imageUrl(),
@@ -20,12 +20,19 @@ class Faker extends Generator
                 'recipient_id' => $this->randomNumber(),
                 'content_title' => $this->text(),
                 'read_on' => null,
+                'comment' => $this->text(),
                 'brand' => config('railnotifications.brand'),
                 'created_at' => Carbon::now()
                     ->toDateTimeString(),
             ],
             $override
         );
+
+        if (isset($array['commentId'])) {
+            unset($array['commentId']);
+        }
+
+        return $array;
     }
 
     public function notificationBroadcast(array $override = [])

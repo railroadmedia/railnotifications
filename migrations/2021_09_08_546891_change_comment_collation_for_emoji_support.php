@@ -17,7 +17,7 @@ class ChangeCommentCollationForEmojiSupport extends Migration
             Schema::connection(config('railnotifications.database_connection_name'))->table(
                 'notifications',
                 function ($table) {
-                    $table->string('comment')->charset('utf8mb4')->collation('utf8mb4_unicode_ci')->change();
+                    $table->string('comment')->charset('utf8mb4')->collation('utf8mb4_unicode_ci')->nullable()->change();
                 }
             );
         }

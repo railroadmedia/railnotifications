@@ -151,4 +151,9 @@ class UserProvider implements UserProviderInterface
     {
         // TODO: Implement updateUserFirebaseToken() method.
     }
+
+    public function updateUserNotificationsSummaryFrequency(int $userId, ?string $notificationsSummaryFrequency)
+    {
+        // TODO: Implement updateUserNotificationsSummaryFrequency() method.
+    }
 }

@@ -3,15 +3,13 @@
 namespace Railroad\Railnotifications\Tests\Controllers;
 
 use Carbon\Carbon;
-use DMS\PHPUnitExtensions\ArraySubset\ArraySubsetAsserts;
+use Illuminate\Support\Facades\DB;
 use Railroad\Railnotifications\Channels\ExampleChannel;
 use Railroad\Railnotifications\Entities\NotificationBroadcast;
 use Railroad\Railnotifications\Tests\TestCase;
 
 class NotificationBroadcastJSONControllerTest extends TestCase
 {
-    use ArraySubsetAsserts;
-
     protected function setUp(): void
     {
         parent::setUp();

@@ -17,7 +17,7 @@ class ChangeNotificationsTextColumnsToMedium extends Migration
                 'notifications',
                 function (\Illuminate\Database\Schema\Blueprint $table) {
                     $table->mediumText('data')->comment(' ')->change();
-                    $table->mediumText('comment')->comment(' ')->change();
+                    $table->mediumText('comment')->comment(' ')->nullable()->change();
                 }
             );
         }

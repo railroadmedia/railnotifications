@@ -6,6 +6,7 @@ use Doctrine\ORM\OptimisticLockException;
 use Doctrine\ORM\ORMException;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\DB;
 use Railroad\Railnotifications\Exceptions\NotFoundException;
 use Railroad\Railnotifications\Requests\BroadcastNotificationRequest;
 use Railroad\Railnotifications\Services\NotificationBroadcastService;

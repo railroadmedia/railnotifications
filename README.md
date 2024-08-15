@@ -1,3 +1,9 @@
+# PHPUnit Test Notes
+This packages tests require a running mysql server. See connection details inside 
+the phpunit.xml.
+
+
+# Menu
 - [railnotifications](#railnotifications)
   * [Install](#install)
   * [NotificationBroadcast event](#notificationbroadcast-event)

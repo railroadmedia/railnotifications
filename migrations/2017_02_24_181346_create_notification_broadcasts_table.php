@@ -17,7 +17,7 @@ class CreateNotificationBroadcastsTable extends Migration
             'notification_broadcasts',
             function (Blueprint $table) {
                 $table->increments('id');
-                $table->string('channel', 1500);
+                $table->string('channel', 500);
                 $table->string('type');
                 $table->string('status');
                 $table->text('report')->nullable();

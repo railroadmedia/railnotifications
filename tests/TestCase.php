@@ -5,6 +5,7 @@ namespace Railroad\Railnotifications\Tests;
 use Carbon\Carbon;
 use Doctrine\DBAL\Types\Type;
 use Doctrine\ORM\EntityManager;
+use Exception;
 use Faker\Generator;
 use Illuminate\Database\DatabaseManager;
 use Illuminate\Database\Schema\Blueprint;
@@ -12,6 +13,9 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Mpociot\ApiDoc\ApiDocGeneratorServiceProvider;
 use Orchestra\Testbench\TestCase as BaseTestCase;
+use PDO;
+use PDOException;
+use PHPUnit\Framework\ExpectationFailedException;
 use Railroad\Doctrine\Providers\DoctrineServiceProvider;
 use Railroad\Doctrine\Types\Carbon\CarbonDateTimeTimezoneType;
 use Railroad\Doctrine\Types\Carbon\CarbonDateTimeType;
@@ -27,6 +31,8 @@ use Railroad\Railnotifications\Tests\Fixtures\ContentProvider;
 use Railroad\Railnotifications\Tests\Fixtures\ForumProvider;
 use Railroad\Railnotifications\Tests\Fixtures\UserProvider;
 use Railroad\Railnotifications\Entities\User;
+use SebastianBergmann\Comparator\ComparisonFailure;
+use SQLite3;
 
 class TestCase extends BaseTestCase
 {
@@ -49,20 +55,10 @@ class TestCase extends BaseTestCase
     {
         parent::setUp();
 
+        Auth::shouldReceive('id')->andReturn(1);
+
         // Run the schema update tool using our entity metadata
         $this->entityManager = app(RailnotificationsEntityManager::class);
-
-        // make sure laravel is using the same connection
-        DB::connection()
-            ->setPdo(
-                $this->entityManager->getConnection()
-                    ->getNativeConnection()
-            );
-        DB::connection()
-            ->setReadPdo(
-                $this->entityManager->getConnection()
-                    ->getNativeConnection()
-            );
 
         $userProvider = new UserProvider();
 
@@ -76,6 +72,22 @@ class TestCase extends BaseTestCase
         $railforumProvider = new ForumProvider();
         $this->app->instance(RailforumProviderInterface::class, $railforumProvider);
 
+        $host = env('MYSQL_HOST', 'mysql8');
+        $port = env('MYSQL_PORT', '3306');
+        $username = env('MYSQL_USER_NAME', 'root');
+        $password = env('MYSQL_PASSWORD', 'root');
+        $database = env('MYSQL_DATABASE_NAME', 'railnotifications_automated_tests');
+
+        try {
+            $pdo = new PDO("mysql:host=$host;port=$port", $username, $password);
+            $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+            // Create the database if it doesn't exist
+            $pdo->exec("CREATE DATABASE IF NOT EXISTS `$database`");
+        } catch (PDOException $e) {
+            die("DB ERROR: " . $e->getMessage());
+        }
+
         $this->artisan('migrate:fresh', []);
         $this->artisan('cache:clear', []);
 
@@ -88,6 +100,13 @@ class TestCase extends BaseTestCase
         $this->createUsersTable();
     }
 
+    protected function tearDown(): void
+    {
+        $this->databaseManager->connection()->statement('DROP DATABASE IF EXISTS ' . env('MYSQL_DATABASE_NAME', 'railnotifications_automated_tests'));
+
+        parent::tearDown();
+    }
+
     /**
      * Define environment setup.
      *
@@ -98,16 +117,22 @@ class TestCase extends BaseTestCase
     {
         $defaultConfig = require(__DIR__ . '/../config/railnotifications.php');
 
-        // Setup default database to use sqlite :memory:
+        // Setup MySQL database configuration
         $app['config']->set('database.default', 'testbench');
-        $app['config']->set(
-            'database.connections.testbench',
-            [
-                'driver' => 'sqlite',
-                'database' => ':memory:',
-                'prefix' => '',
-            ]
-        );
+        $app['config']->set('database.connections.testbench', [
+            'driver' => 'mysql',
+            'host' => env('MYSQL_HOST', 'mysql8'),
+            'port' => env('MYSQL_PORT', '3306'),
+            'database' => env('MYSQL_DATABASE_NAME', 'railnotifications_automated_tests'),
+            'username' => env('MYSQL_USER_NAME', 'root'),
+            'password' => env('MYSQL_PASSWORD', 'root'),
+            'charset' => 'utf8mb4',
+            'collation' => 'utf8mb4_unicode_ci',
+            'prefix' => '',
+            'strict' => true,
+            'engine' => null,
+        ]);
+
         $app['config']->set('railnotifications.redis_host', $defaultConfig['redis_host']);
         $app['config']->set('railnotifications.redis_port', $defaultConfig['redis_port']);
 
@@ -118,10 +143,13 @@ class TestCase extends BaseTestCase
             )
         );
 
-        $app['config']->set('railnotifications.database_driver', 'pdo_sqlite');
-        $app['config']->set('railnotifications.database_user', 'root');
-        $app['config']->set('railnotifications.database_password', 'root');
-        $app['config']->set('railnotifications.database_in_memory', true);
+        $app['config']->set('railnotifications.database_driver', 'pdo_mysql');
+        $app['config']->set('railnotifications.database_host', env('MYSQL_HOST', 'mysql8'));
+        $app['config']->set('railnotifications.database_port', env('MYSQL_PORT', '3306'));
+        $app['config']->set('railnotifications.database_name', env('MYSQL_DATABASE_NAME', 'railnotifications_automated_tests'));
+        $app['config']->set('railnotifications.database_user', env('MYSQL_USER_NAME', 'root'));
+        $app['config']->set('railnotifications.database_password', env('MYSQL_PASSWORD', 'root'));
+        $app['config']->set('railnotifications.database_in_memory', false);
         $app['config']->set('railnotifications.development_mode', true);
         $app['config']->set('railnotifications.data_mode', 'host');
 
@@ -332,5 +360,79 @@ class TestCase extends BaseTestCase
         $userNotificationSetting['id'] = $notificationSettingId;
 
         return $userNotificationSetting;
+    }
+
+    protected function assertArraySubset(array $subset, array $array, bool $strict = false, string $message = '')
+    {
+        $differences = [];
+
+        $findDifferences = function ($subset, $array, $path = '') use (&$findDifferences, $strict, &$differences) {
+            foreach ($subset as $key => $value) {
+                $currentPath = $path ? "{$path}.{$key}" : $key;
+
+                if (!array_key_exists($key, $array)) {
+                    $differences[] = ["path" => $currentPath, "expected" => $value, "actual" => "<<missing>>"];
+                continue;
+            }
+
+                if (is_array($value)) {
+                    if (!is_array($array[$key])) {
+                        $differences[] = ["path" => $currentPath, "expected" => "array", "actual" => gettype($array[$key])];
+                    } else {
+                        $findDifferences($value, $array[$key], $currentPath);
+                    }
+                } else {
+                    $match = $strict ? $array[$key] === $value : $array[$key] == $value;
+                    if (!$match) {
+                        $differences[] = [
+                            "path" => $currentPath,
+                            "expected" => $value,
+                            "actual" => $array[$key]
+                        ];
+                    }
+                }
+            }
+        };
+
+        $findDifferences($subset, $array);
+
+        $formatValue = function ($value) {
+            if (is_bool($value)) {
+                return $value ? 'true' : 'false';
+            }
+            if (is_null($value)) {
+                return 'null';
+            }
+            if (is_string($value)) {
+                return "'{$value}'";
+            }
+            if (is_array($value)) {
+                return 'array(' . count($value) . ')';
+            }
+            return var_export($value, true);
+        };
+
+        if (!empty($differences)) {
+            $context = $strict ? 'strict' : 'non-strict';
+            $failureDescription = sprintf(
+                "Failed asserting that an array has the subset.\nDifferences found (%s mode):\n%s",
+                $context,
+                implode("\n", array_map(function ($diff) use ($formatValue) {
+                    return sprintf(
+                        "  At path '%s':\n    Expected: %s\n    Actual: %s",
+                        $diff['path'],
+                        $formatValue($diff['expected']),
+                        $formatValue($diff['actual'])
+                    );
+                }, $differences))
+            );
+
+            throw new ExpectationFailedException(
+                $message . "\n" . $failureDescription,
+                new ComparisonFailure($subset, $array, var_export($subset, true), var_export($array, true))
+            );
+        }
+
+        $this->assertEmpty($differences);
     }
 }

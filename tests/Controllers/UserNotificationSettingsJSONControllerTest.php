@@ -3,14 +3,11 @@
 namespace Railroad\Railnotifications\Tests\Controllers;
 
 use Carbon\Carbon;
-use DMS\PHPUnitExtensions\ArraySubset\ArraySubsetAsserts;
 use Railroad\Railnotifications\Entities\Notification;
 use Railroad\Railnotifications\Tests\TestCase;
 
 class UserNotificationSettingsJSONControllerTest extends TestCase
 {
-    use ArraySubsetAsserts;
-
     protected function setUp(): void
     {
         parent::setUp();
@@ -18,6 +15,8 @@ class UserNotificationSettingsJSONControllerTest extends TestCase
 
     public function test_index_empty()
     {
+        $this->createAndLogInNewUser();
+
         $response = $this->call(
             'GET',
             'railnotifications/user-notification-settings',
@@ -26,13 +25,25 @@ class UserNotificationSettingsJSONControllerTest extends TestCase
             ]
         );
 
-        $this->assertEquals([], $response->json('data'));
+        $this->assertEquals([
+            'notify_on_lesson_comment_reply' => false,
+            'notify_on_lesson_comment_like' => false,
+            'notify_on_post_in_followed_forum_thread' => false,
+            'notify_on_forum_post_like' => false,
+            'notify_on_forum_followed_thread_reply' => false,
+            'notify_on_new_content_releases' => false,
+            'send_email' => false,
+            'send_in_app_push_notification' => false,
+            'notify_weekly_update' => false,
+            'notifications_summary_frequency_minutes' => null,
+        ], $response->json('data'));
     }
 
     public function test_index()
     {
         $userNotificationSettings = [];
         $recipient = $this->fakeUser();
+
         for ($i = 0; $i < 2; $i++) {
             $this->fakeUserNotificationSetting(['user_id' => rand()]);
         }
@@ -53,8 +64,10 @@ class UserNotificationSettingsJSONControllerTest extends TestCase
 
         $i = 0;
         foreach ($response->json('data') as $settingName => $settingValue) {
-            $this->assertEquals($userNotificationSettings[$i]['setting_name'], $settingName);
-            $this->assertEquals($userNotificationSettings[$i]['setting_value'], $settingValue);
+            if ($i < 3) {
+                $this->assertEquals($userNotificationSettings[$i]['setting_name'], $settingName);
+                $this->assertEquals($userNotificationSettings[$i]['setting_value'], $settingValue);
+            }
             $i++;
         }
     }

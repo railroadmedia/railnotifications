@@ -3,6 +3,7 @@
 namespace Railroad\Railnotifications\Services;
 
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 use Railroad\Railnotifications\Channels\ChannelFactory;
 use Railroad\Railnotifications\Entities\Notification;
 use Railroad\Railnotifications\Entities\NotificationBroadcast;
@@ -85,7 +86,7 @@ class NotificationBroadcastService
 
         $job = new BroadcastNotification($notificationBroadcast->getId());
 
-        dispatch_now($job);
+        dispatch_sync($job);
 
         return $notificationBroadcast;
     }
@@ -145,7 +146,7 @@ class NotificationBroadcastService
             $notificationBroadcasts
         );
 
-        dispatch_now($job);
+        dispatch_sync($job);
     }
 
     /**

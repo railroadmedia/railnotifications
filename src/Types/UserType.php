@@ -10,11 +10,6 @@ class UserType extends IntegerType
 {
     const USER_TYPE = 'railnotification_user';
 
-    public function getSQLDeclaration(array $fieldDeclaration, AbstractPlatform $platform)
-    {
-        return $platform->getUnsignedDeclaration($fieldDeclaration);
-    }
-
     public function convertToPHPValue($value, AbstractPlatform $platform)
     {
         if ($value !== null) {

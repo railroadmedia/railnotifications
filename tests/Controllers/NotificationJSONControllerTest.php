@@ -3,7 +3,6 @@
 namespace Railroad\Railnotifications\Tests\Controllers;
 
 use Carbon\Carbon;
-use DMS\PHPUnitExtensions\ArraySubset\ArraySubsetAsserts;
 use Railroad\Railnotifications\Contracts\ContentProviderInterface;
 use Railroad\Railnotifications\Contracts\RailforumProviderInterface;
 use Railroad\Railnotifications\Entities\Notification;
@@ -13,8 +12,6 @@ use Railroad\Railnotifications\Tests\TestCase;
 
 class NotificationJSONControllerTest extends TestCase
 {
-    use ArraySubsetAsserts;
-
     protected function setUp(): void
     {
         parent::setUp();
@@ -37,36 +34,38 @@ class NotificationJSONControllerTest extends TestCase
     {
         $notifications = [];
         $recipient = $this->fakeUser();
+
         for ($i = 0; $i < 2; $i++) {
             $notification = $this->fakeNotification(['recipient_id' => rand()]);
         }
 
         for ($i = 0; $i < 3; $i++) {
-            $notification = $this->fakeNotification(['recipient_id' => $recipient['id'],
+            $notification = $this->fakeNotification([
+                'recipient_id' => $recipient['id'],
                 'type' => Notification::TYPE_LESSON_COMMENT_REPLY,
-                ]);
+                'commentId' => 1
+            ]);
 
             $notifications[] = $notification;
         }
 
         $contentProviderMock = $this->createMock(ContentProviderInterface::class);
 
-        $contentProviderMock->method('getCommentById')->will($this->returnValue(
-                [
-                    'id' => 1,
-                    'content_id' => 2,
-                    'user_id' => $recipient['id'],
-                    'parent_id' => 4,
-                    'comment' => $this->faker->text,
-                ]));
+        $contentProviderMock->method('getCommentById')->willReturn([
+            'id' => 1,
+            'content_id' => 2,
+            'user_id' => $recipient['id'],
+            'parent_id' => 4,
+            'comment' => $this->faker->text,
+        ]);
 
-        $contentClassMock = $this->getMockBuilder(ContentClass::class)->setMethods(['fetch', 'offsetGet'])->getMock();
+        $contentClassMock = $this->createPartialMock(ContentClass::class, ['fetch', 'offsetGet']);
         $contentClassMock->expects($this->any())
             ->method('offsetGet')
-            ->will($this->returnValue(['mobile_app_url' => $this->faker->url]));
+            ->willReturn(['mobile_app_url' => $this->faker->url]);
 
-        $contentProviderMock->method('getContentById')->will($this->returnValue($contentClassMock));
-        $contentProviderMock->method('getContentTransformer')->will($this->returnValue(new ContentTransformer()));
+        $contentProviderMock->method('getContentById')->willReturn($contentClassMock);
+        $contentProviderMock->method('getContentTransformer')->willReturn(new ContentTransformer());
 
         $this->app->instance(ContentProviderInterface::class, $contentProviderMock);
 
@@ -542,21 +541,27 @@ class NotificationJSONControllerTest extends TestCase
     {
         $notifications = [];
         $recipient = $this->fakeUser();
+
+        // Create some read notifications
         for ($i = 0; $i < 2; $i++) {
-            $notification = $this->fakeNotification(['recipient_id' => rand()]);
+            $this->fakeNotification(['recipient_id' => rand()]);
         }
 
         for ($i = 0; $i < 3; $i++) {
-            $notification = $this->fakeNotification(['recipient_id' => $recipient['id'],
+            $this->fakeNotification([
+                'recipient_id' => $recipient['id'],
                 'type' => Notification::TYPE_LESSON_COMMENT_REPLY,
-                'read_on' => Carbon::now()->toDateTimeString()
+                'read_on' => Carbon::now()->toDateTimeString(),
+                'commentId' => 1,
             ]);
         }
 
-        //unread notifications
+        // Create unread notifications
         for ($i = 0; $i < 3; $i++) {
-            $notification = $this->fakeNotification(['recipient_id' => $recipient['id'],
-                'type' => Notification::TYPE_LESSON_COMMENT_REPLY
+            $notification = $this->fakeNotification([
+                'recipient_id' => $recipient['id'],
+                'type' => Notification::TYPE_LESSON_COMMENT_REPLY,
+                'commentId' => 1,
             ]);
 
             $notifications[] = $notification;
@@ -564,22 +569,21 @@ class NotificationJSONControllerTest extends TestCase
 
         $contentProviderMock = $this->createMock(ContentProviderInterface::class);
 
-        $contentProviderMock->method('getCommentById')->will($this->returnValue(
-            [
-                'id' => 1,
-                'content_id' => 2,
-                'user_id' => $recipient['id'],
-                'parent_id' => 4,
-                'comment' => $this->faker->text,
-            ]));
+        $contentProviderMock->method('getCommentById')->willReturn([
+            'id' => 1,
+            'content_id' => 2,
+            'user_id' => $recipient['id'],
+            'parent_id' => 4,
+            'comment' => $this->faker->text,
+        ]);
 
-        $contentClassMock = $this->getMockBuilder(ContentClass::class)->setMethods(['fetch', 'offsetGet'])->getMock();
+        $contentClassMock = $this->createPartialMock(ContentClass::class, ['fetch', 'offsetGet']);
         $contentClassMock->expects($this->any())
             ->method('offsetGet')
-            ->will($this->returnValue(['mobile_app_url' => $this->faker->url]));
+            ->willReturn(['mobile_app_url' => $this->faker->url]);
 
-        $contentProviderMock->method('getContentById')->will($this->returnValue($contentClassMock));
-        $contentProviderMock->method('getContentTransformer')->will($this->returnValue(new ContentTransformer()));
+        $contentProviderMock->method('getContentById')->willReturn($contentClassMock);
+        $contentProviderMock->method('getContentTransformer')->willReturn(new ContentTransformer());
 
         $this->app->instance(ContentProviderInterface::class, $contentProviderMock);
 
@@ -592,14 +596,16 @@ class NotificationJSONControllerTest extends TestCase
             ]
         );
 
+        $this->assertCount(count($notifications), $response->json('data'), 'The number of unread notifications does not match.');
+
         foreach ($response->json('data') as $index => $resp) {
-            $this->assertEquals($notifications[$index]['type'], $resp['type']);
-            $this->assertEquals(json_decode($notifications[$index]['data'], true), $resp['data']);
-            $this->assertEquals($notifications[$index]['read_on'], $resp['read_on']);
-            $this->assertEquals($recipient['id'], $resp['recipient']['id']);
+            $this->assertEquals($notifications[$index]['type'], $resp['type'], 'Notification type mismatch.');
+            $this->assertEquals(json_decode($notifications[$index]['data'], true), $resp['data'], 'Notification data mismatch.');
+            $this->assertEquals($notifications[$index]['read_on'], $resp['read_on'], 'Read-on timestamp mismatch.');
+            $this->assertEquals($recipient['id'], $resp['recipient']['id'], 'Recipient ID mismatch.');
+            $this->assertNull($resp['read_on'], 'Unread notification should have null read_on value.');
         }
     }
-
     public function test_delete_user_notifications()
     {
         $notifications = [];

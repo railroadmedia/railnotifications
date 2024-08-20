@@ -7,7 +7,7 @@
     "php": "^8.2",
     "laravel/framework": "^11.9",
     "guzzlehttp/guzzle": "^7.2",
-    "kreait/firebase-php": "^6.3",
+    "kreait/firebase-php": "^7.0",
     "doctrine/dbal": "^3.0",
     "doctrine/annotations": "^2.0",
     "symfony/dom-crawler": "^6.0",

@@ -239,7 +239,6 @@ class NotificationFCM
                         ],
                         'payload' => [
                             'aps' => [
-                                'badge' => 42,
                                 "mutableContent" => 1,
                                 "contentAvailable"=> 1,
                             ],

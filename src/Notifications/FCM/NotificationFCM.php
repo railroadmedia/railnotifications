@@ -52,7 +52,7 @@ class NotificationFCM
         $this->contentProvider = $contentProvider;
         $this->forumProvider = $forumProvider;
         $this->notificationService = $notificationService;
-        $this->fcm= $firebaseCloudMessaging;
+        $this->fcm = $firebaseCloudMessaging;
     }
 
     /**
@@ -131,7 +131,7 @@ class NotificationFCM
             if ($commentId = $notification->getCommentId()) {
                 $dataArray['commentId'] = json_encode($commentId);
                 $dataArray['content_id'] = $this->contentProvider->getCommentById($commentId)['content_id'] ?? '';
-                if(!empty($dataArray['content_id'])) {
+                if (!empty($dataArray['content_id'])) {
                     $content = $this->contentProvider->getContentById($dataArray['content_id']);
                     $dataArray['content_type'] = $content['type'] ?? '';
                     $dataArray['content_id'] = json_encode($dataArray['content_id']);
@@ -239,9 +239,8 @@ class NotificationFCM
                         ],
                         'payload' => [
                             'aps' => [
-                                'badge' => 42,
                                 "mutableContent" => 1,
-                                "contentAvailable"=> 1,
+                                "contentAvailable" => 1,
                             ],
                         ],
                     ],

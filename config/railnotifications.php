@@ -83,4 +83,18 @@ return [
 
     // urls
     'app_notifications_deep_link_url' => 'https://www.pianote.com/api/profile',
+
+    'google_service_account_credentials' => [
+        "type" => "service_account",
+        "project_id" => "",
+        "private_key_id" => "",
+        "private_key" => base64_decode(env('RAILNOTIFICATIONS_GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY_BASE_64')),
+        "client_email" => "",
+        "client_id" => "",
+        "auth_uri" => "",
+        "token_uri" => "",
+        "auth_provider_x509_cert_url" => "",
+        "client_x509_cert_url" => "",
+        "universe_domain" => "googleapis.com",
+    ],
 ];

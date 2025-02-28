@@ -12,8 +12,11 @@ class ServiceAccount
 
     public function __construct()
     {
-        $this->client = new ServiceAccountCredentials('https://www.googleapis.com/auth/firebase.messaging',
-                                                      config('railnotifications.service_account_json_file')
+        $serviceAccountCredentials = config('railnotifications.google_service_account_credentials');
+
+        $this->client = new ServiceAccountCredentials(
+            'https://www.googleapis.com/auth/firebase.messaging',
+            $serviceAccountCredentials
         );
     }
 
